@@ -1,0 +1,6 @@
+name: Metropolis
+main: com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin
+depend: [WorldEdit, WorldGuard]
+version: 0.2
+database: true
+
