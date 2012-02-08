@@ -25,7 +25,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class MetropolisPlugin extends JavaPlugin {
 	public static final Logger log=Logger.getLogger("Minecraft");
-	public static final String DEFAULT_WORLD_NAME = "world";
 	
 	public PluginDescriptionFile pdf = null;
 	public WorldGuardPlugin worldGuard = null;
@@ -45,6 +44,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	int roadLevel = 62;
 	int spaceAboveRoad = 2;
 	int roadMaterial = 4;
+	String worldName = "world";
 	
 	@Override
 	public void onDisable() {
@@ -55,6 +55,20 @@ public class MetropolisPlugin extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		pdf = getDescription();
+		
+		Configuration config = getConfig();
+		config.options().copyDefaults(true);
+		
+		plotSizeX = config.getInt("plot.sizeX");
+		plotSizeZ = config.getInt("plot.sizeZ");
+		roadWidth = config.getInt("road.width");
+		spaceAboveRoad = config.getInt("road.clearSpaceAbove");
+		roadLevel = config.getInt("road.level");
+		roadMaterial = config.getInt("road.material");
+		worldName =config.getString("worldname");
+		
+		saveConfig();
+		
 		
 		Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
 		if(plugin == null || !(plugin instanceof WorldGuardPlugin)){
@@ -69,7 +83,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 		worldEdit = (WorldEditPlugin) plugin;
 		
-		world = getServer().getWorld(DEFAULT_WORLD_NAME);
+		world = getServer().getWorld(worldName);
 		
 		regionManager = worldGuard.getRegionManager(world);
 	
@@ -101,17 +115,6 @@ public class MetropolisPlugin extends JavaPlugin {
 
 		log.info(String.format("%s enabled", pdf.getFullName()));
 		
-		Configuration config = getConfig();
-		config.options().copyDefaults(true);
-		
-		plotSizeX = config.getInt("plot.sizeX");
-		plotSizeZ = config.getInt("plot.sizeZ");
-		roadWidth = config.getInt("road.width");
-		spaceAboveRoad = config.getInt("road.clearSpaceAbove");
-		roadLevel = config.getInt("road.level");
-		roadMaterial = config.getInt("road.material");
-		
-		saveConfig();
 		
 		getCommand("metropolis-home-generate").setExecutor(new MetropolisHomeGenerateCommand(this));
 		
