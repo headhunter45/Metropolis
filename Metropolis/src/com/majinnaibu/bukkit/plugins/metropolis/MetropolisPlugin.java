@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.bukkit.World;
@@ -49,6 +48,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		log.info(String.format("%s disabled", pdf.getFullName()));
+		saveConfig();
 	}
 
 	@Override
@@ -109,6 +109,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		spaceAboveRoad = config.getInt("road.clearSpaceAbove");
 		roadLevel = config.getInt("road.level");
 		roadMaterial = config.getInt("road.material");
+		
+		saveConfig();
+		
 		
 		/*
 		Set<String>strings = config.getKeys(true);
