@@ -14,6 +14,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeGenerateCommand;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -112,6 +113,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		saveConfig();
 		
+		getCommand("metropolis-home-generate").setExecutor(new MetropolisHomeGenerateCommand(this));
+		
 		
 		/*
 		Set<String>strings = config.getKeys(true);
@@ -147,25 +150,13 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	PlayerHome getPlayerHome(Player player) {
 		PlayerHome home = null;
-		home = new PlayerHome();
 		
 		String regionName = "h_" + player.getName();
 		ProtectedRegion homeRegion = regionManager.getRegion(regionName);
-		Cuboid plotCuboid = null;
-		Cuboid homeCuboid = null;
 		
 		log.info(homeRegion == null? "null" : homeRegion.toString());
 		if(homeRegion == null){
-			plotCuboid = findNextUnownedHomeRegion();
-			homeCuboid = plotCuboid.inset(roadWidth/2, roadWidth/2);
-			homeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
-			DefaultDomain d = homeRegion.getOwners();
-			d.addPlayer(player.getName());
-			//TODO: set flags for chest protection
-			homeRegion.setPriority(1);
-			regionManager.addRegion(homeRegion);
-		
-			createRoads(plotCuboid);
+			home = generateHome(player.getName());
 		}
 		
 		return home;
@@ -183,7 +174,6 @@ public class MetropolisPlugin extends JavaPlugin {
 	/**/
 	
 	private void createRoads(Cuboid plotCuboid) {
-		log.info("createRoads");
 		if(roadWidth>0){
 			int x=0;
 			int y= roadLevel;
@@ -194,7 +184,6 @@ public class MetropolisPlugin extends JavaPlugin {
 				return;
 			}
 			
-			log.info("road1");
 			for(x=plotCuboid.minX; x<plotCuboid.minX + roadWidth/2; x++){
 				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 					Block block = world.getBlockAt(x, y, z);
@@ -206,7 +195,6 @@ public class MetropolisPlugin extends JavaPlugin {
 				}
 			}
 			
-			log.info("road2");
 			for(x=plotCuboid.maxX - roadWidth/2+1; x<=plotCuboid.maxX; x++){
 				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 					Block block = world.getBlockAt(x, y, z);
@@ -218,7 +206,6 @@ public class MetropolisPlugin extends JavaPlugin {
 				}
 			}
 			
-			log.info("road3");
 			for(z=plotCuboid.minZ; z<plotCuboid.minZ + roadWidth/2; z++){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
 					Block block = world.getBlockAt(x, y, z);
@@ -230,7 +217,6 @@ public class MetropolisPlugin extends JavaPlugin {
 				}
 			}
 			
-			log.info("road4");
 			for(z=plotCuboid.maxZ - roadWidth/2+1; z<=plotCuboid.maxZ; z++){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
 					Block block = world.getBlockAt(x, y, z);
@@ -245,7 +231,6 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private Cuboid findNextUnownedHomeRegion() {
-		log.info("findNextUnownedHomeRegion");
 		int homeIndex = 0;
 		if(_occupiedHomes.size() == 0){
 			if(size < 1){
@@ -322,6 +307,25 @@ public class MetropolisPlugin extends JavaPlugin {
 	public Cuboid getNextUnusedHome(){
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public PlayerHome generateHome(String string) {
+		Cuboid plotCuboid = null;
+		Cuboid homeCuboid = null;
+		ProtectedRegion homeRegion = null;
+		String regionName = "h_" + string;
+		
+		plotCuboid = findNextUnownedHomeRegion();
+		homeCuboid = plotCuboid.inset(roadWidth/2, roadWidth/2);
+		homeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
+		DefaultDomain d = homeRegion.getOwners();
+		d.addPlayer(string);
+		homeRegion.setPriority(1);
+		regionManager.addRegion(homeRegion);
+	
+		createRoads(plotCuboid);
+		
+		return new PlayerHome(homeRegion);
 	}
 	
 }

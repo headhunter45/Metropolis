@@ -12,9 +12,11 @@ INSTALL:
 To install just drop the jar into your plugins folder.  All necessarry data will be created on first launch.
 
 CONFIG:
-There are no configuration options currently, eventually block size, road width, road height and space above the road will be configurable.
+Edit the config.yml file.  You can set the height to clear above roads, the road width, the plot size (incluing half the road width on either side), the road material, and the level at which the road is generated.
 
 Changelog:
+v0.3
+	Added command to generate a home for a user that is not currently logged in.
 v0.2.1
 	Made config file save on load and disable.
 v0.2

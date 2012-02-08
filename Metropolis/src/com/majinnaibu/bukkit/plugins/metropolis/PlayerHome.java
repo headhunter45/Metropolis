@@ -7,6 +7,8 @@ import javax.persistence.Table;
 import com.avaje.ebean.validation.NotNull;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 @Entity()
 @Table(name="met_home")
@@ -29,14 +31,26 @@ public class PlayerHome implements Comparable<PlayerHome>{
 		// TODO Auto-generated constructor stub
 	}
 	
-	public PlayerHome(ProtectedCuboidRegion region){
-		if(region.getId().startsWith("h_") && region.getId().length() > 2){
-			this.playerName = region.getId().substring(2);
-		}else{
-			this.playerName = region.getId();
+	public PlayerHome(ProtectedRegion homeRegion){
+		if(homeRegion instanceof ProtectedCuboidRegion){
+			ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) homeRegion;
+			if(cuboidRegion.getId().startsWith("h_") && cuboidRegion.getId().length() > 2){
+				this.playerName = cuboidRegion.getId().substring(2);
+			}else{
+				this.playerName = cuboidRegion.getId();
+			}
+			
+			this.cuboid = new Cuboid(cuboidRegion.getMinimumPoint(), cuboidRegion.getMaximumPoint());
+		}else if(homeRegion instanceof ProtectedPolygonalRegion){
+			ProtectedPolygonalRegion polygonalRegion = (ProtectedPolygonalRegion)homeRegion;
+			if(polygonalRegion.getId().startsWith("h_") && polygonalRegion.getId().length() > 2){
+				this.playerName = polygonalRegion.getId().substring(2);
+			}else{
+				this.playerName = polygonalRegion.getId();
+			}
+			
+			this.cuboid = new Cuboid(polygonalRegion.getMinimumPoint(), polygonalRegion.getMaximumPoint());
 		}
-		
-		this.cuboid = new Cuboid(region.getMinimumPoint(), region.getMaximumPoint());
 	}
 
 	public int getId(){return this.id;}

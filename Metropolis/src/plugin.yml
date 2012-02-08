@@ -1,6 +1,10 @@
 name: Metropolis
 main: com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin
 depend: [WorldEdit, WorldGuard]
-version: 0.2.1
-database: true
-
+version: 0.3
+database: false
+commands:
+  metropolis-home-generate:
+    description: This command generates a home for a user as if they'd just logged in.
+    permission: metropolis.generate
+    usage: /metropolis-home-generate <playername>
