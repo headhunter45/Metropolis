@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -34,12 +36,15 @@ public class MetropolisPlugin extends JavaPlugin {
 	private List<PlayerHome> _occupiedHomes;
 	
 	private LoginListener _loginListener = null;
+	
 	int size = 0;
+	
 	int plotSizeX = 24;
 	int plotSizeZ = 24;
 	int roadWidth = 4;
 	int roadLevel = 62;
 	int spaceAboveRoad = 2;
+	int roadMaterial = 4;
 	
 	@Override
 	public void onDisable() {
@@ -94,6 +99,25 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 
 		log.info(String.format("%s enabled", pdf.getFullName()));
+		
+		Configuration config = getConfig();
+		config.options().copyDefaults(true);
+		
+		plotSizeX = config.getInt("plot.sizeX");
+		plotSizeZ = config.getInt("plot.sizeZ");
+		roadWidth = config.getInt("road.width");
+		spaceAboveRoad = config.getInt("road.clearSpaceAbove");
+		roadLevel = config.getInt("road.level");
+		roadMaterial = config.getInt("road.material");
+		
+		/*
+		Set<String>strings = config.getKeys(true);
+		log.info(String.valueOf(strings.size()));
+		for(String str : strings){
+			log.info(str);
+		}
+		*/
+		
 	}
 	/*
 	private void setupDatabase() {
@@ -171,7 +195,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(x=plotCuboid.minX; x<plotCuboid.minX + roadWidth/2; x++){
 				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 					Block block = world.getBlockAt(x, y, z);
-					block.setTypeId(4);
+					block.setTypeId(roadMaterial);
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -183,7 +207,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(x=plotCuboid.maxX - roadWidth/2+1; x<=plotCuboid.maxX; x++){
 				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 					Block block = world.getBlockAt(x, y, z);
-					block.setTypeId(4);
+					block.setTypeId(roadMaterial);
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -195,7 +219,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(z=plotCuboid.minZ; z<plotCuboid.minZ + roadWidth/2; z++){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
 					Block block = world.getBlockAt(x, y, z);
-					block.setTypeId(4);
+					block.setTypeId(roadMaterial);
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -207,15 +231,13 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(z=plotCuboid.maxZ - roadWidth/2+1; z<=plotCuboid.maxZ; z++){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
 					Block block = world.getBlockAt(x, y, z);
-					block.setTypeId(4);
+					block.setTypeId(roadMaterial);
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
 					}
 				}
 			}
-			
-			
 		}
 	}
 

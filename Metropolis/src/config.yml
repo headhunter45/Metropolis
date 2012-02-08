@@ -1,0 +1,8 @@
+plot:
+  sizeX: 24
+  sizeZ: 24
+road:
+  width: 4
+  clearSpaceAbove: 66
+  level: 62
+  material: 4
