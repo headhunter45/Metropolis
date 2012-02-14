@@ -2,8 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="C:/Users/Tom/Desktop/mc-1.1/bukkit-1.1-R3.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Tom/Desktop/MC Servers/City/plugins/WorldEdit.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Tom/Desktop/MC Servers/City/plugins/WorldGuard.jar"/>
+	<classpathentry kind="lib" path="lib/bukkit-1.1-R3.jar"/>
+	<classpathentry kind="lib" path="lib/CommandBook.jar"/>
+	<classpathentry kind="lib" path="lib/WorldEdit.jar"/>
+	<classpathentry kind="lib" path="lib/WorldGuard.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

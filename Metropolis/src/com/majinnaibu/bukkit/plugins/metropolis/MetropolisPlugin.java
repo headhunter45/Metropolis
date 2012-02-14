@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
-
-import javax.persistence.PersistenceException;
 
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -118,6 +115,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		getCommand("metropolis-home-list").setExecutor(new MetropolisHomeListCommand(this));
 	}
 	
+	/*
 	private void setupDatabase() {
 		try{
 			getDatabase().find(PlayerHome.class).findRowCount();
@@ -126,6 +124,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			installDDL();
 		}
 	}
+	/**/
 	
 	private void fillOccupiedHomes() {
 		_occupiedHomes = new ArrayList<PlayerHome>();
@@ -146,15 +145,15 @@ public class MetropolisPlugin extends JavaPlugin {
 		for(PlayerHome home : getDatabase().find(PlayerHome.class).findList()){
 			_occupiedHomes.add(home);
 		}
-		/**/
 		
 		Map<String, ProtectedRegion> map = regionManager.getRegions();
 		for(String regionId : map.keySet()){
-			//log.info(String.format("key: %s, id: %s", regionId, map.get(regionId).getId()));
+			log.info(String.format("key: %s, id: %s", regionId, map.get(regionId).getId()));
 		}
 		
 		
 		log.info(String.format("Metropolis: %d occupied homes", _occupiedHomes.size()));
+		/**/
 		
 		Collections.sort(_occupiedHomes);
 	}
@@ -166,7 +165,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		ProtectedRegion homeRegion = regionManager.getRegion(regionName);
 
 		
-		log.info(homeRegion == null? "null" : homeRegion.toString());
+		//log.info(homeRegion == null? "null" : homeRegion.toString());
 		if(homeRegion == null){
 			log.info(String.format("Creating home for player %s", player.getName()));
 			home = generateHome(player.getName());
