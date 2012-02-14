@@ -22,13 +22,19 @@ public class PlayerHome implements Comparable<PlayerHome>{
 	@NotNull
 	private Cuboid cuboid;
 
+	@NotNull
+	private String regionName;
+	
 	public PlayerHome(String owner, BlockVector min, BlockVector max) {
-		cuboid = new Cuboid(min, max);
-		playerName = owner;
+		this.cuboid = new Cuboid(min, max);
+		this.playerName = owner;
+		this.regionName = "h_" + owner;
 	}
 	
 	public PlayerHome() {
-		// TODO Auto-generated constructor stub
+		this.cuboid = new Cuboid();
+		this.playerName = "";
+		this.regionName = "";
 	}
 	
 	public PlayerHome(ProtectedRegion homeRegion){
@@ -62,6 +68,9 @@ public class PlayerHome implements Comparable<PlayerHome>{
 	public Cuboid getCuboid(){return this.cuboid;}
 	public void setCuboid(Cuboid cuboid){this.cuboid = cuboid;}
 
+	public String getRegionName(){return this.regionName;}
+	public void setRegionName(String regionName){this.regionName = regionName;}
+	
 	@Override
 	public boolean equals(Object other) {
 		if(!(other instanceof PlayerHome)){
@@ -84,5 +93,18 @@ public class PlayerHome implements Comparable<PlayerHome>{
 	@Override
 	public int compareTo(PlayerHome another) {
 		return cuboid.compareTo(another.cuboid);
+	}
+
+	public BlockVector getPlotMin(int roadWidth) {
+		return new BlockVector(this.cuboid.minX - roadWidth/2, this.cuboid.minY, this.cuboid.minZ - roadWidth/2);
+	}
+	
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(String.format("{PlayerHome "));
+		
+		return sb.toString();
 	}
 }

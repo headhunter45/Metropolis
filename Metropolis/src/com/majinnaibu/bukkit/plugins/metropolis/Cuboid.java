@@ -1,5 +1,7 @@
 package com.majinnaibu.bukkit.plugins.metropolis;
 
+import java.util.logging.Logger;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -44,6 +46,15 @@ public class Cuboid implements Comparable<Cuboid> {
 		this.maxZ = max.getBlockZ();
 	}
 
+	public Cuboid() {
+		this.minX = 0;
+		this.minY = 0;
+		this.minZ = 0;
+		this.maxX = 0;
+		this.maxY = 0;
+		this.maxZ = 0;
+	}
+
 	public BlockVector getMin(){
 		return new BlockVector(minX, minY, minZ);
 	}
@@ -74,18 +85,33 @@ public class Cuboid implements Comparable<Cuboid> {
 		}
 	}
 
-	public static int compareBlockVectors(BlockVector min, BlockVector otherMin){
-		if(min.getBlockX() < otherMin.getBlockX()){
-			return -1;
-		}else if(min.getBlockX() > otherMin.getBlockX()){
+	public static int compareBlockVectors(BlockVector v1, BlockVector v2){
+		Logger log = Logger.getLogger("Minecraft");
+		
+		if(v1 == null){
+			if(v2 == null){
+				log.info("in Cuboid.compareBlockVectors v1 and v2 are null");
+				return 0;
+			}else{
+				log.info("in Cubiod.compareBlockVectors v1 is null");
+				return -1;
+			}
+		}else if(v2 == null){
+			log.info("in Cubiod.compareBlockVectors v2 is null");
 			return 1;
-		}else if(min.getBlockZ() < otherMin.getBlockZ()){
+		}
+		log.info(String.format("v1.x: %d, v1.y: %d, v1.z: %d, v2.x: %d, v2.y: %d, v2.z: %d", v1.getBlockX(), v1.getBlockY(), v1.getBlockZ(), v2.getBlockX(), v2.getBlockY(), v2.getBlockZ()));
+		if(v1.getBlockX() < v2.getBlockX()){
 			return -1;
-		}else if(min.getBlockZ() > otherMin.getBlockZ()){
+		}else if(v1.getBlockX() > v2.getBlockX()){
 			return 1;
-		}else if(min.getBlockY() < otherMin.getBlockY()){
+		}else if(v1.getBlockZ() < v2.getBlockZ()){
 			return -1;
-		}else if(min.getBlockY() > otherMin.getBlockY()){
+		}else if(v1.getBlockZ() > v2.getBlockZ()){
+			return 1;
+		}else if(v1.getBlockY() < v2.getBlockY()){
+			return -1;
+		}else if(v1.getBlockY() > v2.getBlockY()){
 			return 1;
 		}else{
 			return 0;
@@ -103,4 +129,21 @@ public class Cuboid implements Comparable<Cuboid> {
 	public Cuboid inset(int x, int y, int z){
 		return new Cuboid(this.minX + x, this.minY, this.minZ + z, this.maxX - x, this.maxY, this.maxZ - z);
 	}
+
+	public int getVolume() {
+		return (this.maxX - this.minX) * (this.maxY - this.minY) * (this.maxZ - this.minZ);
+	}
+	public int getMinX(){return minX;}
+	public void setMinX(int minX){this.minX = minX;}
+	public int getMinY(){return minY;}
+	public void setMinY(int minY){this.minY = minY;}
+	public int getMinZ(){return minZ;}
+	public void setMinZ(int minZ){this.minZ = minZ;}
+	public int getMaxX(){return maxX;}
+	public void setMaxX(int maxX){this.maxX = maxX;}
+	public int getMaxY(){return maxY;}
+	public void setMaxY(int maxY){this.maxY = maxY;}
+	public int getMaxZ(){return maxZ;}
+	public void setMaxZ(int maxZ){this.maxZ = maxZ;}
+	
 }

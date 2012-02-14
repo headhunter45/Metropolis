@@ -23,7 +23,7 @@ public class MetropolisHomeGenerateCommand implements CommandExecutor {
 		}
 		
 		if(player != null){
-			if(player.hasPermission("metropolis.generate")){
+			if(!player.hasPermission("metropolis.generate")){
 				return false;
 			}
 		}
