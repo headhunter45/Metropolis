@@ -17,7 +17,7 @@ public class MetropolisHomeListCommand implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		for(PlayerHome cityBlock : _plugin.getCityBlocks()){
-			sender.sendMessage(String.format("%s", cityBlock.toString()));
+			sender.sendMessage(String.format("%s", cityBlock.toFriendlyString()));
 		}
 		return true;
 	}

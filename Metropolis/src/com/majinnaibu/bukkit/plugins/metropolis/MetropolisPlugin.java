@@ -128,10 +128,12 @@ public class MetropolisPlugin extends JavaPlugin {
 	
 	private void fillOccupiedHomes() {
 		_occupiedHomes = new ArrayList<PlayerHome>();
+		
 		for(ProtectedRegion region : regionManager.getRegions().values()){
 			if(region instanceof ProtectedCuboidRegion && region.getId().startsWith("h_")){
 				ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) region;
 				PlayerHome home = new PlayerHome(cuboidRegion);
+				
 				_occupiedHomes.add(home);
 				/*
 				if(getDatabase().find(PlayerHome.class).where().eq("regionName", home.getRegionName()).findRowCount() == 0){
@@ -140,6 +142,9 @@ public class MetropolisPlugin extends JavaPlugin {
 				/**/
 			}
 		}
+		
+		size = calculateCitySize();
+		//log.info(String.valueOf(iSize));
 		
 		/*
 		for(PlayerHome home : getDatabase().find(PlayerHome.class).findList()){
@@ -340,7 +345,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	
 	private void expandCityRegion() {
-		size+=2;
+		size=calculateCitySize();
 		ProtectedRegion cityRegion = regionManager.getRegion("City");
 		if(cityRegion instanceof ProtectedCuboidRegion){
 			ProtectedCuboidRegion region = (ProtectedCuboidRegion)cityRegion;
@@ -348,10 +353,6 @@ public class MetropolisPlugin extends JavaPlugin {
 			BlockVector min;
 			BlockVector max;
 			
-			//min = region.getMinimumPoint();
-			//max = region.getMaximumPoint();
-			//min = new BlockVector(min.getBlockX() - plotSizeX, min.getBlockY(), min.getBlockZ() - plotSizeZ);
-			//max = new BlockVector(max.getBlockX() + plotSizeX, max.getBlockY(), max.getBlockZ() + plotSizeZ);
 			min = getPlotMin(-size/2, -size/2);
 			max = getPlotMax(size/2, size/2);
 			
@@ -360,12 +361,39 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 
+	private int calculateCitySize() {
+		int iSize = 0;
+		
+		for(PlayerHome home: _occupiedHomes){
+			int plotCol=Math.abs(getPlotXFromMin(home.getCuboid()));
+			int plotRow=Math.abs(getPlotZFromMin(home.getCuboid()));
+			//log.info(String.format("iSize: %d, plotRow: %d, plotCol: %d", iSize, plotCol, plotRow));
+			iSize = Math.max(Math.max(plotRow*2+1, plotCol*2+1), iSize);
+			
+		}
+
+		//log.info(String.format("iSize: %d", iSize));
+		return iSize;
+	}
+
 	public BlockVector getPlotMin(int row, int col){
 		return new BlockVector(col * plotSizeX, 0, row * plotSizeZ);
 	}
 	
 	public BlockVector getPlotMax(int row, int col){
 		return new BlockVector(col * plotSizeX + plotSizeX-1, 128, row * plotSizeZ + plotSizeZ-1);
+	}
+	
+	private int getPlotXFromMin(Cuboid cuboid) {
+		int minX = cuboid.getMin().getBlockX() - roadWidth/2;
+		
+		return minX/plotSizeX;
+	}
+
+	private int getPlotZFromMin(Cuboid cuboid) {
+		int minZ = cuboid.getMin().getBlockZ() - roadWidth/2;
+		
+		return minZ/plotSizeZ;
 	}
 
 	private void setHomeOccupied(String owner, BlockVector minimumPoint, BlockVector maximumPoint) {
@@ -377,16 +405,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 
-	public Cuboid getSpawnCuboid(){
-		// TODO Auto-generated method stub
-		return null;
-	}
 	
-	public Cuboid getNextUnusedHome(){
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	public PlayerHome generateHome(String playerName) {
 		log.info(String.format("Generating home for %s", playerName));
 		Cuboid plotCuboid = null;

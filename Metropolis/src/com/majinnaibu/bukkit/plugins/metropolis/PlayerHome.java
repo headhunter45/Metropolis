@@ -103,7 +103,15 @@ public class PlayerHome implements Comparable<PlayerHome>{
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append(String.format("{PlayerHome "));
+		sb.append(String.format("{PlayerHome }"));
+		
+		return sb.toString();
+	}
+
+	public String toFriendlyString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(String.format("Metropolis Home {Owner: %s min: (%d, %d, %d) max: (%d, %d, %d)}", getPlayerName(), getCuboid().getMinX(), getCuboid().getMinY(), getCuboid().getMinZ(), getCuboid().getMaxX(), getCuboid().getMaxY(), getCuboid().getMaxZ()));
 		
 		return sb.toString();
 	}
