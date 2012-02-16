@@ -24,9 +24,9 @@ public class LoginListener implements Listener {
 		PlayerHome home = _plugin.getPlayerHome(player);
 		if(home == null || home.getCuboid() == null || home.getCuboid().getVolume() == 0){
 			MetropolisPlugin.log.info(String.format("Metropolis: Unable to get or create home for player %s", player.getName()));
+		}else{
+			Cuboid cuboid = home.getCuboid();
+			player.sendMessage(String.format("Metropolis: Welcome %s your home is between (%d, %d, %d) and (%d, %d, %d)", player.getName(), cuboid.getMinX(), cuboid.getMinY(), cuboid.getMinZ(), cuboid.getMaxX(), cuboid.getMaxY(), cuboid.getMaxZ()));
 		}
-		
-		Cuboid cuboid = home.getCuboid();
-		player.sendMessage(String.format("Metropolis: Welcome %s your home is between (%d, %d, %d) and (%d, %d, %d)", player.getName(), cuboid.getMinX(), cuboid.getMinY(), cuboid.getMinZ(), cuboid.getMaxX(), cuboid.getMaxY(), cuboid.getMaxZ()));
 	}
 }

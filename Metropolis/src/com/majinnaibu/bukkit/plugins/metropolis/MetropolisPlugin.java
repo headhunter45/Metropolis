@@ -104,6 +104,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		_occupiedHomes = new ArrayList<PlayerHome>();
 		fillOccupiedHomes();
+		resizeCityRegion();
 
 		if(_loginListener == null){
 			_loginListener = new LoginListener(this);
@@ -284,7 +285,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			}
 		}
 		
-		expandCityRegion();
+		resizeCityRegion();
 		return new Cuboid(getPlotMin(-size/2, -size/2), getPlotMax(-size/2, -size/2));
 		
 		/*
@@ -344,7 +345,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		/**/
 	}
 	
-	private void expandCityRegion() {
+	private void resizeCityRegion() {
 		size=calculateCitySize();
 		ProtectedRegion cityRegion = regionManager.getRegion("City");
 		if(cityRegion instanceof ProtectedCuboidRegion){
