@@ -14,6 +14,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisFlagResetCommand;
 import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeGenerateCommand;
 import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeListCommand;
 import com.sk89q.worldedit.BlockVector;
@@ -116,6 +117,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		getCommand("metropolis-home-generate").setExecutor(new MetropolisHomeGenerateCommand(this));
 		getCommand("metropolis-home-list").setExecutor(new MetropolisHomeListCommand(this));
+		getCommand("metropolis-flag-reset").setExecutor(new MetropolisFlagResetCommand(this));
 	}
 	
 	/*

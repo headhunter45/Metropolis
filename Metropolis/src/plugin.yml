@@ -7,9 +7,13 @@ database: false
 commands:
   metropolis-home-generate:
     description: This command generates a home for a user as if they'd just logged in.
-    permission: metropolis.generate
+    permission: metropolis.home.generate
     usage: /metropolis-home-generate <playername>
   metropolis-home-list:
     description: This lists the regions managed by Metropolis
-    permission: metropolis.list
+    permission: metropolis.home.list
     usage: /metropolis-home-list
+  metropolis-flag-reset:
+    description: This command resets the WorldGuard flags for all managed regions (city and h_*).
+    permission: metropolis.flag.reset
+    usage: /metropolis-flag-reset
