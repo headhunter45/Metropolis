@@ -19,6 +19,8 @@ import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeListComma
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.protection.flags.DefaultFlag;
+import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
@@ -77,25 +79,25 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		worldGuard = (WorldGuardPlugin) plugin;
 		
-		/*
-		plugin = getServer().getPluginManager().getPlugin("WorldEdit");
-		if(plugin == null || !(plugin instanceof WorldEditPlugin)){
-			throw new RuntimeException("WorldEdit must be loaded first");
-		}
-		worldEdit = (WorldEditPlugin) plugin;
-		*/
-		
 		world = getServer().getWorld(worldName);
-//		for(World world: getServer().getWorlds()){
-//			log.info(String.format("name: %s", world.getName()));
-//		}
-		
+
 		regionManager = worldGuard.getRegionManager(world);
 			
 		ProtectedRegion cityRegion = regionManager.getRegion("City");
 		if(cityRegion == null){
 			cityRegion = new ProtectedCuboidRegion("City", getPlotMin(0, 0), this.getPlotMax(0, 0));
 			cityRegion.setPriority(0);
+			cityRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
+			cityRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
+			
+			
 			regionManager.addRegion(cityRegion);
 			//TODO determine appropriate chest flags
 		}
@@ -417,6 +419,14 @@ public class MetropolisPlugin extends JavaPlugin {
 		plotCuboid = findNextUnownedHomeRegion();
 		homeCuboid = plotCuboid.inset(roadWidth/2, roadWidth/2);
 		homeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
+		homeRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
+		homeRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
+		homeRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
+		homeRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
+		homeRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
+		homeRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
+		homeRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
+		
 		DefaultDomain d = homeRegion.getOwners();
 		d.addPlayer(playerName);
 		homeRegion.setPriority(1);
