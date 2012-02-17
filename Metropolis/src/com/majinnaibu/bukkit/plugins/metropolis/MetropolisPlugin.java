@@ -17,6 +17,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisFlagResetCommand;
 import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeGenerateCommand;
 import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeListCommand;
+import com.majinnaibu.bukkit.plugins.metropolis.eventlisteners.PlayerJoinListener;
+import com.majinnaibu.bukkit.plugins.metropolis.eventlisteners.PlayerLoginListener;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
@@ -37,7 +39,8 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	private List<PlayerHome> _occupiedHomes;
 	
-	private LoginListener _loginListener = null;
+	private PlayerLoginListener _playerLoginListener = null;
+	private PlayerJoinListener _playerJoinListener = null;
 	
 	int size = 1;
 	
@@ -52,7 +55,6 @@ public class MetropolisPlugin extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		log.info(String.format("%s disabled", pdf.getFullName()));
-		saveConfig();
 	}
 
 	@Override
@@ -109,8 +111,12 @@ public class MetropolisPlugin extends JavaPlugin {
 		fillOccupiedHomes();
 		resizeCityRegion();
 
-		if(_loginListener == null){
-			_loginListener = new LoginListener(this);
+		if(_playerLoginListener == null){
+			_playerLoginListener = new PlayerLoginListener(this);
+		}
+		
+		if(_playerJoinListener == null){
+			_playerJoinListener = new PlayerJoinListener(this);
 		}
 
 		log.info(String.format("%s enabled", pdf.getFullName()));
@@ -168,7 +174,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		Collections.sort(_occupiedHomes);
 	}
 
-	PlayerHome getPlayerHome(Player player) {
+	public PlayerHome getPlayerHome(Player player) {
 		PlayerHome home = null;
 		
 		String regionName = "h_" + player.getName();
@@ -179,6 +185,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		if(homeRegion == null){
 			log.info(String.format("Creating home for player %s", player.getName()));
 			home = generateHome(player.getName());
+		}else{
+			home = new PlayerHome(homeRegion);
 		}
 		
 		return home;

@@ -2,7 +2,7 @@ name: Metropolis
 main: com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin
 depend: [WorldGuard]
 softdepend: [WorldEdit]
-version: 0.4.2
+version: 0.4.3
 database: false
 commands:
   metropolis-home-generate:
