@@ -258,103 +258,58 @@ public class MetropolisPlugin extends JavaPlugin {
 			}
 		}
 	}
+	
+	public boolean isBlockOccupied(int row, int col){
+		for(PlayerHome home : _occupiedHomes){
+			if(home.getRow(roadWidth, plotSizeZ) == row && home.getCol(roadWidth, plotSizeX) == col){
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	private Cuboid findNextUnownedHomeRegion() {
-		if(size <= 2){size=3;}
-		int homeIndex = 0;
-		int rowMin = -size/2;
-		int rowMax = size/2;
-		int colMin = -size/2;
-		int colMax = size/2;
+		int row = 0;
+		int col = 0;
+		int ring = 0;
+		boolean done = false;
 		
-		log.info(String.format("size: %d, rowMin: %d, rowMax: %d, colMin: %d, colMax: %d", size, rowMin, rowMax, colMin, colMax));
-		
-		int row = rowMin;
-		int col = colMin;
-		
-		if(_occupiedHomes.size() == 0){return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));}
-		
-		PlayerHome home = _occupiedHomes.get(homeIndex);
-		
-		for(col=colMin; col <= colMax; col++){
-			for(row=rowMin; row<= rowMax; row++){
-				if(row != 0 || col != 0){
-					log.info(String.format("row: %d, col: %d", row, col));
-					if(home == null){
-						return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
-					}
-					else if(Cuboid.isBlockLessThan(getPlotMin(row, col), home.getPlotMin(roadWidth))){
-						return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
-					}else{
-						homeIndex++;
-						if(homeIndex < _occupiedHomes.size()){
-							home = _occupiedHomes.get(homeIndex);
-						}else{
-							home = null;
-						}
-					}
+		while(!done){
+			row = -ring;
+			col = -ring;
+			
+			for(col = -ring; col <= ring; col++){
+				if(!isBlockOccupied(row, col)){
+					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col)); 
 				}
 			}
-		}
-		
-		resizeCityRegion();
-		return new Cuboid(getPlotMin(-size/2, -size/2), getPlotMax(-size/2, -size/2));
-		
-		/*
-		log.info(String.valueOf(size));
-		int homeIndex = 0;
-		if(_occupiedHomes.size() == 0){
-			log.info("_occupiedHomes.size is 0");
-			if(size < 1){
-				size=1;
-			}
 			
-			expandCityRegion();
-			
-			log.info(String.format("row: %d, col: %d", -1, -1));
-			return new Cuboid(getPlotMin(-1, -1), getPlotMax(-1, -1));
-		}
-		
-		PlayerHome home = _occupiedHomes.get(homeIndex);
-		int row=0;
-		int col=0;
-		log.info(String.format("row-min: %d, row-max: %d, col-min: %d, col-max: %d", -size/2, size/2, -size/2, size/2));
-		for(row = -size/2; row<=size/2; row++){
-			for(col = -size/2; col <= size/2; col++){
-				log.info(String.format(
-						"checking row: %d, col: %d, homeIndex: %d, home is %s",
-						row,
-						col,
-						homeIndex,
-						home==null?"null":"not null"));
-				if(home == null){
-					log.info("home is null");
-					expandCityRegion();
-					log.info(String.format("row: %d, col: %d", row, col));
+			col = ring;
+			for(row=-ring + 1; row < ring; row++){
+				if(!isBlockOccupied(row, col)){
 					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
-				}else if(Cuboid.isBlockLessThan(getPlotMin(row, col), home.getCuboid().getMin())){
-					log.info("Cuboid.isBlockLessThan(getPlotMin(row, col), home.getCuboid().getMin())");
-					log.info(String.format("row: %d, col: %d", row, col));
-					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
-				}else{
-					log.info("else");
-					homeIndex++;
-					if(homeIndex < _occupiedHomes.size()){
-						home = _occupiedHomes.get(homeIndex);
-					}else{
-						home = null;
-					}
 				}
 			}
+			
+			row = ring;
+			for(col = ring; col >= -ring; col--){
+				if(!isBlockOccupied(row, col)){
+					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+				}
+			}
+			
+			col = -ring;
+			for(col = ring; col > -ring; col--){
+				if(!isBlockOccupied(row, col)){
+					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+				}
+			}
+			
+			ring++;
 		}
 		
-		size+=2;
-		
-		log.info(String.format("row: %d, col: %d", row, col));
 		return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
-		//log.info(String.format("row: %d, col: %d", -size/2, -size/2));
-		//return new Cuboid(getPlotMin(-size/2, -size/2), getPlotMax(-size/2, -size/2));
-		/**/
 	}
 	
 	private void resizeCityRegion() {

@@ -122,6 +122,10 @@ public class Cuboid implements Comparable<Cuboid> {
 		return compareBlockVectors(v1, v2) < 0;
 	}
 	
+	public Cuboid inset(int amount){
+		return inset(amount, amount, amount);
+	}
+	
 	public Cuboid inset(int x, int z){
 		return inset(x, 0, z);
 	}
@@ -145,5 +149,17 @@ public class Cuboid implements Comparable<Cuboid> {
 	public void setMaxY(int maxY){this.maxY = maxY;}
 	public int getMaxZ(){return maxZ;}
 	public void setMaxZ(int maxZ){this.maxZ = maxZ;}
+
+	public Cuboid outset(int amount) {
+		return outset(amount, amount, amount);
+	}
+
+	public Cuboid outset(int x, int z){
+		return outset(x, 0, z);
+	}
+	
+	private Cuboid outset(int x, int y, int z) {
+		return new Cuboid(this.minX - x, this.minY - y, this.minZ - z, this.maxX + x, this.maxY + y, this.maxZ + z);
+	}
 	
 }

@@ -115,4 +115,13 @@ public class PlayerHome implements Comparable<PlayerHome>{
 		
 		return sb.toString();
 	}
+	
+	public int getRow(int roadWidth, int plotSizeZ){
+		BlockVector min = getPlotMin(roadWidth);
+		return min.getBlockZ() / plotSizeZ;
+	}
+	
+	public int getCol(int roadWidth, int plotSizeX){
+		return getPlotMin(roadWidth).getBlockX() / plotSizeX;
+	}
 }
