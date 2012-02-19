@@ -160,7 +160,7 @@ public class MetropolisPlugin extends JavaPlugin {
 				block.setTypeId(floorMaterial);
 				
 				for(int i=0; i<spaceAboveRoad; i++){
-					block = world.getBlockAt(x, y+i, z);
+					block = world.getBlockAt(x, y+1+i, z);
 					block.setTypeId(0);
 				}
 			}
@@ -246,34 +246,47 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			for(col = -ring; col <= ring; col++){
 				if(!isBlockOccupied(row, col)){
-					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col)); 
+					if(row != 0 || col != 0){
+						log.info(String.format("row: %d, col: %d", row, col));
+						return new Cuboid(getPlotMin(row, col), getPlotMax(row, col)); 
+					}
 				}
 			}
 			
 			col = ring;
 			for(row=-ring + 1; row < ring; row++){
 				if(!isBlockOccupied(row, col)){
-					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+					if(row != 0 || col != 0){
+						log.info(String.format("row: %d, col: %d", row, col));
+						return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+					}
 				}
 			}
 			
 			row = ring;
 			for(col = ring; col >= -ring; col--){
 				if(!isBlockOccupied(row, col)){
-					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+					if(row != 0 || col != 0){
+						log.info(String.format("row: %d, col: %d", row, col));
+						return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+					}
 				}
 			}
 			
 			col = -ring;
-			for(col = ring; col > -ring; col--){
+			for(row = ring; row > -ring; row--){
 				if(!isBlockOccupied(row, col)){
-					return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+					if(row != 0 || col != 0){
+						log.info(String.format("row: %d, col: %d", row, col));
+						return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+					}
 				}
 			}
 			
 			ring++;
 		}
 		
+		log.info(String.format("row: %d, col: %d", row, col));
 		return new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
 	}
 	
@@ -295,14 +308,16 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private int calculateCitySize() {
-		int iSize = 0;
+		int iSize = 3;
 		
 		for(PlayerHome home: _occupiedHomes){
 			int plotCol=Math.abs(getPlotXFromMin(home.getCuboid()));
 			int plotRow=Math.abs(getPlotZFromMin(home.getCuboid()));
+			log.info(String.format("col: %d, row: %d, iSize: %d", plotCol, plotRow, iSize));
 			iSize = Math.max(Math.max(plotRow*2+1, plotCol*2+1), iSize);
 		}
 
+		log.info(String.format("City size is %d", iSize));
 		return iSize;
 	}
 
