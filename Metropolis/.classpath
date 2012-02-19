@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="lib/bukkit-1.1-R3.jar"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/WorldGuard.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="lib" path="C:/Users/Tom/.m2/repository/org/bukkit/bukkit/1.1-R4-SNAPSHOT/bukkit-1.1-R4-SNAPSHOT.jar">
+		<attributes>
+			<attribute name="maven.groupId" value="org.bukkit"/>
+			<attribute name="maven.artifactId" value="bukkit"/>
+			<attribute name="maven.version" value="1.1-R4-SNAPSHOT"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

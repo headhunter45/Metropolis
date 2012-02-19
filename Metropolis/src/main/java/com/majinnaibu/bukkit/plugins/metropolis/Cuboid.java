@@ -2,14 +2,10 @@ package com.majinnaibu.bukkit.plugins.metropolis;
 
 import java.util.logging.Logger;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 
 import com.sk89q.worldedit.BlockVector;
 
-@Entity
 public class Cuboid implements Comparable<Cuboid> {
-	@Id
 	private int id;
 	
 	public int minX;
