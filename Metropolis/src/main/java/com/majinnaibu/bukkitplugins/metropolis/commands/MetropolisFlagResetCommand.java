@@ -1,10 +1,10 @@
-package com.majinnaibu.bukkit.plugins.metropolis.commands;
+package com.majinnaibu.bukkitplugins.metropolis.commands;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin;
+import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;

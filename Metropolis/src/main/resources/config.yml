@@ -1,6 +1,9 @@
 plot:
   sizeX: 24
   sizeZ: 24
+  floor:
+    generate: true
+    material: 2
 road:
   width: 4
   clearSpaceAbove: 66

@@ -1,4 +1,4 @@
-package com.majinnaibu.bukkit.plugins.metropolis;
+package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,11 +14,10 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisFlagResetCommand;
-import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeGenerateCommand;
-import com.majinnaibu.bukkit.plugins.metropolis.commands.MetropolisHomeListCommand;
-import com.majinnaibu.bukkit.plugins.metropolis.eventlisteners.PlayerJoinListener;
-import com.majinnaibu.bukkit.plugins.metropolis.eventlisteners.PlayerLoginListener;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeListCommand;
+import com.majinnaibu.bukkitplugins.metropolis.eventlisteners.PlayerJoinListener;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
@@ -33,13 +32,11 @@ public class MetropolisPlugin extends JavaPlugin {
 	
 	public PluginDescriptionFile pdf = null;
 	public WorldGuardPlugin worldGuard = null;
-	//public WorldEditPlugin worldEdit = null;
 	public World world = null;
 	public RegionManager regionManager = null;
 
 	private List<PlayerHome> _occupiedHomes;
 	
-	private PlayerLoginListener _playerLoginListener = null;
 	private PlayerJoinListener _playerJoinListener = null;
 	
 	int size = 1;
@@ -51,6 +48,8 @@ public class MetropolisPlugin extends JavaPlugin {
 	int spaceAboveRoad = 2;
 	int roadMaterial = 4;
 	String worldName = "world";
+	boolean generateFloor = false;
+	int floorMaterial = 2;
 	
 	@Override
 	public void onDisable() {
@@ -71,6 +70,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		roadLevel = config.getInt("road.level");
 		roadMaterial = config.getInt("road.material");
 		worldName =config.getString("worldname");
+		generateFloor = config.getBoolean("plot.floor.generate");
+		floorMaterial = config.getInt("plot.floor.material");
 		saveConfig();
 		
 		log.info(String.format("Metropolis: world name is %s", worldName));
@@ -99,22 +100,13 @@ public class MetropolisPlugin extends JavaPlugin {
 			cityRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
 			cityRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
 			cityRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
-			
-			
 			regionManager.addRegion(cityRegion);
-			//TODO determine appropriate chest flags
 		}
-		
-		//setupDatabase();
 		
 		_occupiedHomes = new ArrayList<PlayerHome>();
 		fillOccupiedHomes();
 		resizeCityRegion();
 
-		if(_playerLoginListener == null){
-			_playerLoginListener = new PlayerLoginListener(this);
-		}
-		
 		if(_playerJoinListener == null){
 			_playerJoinListener = new PlayerJoinListener(this);
 		}
@@ -126,17 +118,6 @@ public class MetropolisPlugin extends JavaPlugin {
 		getCommand("metropolis-flag-reset").setExecutor(new MetropolisFlagResetCommand(this));
 	}
 	
-	/*
-	private void setupDatabase() {
-		try{
-			getDatabase().find(PlayerHome.class).findRowCount();
-		}catch(PersistenceException ex){
-			System.out.println("Installing database for " + pdf.getName() + " due to first time usage");
-			installDDL();
-		}
-	}
-	/**/
-	
 	private void fillOccupiedHomes() {
 		_occupiedHomes = new ArrayList<PlayerHome>();
 		
@@ -146,32 +127,10 @@ public class MetropolisPlugin extends JavaPlugin {
 				PlayerHome home = new PlayerHome(cuboidRegion);
 				
 				_occupiedHomes.add(home);
-				/*
-				if(getDatabase().find(PlayerHome.class).where().eq("regionName", home.getRegionName()).findRowCount() == 0){
-					getDatabase().insert(home);
-				}
-				/**/
 			}
 		}
 		
 		size = calculateCitySize();
-		//log.info(String.valueOf(iSize));
-		
-		/*
-		for(PlayerHome home : getDatabase().find(PlayerHome.class).findList()){
-			_occupiedHomes.add(home);
-		}
-		
-		Map<String, ProtectedRegion> map = regionManager.getRegions();
-		for(String regionId : map.keySet()){
-			log.info(String.format("key: %s, id: %s", regionId, map.get(regionId).getId()));
-		}
-		
-		
-		log.info(String.format("Metropolis: %d occupied homes", _occupiedHomes.size()));
-		/**/
-		
-		Collections.sort(_occupiedHomes);
 	}
 
 	public PlayerHome getPlayerHome(Player player) {
@@ -180,8 +139,6 @@ public class MetropolisPlugin extends JavaPlugin {
 		String regionName = "h_" + player.getName();
 		ProtectedRegion homeRegion = regionManager.getRegion(regionName);
 
-		
-		//log.info(homeRegion == null? "null" : homeRegion.toString());
 		if(homeRegion == null){
 			log.info(String.format("Creating home for player %s", player.getName()));
 			home = generateHome(player.getName());
@@ -192,14 +149,22 @@ public class MetropolisPlugin extends JavaPlugin {
 		return home;
 	}
 
-	@Override
-	public List<Class<?>> getDatabaseClasses(){
-		List<Class<?>> list = new ArrayList<Class<?>>();
+	private void generateFloor(Cuboid plotCuboid){
+		int x=0;
+		int y=roadLevel;
+		int z=0;
 		
-		list.add(PlayerHome.class);
-		list.add(Cuboid.class);
-		
-		return list;
+		for(x = plotCuboid.minX + roadWidth/2; x <= plotCuboid.maxX - roadWidth/2; x++){
+			for(z=plotCuboid.minZ + roadWidth/2; z<=plotCuboid.maxZ - roadWidth/2; z++){
+				Block block = world.getBlockAt(x, y, z);
+				block.setTypeId(floorMaterial);
+				
+				for(int i=0; i<spaceAboveRoad; i++){
+					block = world.getBlockAt(x, y+i, z);
+					block.setTypeId(0);
+				}
+			}
+		}
 	}
 	
 	private void createRoads(Cuboid plotCuboid) {
@@ -209,7 +174,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			int z=0;
 			
 			if(plotCuboid == null){
-				log.info("plotCuboid is null");
+				log.warning("plotCuboid is null");
 				return;
 			}
 			
@@ -335,12 +300,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		for(PlayerHome home: _occupiedHomes){
 			int plotCol=Math.abs(getPlotXFromMin(home.getCuboid()));
 			int plotRow=Math.abs(getPlotZFromMin(home.getCuboid()));
-			//log.info(String.format("iSize: %d, plotRow: %d, plotCol: %d", iSize, plotCol, plotRow));
 			iSize = Math.max(Math.max(plotRow*2+1, plotCol*2+1), iSize);
-			
 		}
 
-		//log.info(String.format("iSize: %d", iSize));
 		return iSize;
 	}
 
@@ -399,13 +361,16 @@ public class MetropolisPlugin extends JavaPlugin {
 		try {
 			regionManager.save();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	
 		setHomeOccupied(playerName, homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint());
 		
 		createRoads(plotCuboid);
+		
+		if(generateFloor){
+			generateFloor(plotCuboid);
+		}
 		
 		log.info(String.format("Done generating home for %s", playerName));
 		
@@ -415,5 +380,4 @@ public class MetropolisPlugin extends JavaPlugin {
 	public List<PlayerHome> getCityBlocks() {
 		return Collections.unmodifiableList(_occupiedHomes);
 	}
-	
 }

@@ -1,4 +1,4 @@
-package com.majinnaibu.bukkit.plugins.metropolis.eventlisteners;
+package com.majinnaibu.bukkitplugins.metropolis.eventlisteners;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -6,9 +6,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import com.majinnaibu.bukkit.plugins.metropolis.Cuboid;
-import com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin;
-import com.majinnaibu.bukkit.plugins.metropolis.PlayerHome;
+import com.majinnaibu.bukkitplugins.metropolis.Cuboid;
+import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
+import com.majinnaibu.bukkitplugins.metropolis.PlayerHome;
 
 public class PlayerJoinListener implements Listener {
 	private MetropolisPlugin _plugin = null;

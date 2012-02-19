@@ -1,4 +1,4 @@
-package com.majinnaibu.bukkit.plugins.metropolis;
+package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.util.logging.Logger;
 
@@ -154,8 +154,20 @@ public class Cuboid implements Comparable<Cuboid> {
 		return outset(x, 0, z);
 	}
 	
-	private Cuboid outset(int x, int y, int z) {
+	public Cuboid outset(int x, int y, int z) {
 		return new Cuboid(this.minX - x, this.minY - y, this.minZ - z, this.maxX + x, this.maxY + y, this.maxZ + z);
+	}
+	
+	public int getCenterX(){
+		return (this.minX + this.maxX) /2;
+	}
+	
+	public int getCenterY(){
+		return (this.minY + this.maxY)/2;
+	}
+	
+	public int getCenterZ(){
+		return (this.minZ + this.maxZ)/2;
 	}
 	
 }

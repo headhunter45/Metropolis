@@ -1,4 +1,4 @@
-package com.majinnaibu.bukkit.plugins.metropolis;
+package com.majinnaibu.bukkitplugins.metropolis;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;

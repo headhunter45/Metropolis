@@ -1,11 +1,11 @@
-package com.majinnaibu.bukkit.plugins.metropolis.commands;
+package com.majinnaibu.bukkitplugins.metropolis.commands;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin;
-import com.majinnaibu.bukkit.plugins.metropolis.PlayerHome;
+import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
+import com.majinnaibu.bukkitplugins.metropolis.PlayerHome;
 
 public class MetropolisHomeListCommand implements CommandExecutor {
 	private MetropolisPlugin _plugin;

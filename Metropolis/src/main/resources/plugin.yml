@@ -1,8 +1,8 @@
 name: Metropolis
-main: com.majinnaibu.bukkit.plugins.metropolis.MetropolisPlugin
+main: com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin
 depend: [WorldGuard]
-softdepend: [WorldEdit]
-version: 0.4.3
+softdepend: [WorldEdit,CommandBook]
+version: 0.4.5
 database: false
 commands:
   metropolis-home-generate:
