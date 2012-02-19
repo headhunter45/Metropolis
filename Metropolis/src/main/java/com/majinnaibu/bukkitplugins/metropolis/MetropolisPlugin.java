@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -50,6 +52,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	String worldName = "world";
 	boolean generateFloor = false;
 	int floorMaterial = 2;
+	boolean generateSign = false;
 	
 	@Override
 	public void onDisable() {
@@ -72,6 +75,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		worldName =config.getString("worldname");
 		generateFloor = config.getBoolean("plot.floor.generate");
 		floorMaterial = config.getInt("plot.floor.material");
+		generateSign = config.getBoolean("plot.sign.generate");
 		saveConfig();
 		
 		log.info(String.format("Metropolis: world name is %s", worldName));
@@ -387,9 +391,29 @@ public class MetropolisPlugin extends JavaPlugin {
 			generateFloor(plotCuboid);
 		}
 		
+		log.info(String.format("generateSign: %s", String.valueOf(generateSign)));
+		if(generateSign){
+			generateSign(plotCuboid, playerName);
+		}
+		
 		log.info(String.format("Done generating home for %s", playerName));
 		
 		return new PlayerHome(homeRegion);
+	}
+
+	private void generateSign(Cuboid plotCuboid, String playerName) {
+		Block signBlock = world.getBlockAt(plotCuboid.getCenterX(), roadLevel+1, plotCuboid.getCenterZ());
+		signBlock.setType(Material.SIGN_POST);
+		Sign sign = (Sign)signBlock.getState();
+		sign.setLine(0, "Home of");
+		
+		sign.setLine(1, playerName.substring(0, Math.min(15, playerName.length())));
+		if(playerName.length() > 15){
+			sign.setLine(2, playerName.substring(16, Math.min(30, playerName.length())));
+			if(playerName.length() > 45){
+				sign.setLine(3, playerName.substring(31, Math.min(45, playerName.length())));
+			}
+		}		
 	}
 
 	public List<PlayerHome> getCityBlocks() {

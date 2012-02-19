@@ -15,6 +15,9 @@ CONFIG:
 Edit the config.yml file.  You can set the height to clear above roads, the road width, the plot size (incluing half the road width on either side), the road material, and the level at which the road is generated.
 
 Changelog:
+v0.4.6
+	Added optional generation of a sign identifying owner in plots on creation
+v0.4.5
 v0.4.4
 	Added a welcome message telling players where their home is.
 	Switched from PlayerLoginEvent to PlayerJoinEvent

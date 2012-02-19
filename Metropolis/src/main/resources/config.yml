@@ -4,6 +4,8 @@ plot:
   floor:
     generate: true
     material: 2
+  sign:
+    generate: true
 road:
   width: 4
   clearSpaceAbove: 66
