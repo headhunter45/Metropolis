@@ -11,4 +11,8 @@ road:
   clearSpaceAbove: 66
   level: 62
   material: 4
+spawn:
+  generate: true
+  setAsWorldSpawn: true
+  material: 2
 worldname: world

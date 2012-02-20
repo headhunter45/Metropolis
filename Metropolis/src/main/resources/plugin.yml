@@ -21,3 +21,7 @@ commands:
     description: This command reserves a plot so it won't be assigned as a home.
     permission: metropolis.plot.reserve
     usage: /metropolis-plot-reserve <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
+  gentesthomes:
+    description:
+    permission: metropolis.debug
+    usage: /gentesthomes

@@ -10,12 +10,15 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeListCommand;
@@ -131,6 +134,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		getCommand("metropolis-home-list").setExecutor(new MetropolisHomeListCommand(this));
 		getCommand("metropolis-flag-reset").setExecutor(new MetropolisFlagResetCommand(this));
 		getCommand("metropolis-plot-reserve").setExecutor(new MetropolisPlotReserveCommand(this));
+		if(DEBUG){
+			getCommand("gentesthomes").setExecutor(new MetropolisDebugGenerateTestHomesCommand(this));
+		}
 	}
 	
 	private void fillOccupiedPlots(){
@@ -149,6 +155,11 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 		
 		size=calculateCitySize();
+	}
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		return super.onCommand(sender, command, label, args);
 	}
 
 	public PlayerHome getPlayerHome(Player player) {
