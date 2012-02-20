@@ -7,10 +7,11 @@ import javax.persistence.Table;
 import com.avaje.ebean.validation.NotNull;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 @Entity()
 @Table(name="Metropolis_Plot")
-public class Plot implements Comparable<PlayerHome>{
+public class Plot implements Comparable<Plot>{
 	@Id
 	private int _id;
 	public int getId(){return _id;}
@@ -70,7 +71,7 @@ public class Plot implements Comparable<PlayerHome>{
 	}
 
 	@Override
-	public int compareTo(PlayerHome another) {
+	public int compareTo(Plot another) {
 		return getCuboid().compareTo(another.getCuboid());
 	}
 
@@ -83,7 +84,19 @@ public class Plot implements Comparable<PlayerHome>{
 		return sb.toString();
 	}
 	
-	public static Plot get(ProtectedCuboidRegion cuboidRegion){
-		return new Plot(cuboidRegion);
+	public static Plot get(ProtectedRegion region){
+		if(region instanceof ProtectedCuboidRegion){
+			return new Plot((ProtectedCuboidRegion) region);
+		}else{
+			return null;
+		}
+	}
+	
+	public String toFriendlyString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(String.format("Metropolis Reserved Plot {min: (%d, %d, %d) max: (%d, %d, %d)}", getCuboid().getMinX(), getCuboid().getMinY(), getCuboid().getMinZ(), getCuboid().getMaxX(), getCuboid().getMaxY(), getCuboid().getMaxZ()));
+		
+		return sb.toString();
 	}
 }

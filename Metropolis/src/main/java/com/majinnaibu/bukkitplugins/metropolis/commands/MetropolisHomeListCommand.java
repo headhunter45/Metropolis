@@ -5,7 +5,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
-import com.majinnaibu.bukkitplugins.metropolis.PlayerHome;
+import com.majinnaibu.bukkitplugins.metropolis.Plot;
 
 public class MetropolisHomeListCommand implements CommandExecutor {
 	private MetropolisPlugin _plugin;
@@ -16,7 +16,7 @@ public class MetropolisHomeListCommand implements CommandExecutor {
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		for(PlayerHome cityBlock : _plugin.getCityBlocks()){
+		for(Plot cityBlock : _plugin.getCityBlocks()){
 			sender.sendMessage(String.format("%s", cityBlock.toFriendlyString()));
 		}
 		return true;

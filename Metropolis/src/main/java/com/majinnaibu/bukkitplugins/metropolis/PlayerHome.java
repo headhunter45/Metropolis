@@ -75,7 +75,11 @@ public class PlayerHome extends Plot{
 		return sb.toString();
 	}
 	
-	public static PlayerHome get(ProtectedCuboidRegion cuboidRegion){
-		return new PlayerHome(cuboidRegion);
+	public static PlayerHome get(ProtectedRegion homeRegion){
+		if(homeRegion instanceof ProtectedCuboidRegion){
+			return new PlayerHome((ProtectedCuboidRegion) homeRegion);
+		}else{
+			return null;
+		}
 	}
 }

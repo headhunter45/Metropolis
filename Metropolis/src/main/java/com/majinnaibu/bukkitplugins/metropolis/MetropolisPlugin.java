@@ -41,7 +41,6 @@ public class MetropolisPlugin extends JavaPlugin {
 	public World world = null;
 	public RegionManager regionManager = null;
 
-	private List<PlayerHome> _occupiedHomes;
 	private List<Plot> _occupiedPlots;
 	
 	private PlayerJoinListener _playerJoinListener = null;
@@ -118,7 +117,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			regionManager.addRegion(cityRegion);
 		}
 		
-		_occupiedHomes = new ArrayList<PlayerHome>();
+		_occupiedPlots = new ArrayList<Plot>();
 		fillOccupiedPlots();
 		resizeCityRegion();
 
@@ -135,16 +134,14 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	
 	private void fillOccupiedPlots(){
-		_occupiedPlots = new ArrayList<Plot>();
-		_occupiedHomes = new ArrayList<PlayerHome>();
+		_occupiedPlots.clear();
 		
 		for(ProtectedRegion region: regionManager.getRegions().values()){
 			if(region instanceof ProtectedCuboidRegion){
 				ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) region;
 				if(cuboidRegion.getId().startsWith("h_")){
-					PlayerHome home = PlayerHome.get(cuboidRegion);
+					PlayerHome home = PlayerHome.get(region);
 					_occupiedPlots.add(home);
-					_occupiedHomes.add(home);
 				}else if(cuboidRegion.getId().startsWith("r_")){
 					_occupiedPlots.add(Plot.get(cuboidRegion));
 				}
@@ -336,7 +333,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	private int calculateCitySize() {
 		int iSize = 3;
 		
-		for(PlayerHome home: _occupiedHomes){
+		for(Plot home: _occupiedPlots){
 			int plotCol=Math.abs(getPlotXFromMin(home.getCuboid()));
 			int plotRow=Math.abs(getPlotZFromMin(home.getCuboid()));
 			if(DEBUG){log.info(String.format("col: %d, row: %d, iSize: %d", plotCol, plotRow, iSize));}
@@ -370,9 +367,8 @@ public class MetropolisPlugin extends JavaPlugin {
 	private void setHomeOccupied(String owner, BlockVector minimumPoint, BlockVector maximumPoint) {
 		
 		PlayerHome home = new PlayerHome(owner, minimumPoint, maximumPoint);
-		if(!_occupiedHomes.contains(home)){
-			_occupiedHomes.add(home);
-			Collections.sort(_occupiedHomes);
+		if(!_occupiedPlots.contains(home)){
+			_occupiedPlots.add(home);
 		}
 	}
 
@@ -383,6 +379,10 @@ public class MetropolisPlugin extends JavaPlugin {
 		Cuboid homeCuboid = null;
 		ProtectedRegion homeRegion = null;
 		String regionName = "h_" + playerName;
+		homeRegion = regionManager.getRegion("h_" + playerName);
+		if(homeRegion != null){
+			return PlayerHome.get(homeRegion);
+		}
 		
 		plotCuboid = findNextUnownedHomeRegion();
 		homeCuboid = plotCuboid.inset(roadWidth/2, roadWidth/2);
@@ -438,8 +438,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		}		
 	}
 
-	public List<PlayerHome> getCityBlocks() {
-		return Collections.unmodifiableList(_occupiedHomes);
+	public List<Plot> getCityBlocks() {
+		return Collections.unmodifiableList(_occupiedPlots);
 	}
 	
 	public World getWorld(){
