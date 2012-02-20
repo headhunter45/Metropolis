@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 
 
 import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class Cuboid implements Comparable<Cuboid> {
 	private int id;
@@ -49,6 +50,15 @@ public class Cuboid implements Comparable<Cuboid> {
 		this.maxX = 0;
 		this.maxY = 0;
 		this.maxZ = 0;
+	}
+
+	public Cuboid(Selection selection) {
+		this.minX = selection.getMinimumPoint().getBlockX();
+		this.minY = selection.getMinimumPoint().getBlockY();
+		this.minZ = selection.getMinimumPoint().getBlockZ();
+		this.maxX = selection.getMaximumPoint().getBlockX();
+		this.maxY = selection.getMaximumPoint().getBlockY();
+		this.maxZ = selection.getMaximumPoint().getBlockZ();
 	}
 
 	public BlockVector getMin(){
@@ -169,5 +179,29 @@ public class Cuboid implements Comparable<Cuboid> {
 	public int getCenterZ(){
 		return (this.minZ + this.maxZ)/2;
 	}
-	
+
+	public boolean intersects(Cuboid other) {
+		if (this.maxX >= other.minX && this.minX <= other.maxX)
+        {
+            if (this.maxZ >= other.minZ && this.minZ <= other.maxZ)
+            {
+                if (this.maxY >= other.minY && this.minY <= other.maxY)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+	}
 }

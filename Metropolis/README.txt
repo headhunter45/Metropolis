@@ -17,6 +17,11 @@ Edit the config.yml file.  You can set the height to clear above roads, the road
 Changelog:
 v0.4.6
 	Added optional generation of a sign identifying owner in plots on creation
+	Added a Cuboid constructor that takes a worldedit selection
+	Added a debug mode that enables extra logging.  MetropolisPlugin.DEBUG should be true for snapshots and false for release builds.
+	Added an occupied Plots list to MetropolisPlugin to keep track of both player homes and reserved plots.
+	Added the Plot class as a parent of PlayerHome and moved relevant code to it. 
+	Added a command to reserve plots that aren't tied to a player.  This can be used to setup a larger protected area around spawn
 v0.4.5
 v0.4.4
 	Added a welcome message telling players where their home is.

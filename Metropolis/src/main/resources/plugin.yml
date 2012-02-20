@@ -17,3 +17,7 @@ commands:
     description: This command resets the WorldGuard flags for all managed regions (city and h_*).
     permission: metropolis.flag.reset
     usage: /metropolis-flag-reset
+  metropolis-plot-reserve:
+    description: This command reserves a plot so it won't be assigned as a home.
+    permission: metropolis.plot.reserve
+    usage: /metropolis-plot-reserve <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
