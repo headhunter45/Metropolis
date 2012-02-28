@@ -35,7 +35,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class MetropolisPlugin extends JavaPlugin {
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	public static final Logger log=Logger.getLogger("Minecraft");
 	
 	public PluginDescriptionFile pdf = null;
@@ -60,6 +60,15 @@ public class MetropolisPlugin extends JavaPlugin {
 	boolean generateFloor = false;
 	int floorMaterial = 2;
 	boolean generateSign = false;
+	private boolean generateSpawn = true;
+	private boolean setWorldSpawn = true;
+	private int spawnFloorMaterial = 4;
+	
+	private Cuboid _spawnCuboid = null;
+	private Cuboid _cityCuboid = null;
+	private ProtectedRegion _spawnRegion = null;
+	private ProtectedRegion _cityRegion = null;
+	
 	
 	@Override
 	public void onDisable() {
@@ -83,6 +92,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		generateFloor = config.getBoolean("plot.floor.generate");
 		floorMaterial = config.getInt("plot.floor.material");
 		generateSign = config.getBoolean("plot.sign.generate");
+		generateSpawn = config.getBoolean("spawn.generate");
+		setWorldSpawn = config.getBoolean("spawn.setAsWorldSpawn");
+		spawnFloorMaterial = config.getInt("spawn.material");
 		saveConfig();
 		
 		log.info(String.format("Metropolis: world name is %s", worldName));
@@ -104,21 +116,42 @@ public class MetropolisPlugin extends JavaPlugin {
 
 		regionManager = worldGuard.getRegionManager(world);
 			
-		ProtectedRegion cityRegion = regionManager.getRegion("City");
-		if(cityRegion == null){
-			cityRegion = new ProtectedCuboidRegion("City", getPlotMin(0, 0), this.getPlotMax(0, 0));
-			cityRegion.setPriority(0);
-			cityRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
-			cityRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
-			regionManager.addRegion(cityRegion);
+		_cityRegion = regionManager.getRegion("City");
+		if(_cityRegion == null){
+			_cityRegion = new ProtectedCuboidRegion("City", getPlotMin(0, 0), this.getPlotMax(0, 0));
+			_cityRegion.setPriority(0);
+			_cityRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
+			_cityRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
+			regionManager.addRegion(_cityRegion);
 		}
+		
+		_cityCuboid = new Cuboid(_cityRegion.getMinimumPoint(), _cityRegion.getMaximumPoint());
+		
+		_spawnRegion = regionManager.getRegion("Spawn");
+		if(_spawnRegion == null){
+			_spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0), this.getPlotMax(0,  0));
+			_spawnRegion.setPriority(1);
+			_spawnRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
+			_spawnRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
+			regionManager.addRegion(_spawnRegion);
+			setupSpawn();
+		}
+		
+		_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
 		
 		_occupiedPlots = new ArrayList<Plot>();
 		fillOccupiedPlots();
@@ -139,6 +172,34 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 	
+	private void setupSpawn() {
+		BlockVector min = getPlotMin(0, 0);
+		BlockVector max = getPlotMax(0, 0);
+		
+		if(generateSpawn){
+			int x= 0;
+			int y=roadLevel;
+			int z=0;
+			
+			for(x=min.getBlockX(); x<= max.getBlockX(); x++){
+				for(z=min.getBlockZ(); z<= max.getBlockZ(); z++){
+					for(y=roadLevel+1; y<world.getMaxHeight(); y++){
+						Block block = world.getBlockAt(x, y, z);
+						block.setTypeId(0);
+					}
+					y=roadLevel;
+					Block block = world.getBlockAt(x, y, z);
+					block.setTypeId(spawnFloorMaterial);
+				}
+			}
+		}
+		
+		if(setWorldSpawn){
+			Cuboid spawnCuboid = new Cuboid(min, max);
+			world.setSpawnLocation(spawnCuboid.getCenterX(), roadLevel+1, spawnCuboid.getCenterZ());
+		}
+	}
+
 	private void fillOccupiedPlots(){
 		_occupiedPlots.clear();
 		
@@ -264,10 +325,15 @@ public class MetropolisPlugin extends JavaPlugin {
 				return true;
 			}
 		}
+		
+		
+		if(cuboid.intersects(_spawnCuboid)){
+			return true;
+		}
 
 		return false;
 	}
-
+	
 	private Cuboid findNextUnownedHomeRegion() {
 		int row = 0;
 		int col = 0;

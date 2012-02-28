@@ -22,6 +22,6 @@ commands:
     permission: metropolis.plot.reserve
     usage: /metropolis-plot-reserve <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
   gentesthomes:
-    description:
+    description: This command is ignored on non-debug builds.
     permission: metropolis.debug
     usage: /gentesthomes
