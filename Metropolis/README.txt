@@ -16,6 +16,9 @@ Edit the config.yml file.  You can set the height to clear above roads, the road
 
 Changelog:
 v0.5
+	Added example docs
+	Added Commands to plugin.yml to move and evict homes
+	Added floor and road supports to config file and generation
 v0.4.6
 	Added optional generation of a sign identifying owner in plots on creation
 	Added a Cuboid constructor that takes a worldedit selection
