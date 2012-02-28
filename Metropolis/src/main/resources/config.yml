@@ -4,6 +4,9 @@ plot:
   floor:
     generate: true
     material: 2
+    supports:
+      generate: true
+      material: 1
   sign:
     generate: true
 road:
@@ -11,8 +14,15 @@ road:
   clearSpaceAbove: 66
   level: 62
   material: 4
+  supports:
+    generate: true
+    material: 1
 spawn:
   generate: true
   setAsWorldSpawn: true
   material: 2
+wall:
+  generate: true
+  material: 7
+  height: 66
 worldname: world

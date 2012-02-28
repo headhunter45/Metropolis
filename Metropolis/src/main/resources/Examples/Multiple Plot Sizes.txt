@@ -1,0 +1,19 @@
+Goal: Have 1 plot size for mods and 1 plot size for normals.
+Implementation:
+	1.	Set the plotSize in the config to the larger plot size there are other possible sizes but powers of 2 work really well so lets give mods a 64x64 plot.  Roads are recomended but will eat into the plot on all sides so the roadsize can be ignored for this example.
+	2.	Start the server and run /metropolis-home-generate <username> for each mod.
+	3.	If you have not completed a full ring then run /metropolis-home-generate <test n> where n starts at 1 and increases until you have filled a full ring.  This will reserve those plots for later or anyone who happens to have that username, but that can be dealth with later.
+	4.  Stop the server and change the plotSize to a smaller number like 32.
+	5.	Restart the server and let your users log in.
+	
+Notes:
+	All users will be assigned a small plot when they first connect.  When you make them a mod just delete their current region and change the name of one of the reserved home regions to h_<their username>.
+	/region remove h_jonnynewadmin
+	/region select test_1
+	/region remove test_1
+	/region define h_johnnynewadmin
+	JohnnyNewAdmin's old home will become available for resettlement.  If you want to copy johnny's old blocks into his new home region I'd suggest WorldEdit.
+	This process including optionally copying the blocks will be an upcoming feature.  Probably in 0.5.x and maybe in 0.6.
+	
+	If you later run out of larger plots you can just set the size back to the larger number and let more generate.  Moving and evictions will be coming soon and make this easier.
+	You can manually just create a region for a user before they login named like h_<username> if you want a specific user to have a really big space as well.

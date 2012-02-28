@@ -2,7 +2,7 @@ name: Metropolis
 main: com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin
 depend: [WorldGuard]
 softdepend: [WorldEdit,CommandBook]
-version: 0.4.6
+version: 0.5
 database: false
 commands:
   metropolis-home-generate:
@@ -20,7 +20,15 @@ commands:
   metropolis-plot-reserve:
     description: This command reserves a plot so it won't be assigned as a home.
     permission: metropolis.plot.reserve
-    usage: /metropolis-plot-reserve <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
+    usage: /metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
+  metropolis-home-evict:
+    description: This unassigns a player's current home.
+    permission: metropolis.home.evict
+    usage: /metropolis-home-evict <playerName>
+  metropolis-home-move:
+    description: This command swaps a player's current home with a reserved plot.
+    permission: metropolis.home.move
+    usage: /metropolis-home-move <newRegionName>
   gentesthomes:
     description: This command is ignored on non-debug builds.
     permission: metropolis.debug

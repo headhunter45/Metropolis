@@ -35,7 +35,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class MetropolisPlugin extends JavaPlugin {
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 	public static final Logger log=Logger.getLogger("Minecraft");
 	
 	public PluginDescriptionFile pdf = null;
@@ -50,20 +50,28 @@ public class MetropolisPlugin extends JavaPlugin {
 	
 	int size = 1;
 	
-	int plotSizeX = 24;
-	int plotSizeZ = 24;
-	int roadWidth = 4;
-	int roadLevel = 62;
-	int spaceAboveRoad = 2;
-	int roadMaterial = 4;
-	String worldName = "world";
-	boolean generateFloor = false;
-	int floorMaterial = 2;
-	boolean generateSign = false;
+	private int plotSizeX = 24;
+	private int plotSizeZ = 24;
+	private int roadWidth = 4;
+	private int roadLevel = 62;
+	private int spaceAboveRoad = 2;
+	private int roadMaterial = 4;
+	private boolean generateRoadSupports = true;
+	private int roadSupportMaterial = 2;
+	private String worldName = "world";
+	private boolean generateFloor = false;
+	private int floorMaterial = 2;
+	private int spaceAboveFloor = 2;
+	private boolean generateSign = false;
 	private boolean generateSpawn = true;
 	private boolean setWorldSpawn = true;
 	private int spawnFloorMaterial = 4;
-	
+	private boolean generateFloorSupports = false;
+	private int floorSupportMaterial = 1;
+	private boolean generateWall = false;
+	private int wallMaterial = 20;
+	private int wallHeight = 128;
+		
 	private Cuboid _spawnCuboid = null;
 	private Cuboid _cityCuboid = null;
 	private ProtectedRegion _spawnRegion = null;
@@ -84,17 +92,25 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		plotSizeX = config.getInt("plot.sizeX");
 		plotSizeZ = config.getInt("plot.sizeZ");
+		generateFloor = config.getBoolean("plot.floor.generate");
+		floorMaterial = config.getInt("plot.floor.material");
+		spaceAboveFloor = config.getInt("plot.floor.clearSpaceAbove");
+		generateFloorSupports = config.getBoolean("plot.floor.supports.generate");
+		floorSupportMaterial = config.getInt("plot.floor.supports.material");
+		generateSign = config.getBoolean("plot.sign.generate");
 		roadWidth = config.getInt("road.width");
 		spaceAboveRoad = config.getInt("road.clearSpaceAbove");
 		roadLevel = config.getInt("road.level");
 		roadMaterial = config.getInt("road.material");
-		worldName =config.getString("worldname");
-		generateFloor = config.getBoolean("plot.floor.generate");
-		floorMaterial = config.getInt("plot.floor.material");
-		generateSign = config.getBoolean("plot.sign.generate");
+		generateRoadSupports = config.getBoolean("road.supports.generate");
+		roadSupportMaterial = config.getInt("road.supports.material");
 		generateSpawn = config.getBoolean("spawn.generate");
 		setWorldSpawn = config.getBoolean("spawn.setAsWorldSpawn");
 		spawnFloorMaterial = config.getInt("spawn.material");
+		generateWall = config.getBoolean("wall.generate");
+		wallMaterial = config.getInt("wall.material");
+		wallHeight = config.getInt("wall.material");
+		worldName =config.getString("worldname");
 		saveConfig();
 		
 		log.info(String.format("Metropolis: world name is %s", worldName));
@@ -249,9 +265,18 @@ public class MetropolisPlugin extends JavaPlugin {
 		for(x = plotCuboid.minX + roadWidth/2; x <= plotCuboid.maxX - roadWidth/2; x++){
 			for(z=plotCuboid.minZ + roadWidth/2; z<=plotCuboid.maxZ - roadWidth/2; z++){
 				Block block = world.getBlockAt(x, y, z);
+				//Set the floor block
 				block.setTypeId(floorMaterial);
 				
-				for(int i=0; i<spaceAboveRoad; i++){
+				//Set the support
+				if(generateFloorSupports && isPhysicsMaterial(block.getType())){
+					Block blockUnder = world.getBlockAt(x, y-1, z);
+					if(!isSolidMaterial(blockUnder.getType())){
+						blockUnder.setTypeId(floorSupportMaterial);
+					}
+				}
+				
+				for(int i=0; i<spaceAboveFloor; i++){
 					block = world.getBlockAt(x, y+1+i, z);
 					block.setTypeId(0);
 				}
@@ -275,7 +300,17 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(x=plotCuboid.minX; x<plotCuboid.minX + roadWidth/2; x++){
 				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 					Block block = world.getBlockAt(x, y, z);
+					//Set the road block
 					block.setTypeId(roadMaterial);
+					//Set the support
+					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
+						Block blockUnder = world.getBlockAt(x, y-1, z);
+						if(!isSolidMaterial(blockUnder.getType())){
+							blockUnder.setTypeId(roadSupportMaterial);
+						}
+					}
+					
+					//Clear the space above
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -286,7 +321,17 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(x=plotCuboid.maxX - roadWidth/2+1; x<=plotCuboid.maxX; x++){
 				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 					Block block = world.getBlockAt(x, y, z);
+					//Set the road block
 					block.setTypeId(roadMaterial);
+					//Set the support
+					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
+						Block blockUnder = world.getBlockAt(x, y-1, z);
+						if(!isSolidMaterial(blockUnder.getType())){
+							blockUnder.setTypeId(roadSupportMaterial);
+						}
+					}
+					
+					//Clear the space above
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -297,7 +342,17 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(z=plotCuboid.minZ; z<plotCuboid.minZ + roadWidth/2; z++){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
 					Block block = world.getBlockAt(x, y, z);
+					//Set the road block
 					block.setTypeId(roadMaterial);
+					//Set the support
+					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
+						Block blockUnder = world.getBlockAt(x, y-1, z);
+						if(!isSolidMaterial(blockUnder.getType())){
+							blockUnder.setTypeId(roadSupportMaterial);
+						}
+					}
+					
+					//Clear the space above
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -308,7 +363,17 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(z=plotCuboid.maxZ - roadWidth/2+1; z<=plotCuboid.maxZ; z++){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
 					Block block = world.getBlockAt(x, y, z);
+					//Set the road block
 					block.setTypeId(roadMaterial);
+					//Set the support
+					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
+						Block blockUnder = world.getBlockAt(x, y-1, z);
+						if(!isSolidMaterial(blockUnder.getType())){
+							blockUnder.setTypeId(roadSupportMaterial);
+						}
+					}
+					
+					//Clear the space above
 					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
 						block = world.getBlockAt(x, y+y1+1, z);
 						block.setTypeId(0);
@@ -318,6 +383,19 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 	
+	private boolean isSolidMaterial(Material material) {
+		return  material != Material.AIR && 
+				material != Material.WATER && 
+				material != Material.LAVA && 
+				material != Material.TORCH && 
+				material != Material.REDSTONE_TORCH_OFF && 
+				material != Material.REDSTONE_TORCH_ON;
+	}
+
+	private boolean isPhysicsMaterial(Material material) {
+		return material == Material.GRAVEL || material == Material.SAND;
+	}
+
 	public boolean isBlockOccupied(int row, int col){
 		Cuboid cuboid = new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
 		for(Plot plot: _occupiedPlots){

@@ -15,6 +15,7 @@ CONFIG:
 Edit the config.yml file.  You can set the height to clear above roads, the road width, the plot size (incluing half the road width on either side), the road material, and the level at which the road is generated.
 
 Changelog:
+v0.5
 v0.4.6
 	Added optional generation of a sign identifying owner in plots on creation
 	Added a Cuboid constructor that takes a worldedit selection
