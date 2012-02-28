@@ -1,6 +1,5 @@
 package com.majinnaibu.bukkitplugins.metropolis;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +27,7 @@ import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -556,7 +556,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		regionManager.addRegion(homeRegion);
 		try {
 			regionManager.save();
-		} catch (IOException e) {
+		} catch (ProtectionDatabaseException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	
