@@ -4,32 +4,4 @@ depend: [WorldGuard]
 softdepend: [WorldEdit,CommandBook]
 version: 0.5
 database: false
-commands:
-  metropolis-home-generate:
-    description: This command generates a home for a user as if they'd just logged in.
-    permission: metropolis.home.generate
-    usage: /metropolis-home-generate <playername>
-  metropolis-home-list:
-    description: This lists the regions managed by Metropolis
-    permission: metropolis.home.list
-    usage: /metropolis-home-list
-  metropolis-flag-reset:
-    description: This command resets the WorldGuard flags for all managed regions (city and h_*).
-    permission: metropolis.flag.reset
-    usage: /metropolis-flag-reset
-  metropolis-plot-reserve:
-    description: This command reserves a plot so it won't be assigned as a home.
-    permission: metropolis.plot.reserve
-    usage: /metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
-  metropolis-home-evict:
-    description: This unassigns a player's current home.
-    permission: metropolis.home.evict
-    usage: /metropolis-home-evict <playerName>
-  metropolis-home-move:
-    description: This command swaps a player's current home with a reserved plot.
-    permission: metropolis.home.move
-    usage: /metropolis-home-move <newRegionName>
-  gentesthomes:
-    description: This command is ignored on non-debug builds.
-    permission: metropolis.debug
-    usage: /gentesthomes
+commands:  metropolis-home-generate:   description: This command generates a home for a user as if they'd just logged in.   permission: metropolis.home.generate   usage: /metropolis-home-generate <playername>  metropolis-home-list:   description: This lists the regions managed by Metropolis   permission: metropolis.home.list   usage: /metropolis-home-list  metropolis-home-evict:   description: This unassigns a player's current home.   permission: metropolis.home.evict   usage: /metropolis-home-evict <playerName>  metropolis-home-move:   description: This command swaps a player's current home with a reserved plot.   permission: metropolis.home.move   usage: /metropolis-home-move <newRegionName>  metropolis-home-go:   description: Teleports the user or another player to his home.   permission: metropolis.home.go   usage: /metropolis-home-go  metropolis-flag-reset:   description: This command resets the WorldGuard flags for all managed regions (city and h_*).   permission: metropolis.flag.reset   usage: /metropolis-flag-reset  metropolis-plot-reserve:   description: This command reserves a plot so it won't be assigned as a home.   permission: metropolis.plot.reserve   usage: /metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>  metropolis-plot-go:   description: This command teleports the user or another player to a plot.   permission: metropolis.plot.go   usage: /metropolis-plot-go <plotName> [playerName]  metropolis-debug-generatetesthomes:   description: This command is ignored on non-debug builds.   permission: metropolis.debug   usage: /metropolis-debug-gentesthomes

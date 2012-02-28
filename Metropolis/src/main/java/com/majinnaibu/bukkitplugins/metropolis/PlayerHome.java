@@ -3,6 +3,8 @@ package com.majinnaibu.bukkitplugins.metropolis;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import org.bukkit.Location;
+
 import com.avaje.ebean.validation.NotNull;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;

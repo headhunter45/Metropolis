@@ -4,6 +4,11 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+
 import com.avaje.ebean.validation.NotNull;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
@@ -98,5 +103,27 @@ public class Plot implements Comparable<Plot>{
 		sb.append(String.format("Metropolis Reserved Plot {min: (%d, %d, %d) max: (%d, %d, %d)}", getCuboid().getMinX(), getCuboid().getMinY(), getCuboid().getMinZ(), getCuboid().getMaxX(), getCuboid().getMaxY(), getCuboid().getMaxZ()));
 		
 		return sb.toString();
+	}
+	
+	public boolean contains(Location bedSpawn) {
+		return _cuboid.contains(bedSpawn);
+	}
+	
+	public Location getViableSpawnLocation(World world) {
+		Cuboid cuboid = getCuboid();
+		for(int y=cuboid.maxY-1; y>= cuboid.minY; y--){
+			for(int x=cuboid.minX; x<= cuboid.maxX; x++){
+				for(int z=cuboid.minZ; z<= cuboid.maxZ; z++){
+					Block block = world.getBlockAt(x, y, z);
+					Block blockAbove = world.getBlockAt(x, y+1, z);
+					Block blockUnder = world.getBlockAt(x, y-1, z);
+					if(block.getType() == Material.AIR & blockAbove.getType() == Material.AIR && blockUnder.getType() != Material.AIR){
+						return new Location(world, x, y, z);
+					}
+				}
+			}
+		}
+		
+		return null;
 	}
 }

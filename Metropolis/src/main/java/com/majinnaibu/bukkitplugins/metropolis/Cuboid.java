@@ -2,6 +2,8 @@ package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.util.logging.Logger;
 
+import org.bukkit.Location;
+
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.bukkit.selections.Selection;
@@ -203,5 +205,17 @@ public class Cuboid implements Comparable<Cuboid> {
         {
             return false;
         }
+	}
+
+	public boolean contains(Location bedSpawn) {
+		if(this.minX > bedSpawn.getBlockX() || this.maxX < bedSpawn.getBlockX()){
+			return false;
+		}else if(this.minZ > bedSpawn.getBlockZ() || this.maxZ < bedSpawn.getBlockZ()){
+			return false;
+		}else if(this.minY > bedSpawn.getBlockY() || this.maxY < bedSpawn.getBlockY()){
+			return false;
+		}
+		
+		return true;
 	}
 }

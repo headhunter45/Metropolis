@@ -19,8 +19,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeEvictCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGoCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeListCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeMoveCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotGoCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotReserveCommand;
 import com.majinnaibu.bukkitplugins.metropolis.eventlisteners.PlayerJoinListener;
 import com.sk89q.worldedit.BlockVector;
@@ -37,6 +41,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 public class MetropolisPlugin extends JavaPlugin {
 	public static final boolean DEBUG = true;
 	public static final Logger log=Logger.getLogger("Minecraft");
+	private static final int version = 1;
 	
 	public PluginDescriptionFile pdf = null;
 	public WorldGuardPlugin worldGuard = null;
@@ -88,29 +93,52 @@ public class MetropolisPlugin extends JavaPlugin {
 		pdf = getDescription();
 		
 		Configuration config = getConfig();
+		if(!config.contains("version")){
+			//new or upgrading from ancient
+			if(config.contains("plot.sizeX")){
+				//upgrading from ancient
+				int oldSizeX = safeGetIntFromConfig(config, "plot.sizeX");
+				int oldSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
+				int oldRoadWidth = safeGetIntFromConfig(config, "road.width");
+				oldSizeX -= oldRoadWidth;
+				oldSizeZ -= oldRoadWidth;
+				config.set("plot.sizeX", oldSizeX);
+				config.set("plot.sizeZ", oldSizeZ);
+			}else{
+				//new
+			}
+		}else{
+			int configVersion = safeGetIntFromConfig(config, "version");
+			
+			if(configVersion != version){
+				//upgrade config
+				config.set("version", version);
+			}
+		}
+		
 		config.options().copyDefaults(true);
 		
-		plotSizeX = config.getInt("plot.sizeX");
-		plotSizeZ = config.getInt("plot.sizeZ");
-		generateFloor = config.getBoolean("plot.floor.generate");
-		floorMaterial = config.getInt("plot.floor.material");
-		spaceAboveFloor = config.getInt("plot.floor.clearSpaceAbove");
-		generateFloorSupports = config.getBoolean("plot.floor.supports.generate");
-		floorSupportMaterial = config.getInt("plot.floor.supports.material");
-		generateSign = config.getBoolean("plot.sign.generate");
-		roadWidth = config.getInt("road.width");
-		spaceAboveRoad = config.getInt("road.clearSpaceAbove");
-		roadLevel = config.getInt("road.level");
-		roadMaterial = config.getInt("road.material");
-		generateRoadSupports = config.getBoolean("road.supports.generate");
-		roadSupportMaterial = config.getInt("road.supports.material");
-		generateSpawn = config.getBoolean("spawn.generate");
-		setWorldSpawn = config.getBoolean("spawn.setAsWorldSpawn");
-		spawnFloorMaterial = config.getInt("spawn.material");
-		generateWall = config.getBoolean("wall.generate");
-		wallMaterial = config.getInt("wall.material");
-		wallHeight = config.getInt("wall.material");
-		worldName =config.getString("worldname");
+		plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
+		plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
+		generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
+		floorMaterial = safeGetIntFromConfig(config, "plot.floor.material");
+		spaceAboveFloor = safeGetIntFromConfig(config, "plot.floor.clearSpaceAbove");
+		generateFloorSupports = safeGetBooleanFromConfig(config, "plot.floor.supports.generate");
+		floorSupportMaterial = safeGetIntFromConfig(config, "plot.floor.supports.material");
+		generateSign = safeGetBooleanFromConfig(config, "plot.sign.generate");
+		roadWidth = safeGetIntFromConfig(config, "road.width");
+		spaceAboveRoad = safeGetIntFromConfig(config, "road.clearSpaceAbove");
+		roadLevel = safeGetIntFromConfig(config, "road.level");
+		roadMaterial = safeGetIntFromConfig(config, "road.material");
+		generateRoadSupports = safeGetBooleanFromConfig(config, "road.supports.generate");
+		roadSupportMaterial = safeGetIntFromConfig(config, "road.supports.material");
+		generateSpawn = safeGetBooleanFromConfig(config, "spawn.generate");
+		setWorldSpawn = safeGetBooleanFromConfig(config, "spawn.setAsWorldSpawn");
+		spawnFloorMaterial = safeGetIntFromConfig(config, "spawn.material");
+		generateWall = safeGetBooleanFromConfig(config, "wall.generate");
+		wallMaterial = safeGetIntFromConfig(config, "wall.material");
+		wallHeight = safeGetIntFromConfig(config, "wall.material");
+		worldName = safeGetStringFromConfig(config, "worldname");
 		saveConfig();
 		
 		log.info(String.format("Metropolis: world name is %s", worldName));
@@ -179,15 +207,55 @@ public class MetropolisPlugin extends JavaPlugin {
 
 		log.info(String.format("%s enabled", pdf.getFullName()));
 		
-		getCommand("metropolis-home-generate").setExecutor(new MetropolisHomeGenerateCommand(this));
-		getCommand("metropolis-home-list").setExecutor(new MetropolisHomeListCommand(this));
-		getCommand("metropolis-flag-reset").setExecutor(new MetropolisFlagResetCommand(this));
-		getCommand("metropolis-plot-reserve").setExecutor(new MetropolisPlotReserveCommand(this));
 		if(DEBUG){
-			getCommand("gentesthomes").setExecutor(new MetropolisDebugGenerateTestHomesCommand(this));
+			getCommand("metropolis-debug-generatetesthomes").setExecutor(new MetropolisDebugGenerateTestHomesCommand(this));
 		}
+		
+		getCommand("metropolis-flag-reset").setExecutor(new MetropolisFlagResetCommand(this));
+		
+		getCommand("metropolis-home-evict").setExecutor(new MetropolisHomeEvictCommand(this));
+		getCommand("metropolis-home-generate").setExecutor(new MetropolisHomeGenerateCommand(this));
+		getCommand("metropolis-home-go").setExecutor(new MetropolisHomeGoCommand(this));
+		getCommand("metropolis-home-list").setExecutor(new MetropolisHomeListCommand(this));
+		getCommand("metropolis-home-move").setExecutor(new MetropolisHomeMoveCommand(this));
+		
+		getCommand("metropolis-plot-go").setExecutor(new MetropolisPlotGoCommand(this));
+		getCommand("metropolis-plot-reserve").setExecutor(new MetropolisPlotReserveCommand(this));
+		
 	}
 	
+	private String safeGetStringFromConfig(Configuration config, String name) {
+		if(config.isString(name)){
+			return config.getString(name);
+		}else{
+			throwInvalidConfigException();
+			return null;
+		}
+	}
+
+	private boolean safeGetBooleanFromConfig(Configuration config, String name) {
+		if(config.isBoolean(name)){
+			return config.getBoolean(name);
+		}else{
+			throwInvalidConfigException();
+			return false;
+		}
+	}
+
+	private int safeGetIntFromConfig(Configuration config, String name) {
+		if(config.isInt(name)){
+			return config.getInt(name);
+		}else{
+			throwInvalidConfigException();
+			return 0;
+		}
+	}
+
+	private void throwInvalidConfigException() {
+		log.info("Metropolis: ERROR config file is invalid.  Please correct Metropolis/config.yml and restart the server.");
+		throw new RuntimeException("Config file is invalid.");
+	}
+
 	private void setupSpawn() {
 		BlockVector min = getPlotMin(0, 0);
 		BlockVector max = getPlotMax(0, 0);
@@ -203,6 +271,7 @@ public class MetropolisPlugin extends JavaPlugin {
 						Block block = world.getBlockAt(x, y, z);
 						block.setTypeId(0);
 					}
+					
 					y=roadLevel;
 					Block block = world.getBlockAt(x, y, z);
 					block.setTypeId(spawnFloorMaterial);
@@ -557,7 +626,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		try {
 			regionManager.save();
 		} catch (ProtectionDatabaseException e) {
-			// TODO Auto-generated catch block
+			log.info("Metropolis: ERROR Problem saving region");
 			e.printStackTrace();
 		}
 	
