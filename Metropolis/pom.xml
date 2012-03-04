@@ -22,30 +22,24 @@
   
   <repositories>
     <repository>
-      <id>sk89q-mvn2</id>
-      <url>http://mvn2.sk89q.com/repo</url>
-    </repository>
-  
-    <repository>
       <id>bukkit-repo</id>
       <url>http://repo.bukkit.org/content/groups/public</url>
     </repository>
   </repositories>
 
-
   <dependencies>
+    <!-- Bukkit -->
+    <dependency>
+      <groupId>org.bukkit</groupId>
+      <artifactId>bukkit</artifactId>
+      <version>1.2.3-R0.1-SNAPSHOT</version>
+    </dependency>
+
     <!-- WorldEdit -->
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
       <version>5.3-SNAPSHOT</version>
-    </dependency>
-    
-    <!-- Bukkit -->
-    <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
-      <version>1.1-R4-SNAPSHOT</version>
     </dependency>
     
     <!-- WorldGuard -->
