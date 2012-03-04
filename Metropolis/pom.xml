@@ -22,31 +22,41 @@
   
   <repositories>
     <repository>
+      <id>wg</id>
+      <url>http://files.zachsthings.com/repo</url>
+    </repository>
+    <repository>
+      <id>sk89q</id>
+      <url>http://mvn2.sk89q.com/repo</url>
+    </repository>
+  
+    <repository>
       <id>bukkit-repo</id>
       <url>http://repo.bukkit.org/content/groups/public</url>
     </repository>
   </repositories>
 
-  <dependencies>
-    <!-- Bukkit -->
-    <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
-      <version>1.2.3-R0.1-SNAPSHOT</version>
-    </dependency>
 
+  <dependencies>
     <!-- WorldEdit -->
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
-      <version>5.3-SNAPSHOT</version>
+      <version>5.2</version>
+    </dependency>
+    
+    <!-- Bukkit -->
+    <dependency>
+      <groupId>org.bukkit</groupId>
+      <artifactId>bukkit</artifactId>
+      <version>1.1-R6</version>
     </dependency>
     
     <!-- WorldGuard -->
     <dependency>
     	<groupId>com.sk89q</groupId>
     	<artifactId>worldguard</artifactId>
-    	<version>5.6-SNAPSHOT</version>
+    	<version>5.5</version>
     </dependency>
   </dependencies>
 </project>
