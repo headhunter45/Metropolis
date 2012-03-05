@@ -60,4 +60,22 @@
     	<version>5.5</version>
     </dependency>
   </dependencies>
+  
+  <distributionManagement>
+    <repository>
+      <id>majinnaibu-repository</id>
+      <url>ftp://www.majinnaibu.com/majinnaibu/repo</url>
+    </repository>
+  </distributionManagement>
+
+  <build>
+    <extensions>
+      <!-- Enabling the use of FTP -->
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+         <artifactId>wagon-ftp</artifactId>
+         <version>1.0-beta-6</version>
+      </extension>
+    </extensions>
+  </build>
 </project>
