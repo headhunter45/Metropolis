@@ -10,6 +10,7 @@
   <version>0.5-SNAPSHOT</version>
   <name>Metropolis</name>
   <description>Metropolis generates homes and streets for players as they connect to your server.</description>
+  <url>http://www.github.com/headhunter45/Metropolis</url>
   <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>

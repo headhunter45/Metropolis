@@ -6,15 +6,19 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.bukkit.Material;
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
@@ -92,10 +96,12 @@ public class MetropolisPlugin extends JavaPlugin {
 	public void onEnable() {
 		pdf = getDescription();
 		
+		if(DEBUG){log.info("Checking config");}
 		Configuration config = getConfig();
 		if(!config.contains("version")){
 			//new or upgrading from ancient
 			if(config.contains("plot.sizeX")){
+				if(DEBUG){log.info("Upgrading from a 0.4.6 config or newer.");}
 				//upgrading from ancient
 				int oldSizeX = safeGetIntFromConfig(config, "plot.sizeX");
 				int oldSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
@@ -104,20 +110,25 @@ public class MetropolisPlugin extends JavaPlugin {
 				oldSizeZ -= oldRoadWidth;
 				config.set("plot.sizeX", oldSizeX);
 				config.set("plot.sizeZ", oldSizeZ);
+				saveConfig();
+				if(DEBUG){log.info("Plot size updated");}
 			}else{
-				//new
+				if(DEBUG){log.info("No config exists.  Assuming new installation.");}
 			}
 		}else{
 			int configVersion = safeGetIntFromConfig(config, "version");
-			
+			if(DEBUG){log.info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
 			if(configVersion != version){
 				//upgrade config
 				config.set("version", version);
 			}
+			saveConfig();
+			if(DEBUG){log.info("Config updated");}
 		}
 		
 		config.options().copyDefaults(true);
 		
+		if(DEBUG){log.info("Reading configuration from file.");}
 		plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
 		plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
 		generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
@@ -140,25 +151,41 @@ public class MetropolisPlugin extends JavaPlugin {
 		wallHeight = safeGetIntFromConfig(config, "wall.material");
 		worldName = safeGetStringFromConfig(config, "worldname");
 		saveConfig();
+		if(DEBUG){log.info("Done reading config.");}
 		
 		log.info(String.format("Metropolis: world name is %s", worldName));
 		
-		Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
+		Server server = getServer();
+		if(server == null){
+			throw new RuntimeException("getServer() is null");
+		}
+		PluginManager pluginManager = server.getPluginManager();
+		if(pluginManager == null){
+			throw new RuntimeException("server.getPluginManager() is null");
+		}
+		
+		Plugin plugin = pluginManager.getPlugin("WorldGuard");
 		if(plugin == null || !(plugin instanceof WorldGuardPlugin)){
 			throw new RuntimeException("WorldGuard must be loaded first");
 		}
 		
 		worldGuard = (WorldGuardPlugin) plugin;
 		
-		plugin = getServer().getPluginManager().getPlugin("WorldEdit");
+		plugin = pluginManager.getPlugin("WorldEdit");
 		if(plugin == null || !(plugin instanceof WorldEditPlugin)){
 			throw new RuntimeException("WorldEdit must be loaded first");
 		}
 		worldEdit = (WorldEditPlugin) plugin;
 		
-		world = getServer().getWorld(worldName);
+		world = server.getWorld(worldName);
+		if(world == null){
+			throw new RuntimeException(String.format("The world %s does not exist", worldName));
+		}
 
 		regionManager = worldGuard.getRegionManager(world);
+		if(regionManager == null){
+			throw new RuntimeException("WorldGuard regions don't seem to be enabled.");
+		}
 			
 		_cityRegion = regionManager.getRegion("City");
 		if(_cityRegion == null){
@@ -207,21 +234,32 @@ public class MetropolisPlugin extends JavaPlugin {
 
 		log.info(String.format("%s enabled", pdf.getFullName()));
 		
-		if(DEBUG){
-			getCommand("metropolis-debug-generatetesthomes").setExecutor(new MetropolisDebugGenerateTestHomesCommand(this));
+		PluginCommand command = getCommand("metropolis-debug-generatetesthomes");
+		if(command != null){
+			command.setExecutor(new MetropolisDebugGenerateTestHomesCommand(this));
+		}else{
+			throw new RuntimeException("The metropolis-debug-generatetesthomes command does not appear to exist");
 		}
 		
-		getCommand("metropolis-flag-reset").setExecutor(new MetropolisFlagResetCommand(this));
+		RegisterCommandHandler("metropolis-flag-reset", new MetropolisFlagResetCommand(this));
 		
-		getCommand("metropolis-home-evict").setExecutor(new MetropolisHomeEvictCommand(this));
-		getCommand("metropolis-home-generate").setExecutor(new MetropolisHomeGenerateCommand(this));
-		getCommand("metropolis-home-go").setExecutor(new MetropolisHomeGoCommand(this));
-		getCommand("metropolis-home-list").setExecutor(new MetropolisHomeListCommand(this));
-		getCommand("metropolis-home-move").setExecutor(new MetropolisHomeMoveCommand(this));
+		RegisterCommandHandler("metropolis-home-evict", new MetropolisHomeEvictCommand(this));
+		RegisterCommandHandler("metropolis-home-generate", new MetropolisHomeGenerateCommand(this));
+		RegisterCommandHandler("metropolis-home-go", new MetropolisHomeGoCommand(this));
+		RegisterCommandHandler("metropolis-home-list", new MetropolisHomeListCommand(this));
+		RegisterCommandHandler("metropolis-home-move", new MetropolisHomeMoveCommand(this));
 		
-		getCommand("metropolis-plot-go").setExecutor(new MetropolisPlotGoCommand(this));
-		getCommand("metropolis-plot-reserve").setExecutor(new MetropolisPlotReserveCommand(this));
-		
+		RegisterCommandHandler("metropolis-plot-go", new MetropolisPlotGoCommand(this));
+		RegisterCommandHandler("metropolis-plot-reserve", new MetropolisPlotReserveCommand(this));
+	}
+	
+	private void RegisterCommandHandler(String commandName, CommandExecutor executor){
+		PluginCommand command = getCommand(commandName);
+		if(command == null){
+			throw new RuntimeException(String.format("The command %s does not appear to exist", commandName));
+		}else{
+			command.setExecutor(executor);
+		}
 	}
 	
 	private String safeGetStringFromConfig(Configuration config, String name) {
