@@ -2,12 +2,15 @@ package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.util.logging.Logger;
 
+import javax.persistence.Embeddable;
+
 import org.bukkit.Location;
 
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 
+@Embeddable
 public class Cuboid implements Comparable<Cuboid> {
 	private int id;
 	

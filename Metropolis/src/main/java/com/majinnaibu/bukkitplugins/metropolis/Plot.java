@@ -23,6 +23,7 @@ public class Plot implements Comparable<Plot>{
 	public void setId(int id){_id = id;}
 	
 	@NotNull
+	
 	private Cuboid _cuboid;
 	public Cuboid getCuboid(){return _cuboid;}
 	public void setCuboid(Cuboid cuboid){_cuboid = cuboid;}

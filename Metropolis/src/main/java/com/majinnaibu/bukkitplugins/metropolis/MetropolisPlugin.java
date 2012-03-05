@@ -47,6 +47,11 @@ public class MetropolisPlugin extends JavaPlugin {
 	public static final Logger log=Logger.getLogger("Minecraft");
 	private static final int version = 1;
 	
+	public static final int ROAD_NORTH=1;
+	public static final int ROAD_SOUTH=2;
+	public static final int ROAD_EAST=4;
+	public static final int ROAD_WEST=8;
+	
 	public PluginDescriptionFile pdf = null;
 	public WorldGuardPlugin worldGuard = null;
 	public WorldEditPlugin worldEdit = null;
@@ -405,7 +410,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 	
-	private void createRoads(Cuboid plotCuboid) {
+	private void createRoads(Cuboid plotCuboid, int roadMask){
 		if(roadWidth>0){
 			int x=0;
 			int y= roadLevel;
@@ -418,92 +423,103 @@ public class MetropolisPlugin extends JavaPlugin {
 				return;
 			}
 			
-			for(x=plotCuboid.minX; x<plotCuboid.minX + roadWidth/2; x++){
-				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
-					Block block = world.getBlockAt(x, y, z);
-					//Set the road block
-					block.setType(roadMaterial);
-					//Set the support
-					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
-						Block blockUnder = world.getBlockAt(x, y-1, z);
-						if(!isSolidMaterial(blockUnder.getType())){
-							blockUnder.setType(roadSupportMaterial);
-						}
-					}
-					
-					//Clear the space above
-					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
-						block = world.getBlockAt(x, y+y1+1, z);
-						block.setType(Material.AIR);
+			//North West Corner
+			if((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0){
+				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+						setRoad(x, y, z);
 					}
 				}
 			}
 			
-			for(x=plotCuboid.maxX - roadWidth/2+1; x<=plotCuboid.maxX; x++){
-				for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
-					Block block = world.getBlockAt(x, y, z);
-					//Set the road block
-					block.setType(roadMaterial);
-					//Set the support
-					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
-						Block blockUnder = world.getBlockAt(x, y-1, z);
-						if(!isSolidMaterial(blockUnder.getType())){
-							blockUnder.setType(roadSupportMaterial);
-						}
-					}
-					
-					//Clear the space above
-					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
-						block = world.getBlockAt(x, y+y1+1, z);
-						block.setType(Material.AIR);
+			//North Strip
+			if((roadMask & ROAD_NORTH) != 0){
+				for(x=plotCuboid.minX; x<plotCuboid.maxX; x++){
+					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+						setRoad(x, y, z);
 					}
 				}
 			}
 			
-			for(z=plotCuboid.minZ; z<plotCuboid.minZ + roadWidth/2; z++){
-				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
-					Block block = world.getBlockAt(x, y, z);
-					//Set the road block
-					block.setType(roadMaterial);
-					//Set the support
-					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
-						Block blockUnder = world.getBlockAt(x, y-1, z);
-						if(!isSolidMaterial(blockUnder.getType())){
-							blockUnder.setType(roadSupportMaterial);
-						}
-					}
-					
-					//Clear the space above
-					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
-						block = world.getBlockAt(x, y+y1+1, z);
-						block.setType(Material.AIR);
+			//North East Corner
+			if((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0){
+				for(x=plotCuboid.maxX; x<plotCuboid.maxX + roadWidth;x++){
+					for(z=plotCuboid.minZ-roadWidth; z<plotCuboid.minZ; z++){
+						setRoad(x, y, z);
 					}
 				}
 			}
 			
-			for(z=plotCuboid.maxZ - roadWidth/2+1; z<=plotCuboid.maxZ; z++){
-				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
-					Block block = world.getBlockAt(x, y, z);
-					//Set the road block
-					block.setType(roadMaterial);
-					//Set the support
-					if(generateRoadSupports && isPhysicsMaterial(block.getType())){
-						Block blockUnder = world.getBlockAt(x, y-1, z);
-						if(!isSolidMaterial(blockUnder.getType())){
-							blockUnder.setType(roadSupportMaterial);
-						}
+			//East Strip
+			if((roadMask & ROAD_EAST) != 0){
+				for(x=plotCuboid.maxX; x<plotCuboid.maxX + roadWidth; x++){
+					for(z=plotCuboid.minZ; z<plotCuboid.maxZ; z++){
+						setRoad(x, y, z);
 					}
-					
-					//Clear the space above
-					for(int y1 = 0; y1 < spaceAboveRoad; y1++){
-						block = world.getBlockAt(x, y+y1+1, z);
-						block.setType(Material.AIR);
+				}
+			}
+			
+			//South East Corner
+			if((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0){
+				for(x=plotCuboid.maxX; x<plotCuboid.maxX + roadWidth; x++){
+					for(z=plotCuboid.maxZ; z<plotCuboid.maxZ + roadWidth; z++){
+						setRoad(x, y, z);
+					}
+				}
+			}
+			
+			//South Strip
+			if((roadMask & ROAD_SOUTH) != 0){
+				for(x=plotCuboid.minX; x<plotCuboid.maxX; x++){
+					for(z=plotCuboid.maxZ; z<plotCuboid.maxZ+roadWidth; z++){
+						setRoad(x, y, z);
+					}
+				}
+			}
+			
+			//South West Corner
+			if((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0){
+				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.maxZ; z<plotCuboid.maxZ + roadWidth; z++){
+						setRoad(x, y, z);
+					}
+				}
+			}
+			
+			//West Strip
+			if((roadMask & ROAD_WEST) != 0){
+				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.minZ; z<plotCuboid.maxZ; z++){
+						setRoad(x, y, z);
 					}
 				}
 			}
 		}
 	}
 	
+	private void createRoads(Cuboid plotCuboid) {
+		createRoads(plotCuboid, ROAD_NORTH|ROAD_SOUTH|ROAD_EAST|ROAD_WEST);
+	}
+	
+	private void setRoad(int x, int y, int z) {
+		Block block = world.getBlockAt(x, y, z);
+		//Set the road block
+		block.setType(roadMaterial);
+		//Set the support
+		if(generateRoadSupports && isPhysicsMaterial(block.getType())){
+			Block blockUnder = world.getBlockAt(x, y-1, z);
+			if(!isSolidMaterial(blockUnder.getType())){
+				blockUnder.setType(roadSupportMaterial);
+			}
+		}
+		
+		//Clear the space above
+		for(int y1 = 0; y1 < spaceAboveRoad; y1++){
+			block = world.getBlockAt(x, y+y1+1, z);
+			block.setType(Material.AIR);
+		}
+	}
+
 	private boolean isSolidMaterial(Material material) {
 		return 	material.isBlock() &&
 				material != Material.AIR && 
