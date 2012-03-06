@@ -221,4 +221,11 @@ public class Cuboid implements Comparable<Cuboid> {
 		
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("{Cuboid minX=%d, minY=%d, minZ=%d, maxX=%d, maxY=%d, maxZ=%d}", minX, minY, minZ, maxX, maxY, maxZ);
+	}
+	
+	
 }
