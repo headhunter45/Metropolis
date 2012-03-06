@@ -444,10 +444,13 @@ public class MetropolisPlugin extends JavaPlugin {
 				return;
 			}
 			
+			int roadWidth1 = roadWidth / 2;
+			int roadWidth2 = roadWidth - roadWidth1;
+			
 			//North West Corner
 			if((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0){
-				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -456,7 +459,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			//North Strip
 			if((roadMask & ROAD_NORTH) != 0){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
-					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -464,8 +467,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//North East Corner
 			if((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0){
-				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth; x++){
-					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
+					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -473,7 +476,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//East Strip
 			if((roadMask & ROAD_EAST) != 0){
-				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth; x++){
+				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
 					for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 						setRoad(x, y, z);
 					}
@@ -482,8 +485,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//South East Corner
 			if((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0){
-				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth; x++){
-					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth; z++){
+				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
+					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -492,7 +495,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			//South Strip
 			if((roadMask & ROAD_SOUTH) != 0){
 				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
-					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth; z++){
+					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -500,8 +503,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//South West Corner
 			if((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0){
-				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth; z++){
+				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -509,7 +512,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//West Strip
 			if((roadMask & ROAD_WEST) != 0){
-				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
+				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
 					for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 						setRoad(x, y, z);
 					}
@@ -558,7 +561,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	public boolean isBlockOccupied(int row, int col){
-		Cuboid cuboid = new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+		Cuboid cuboid = new Cuboid(getGridMin(row, col), getGridMax(row, col));
 		for(Plot plot: _occupiedPlots){
 			if(plot.getCuboid().intersects(cuboid)){
 				return true;
@@ -674,7 +677,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	public BlockVector getPlotMax(int row, int col){
 		BlockVector gridMax = getGridMax(row, col);
 		
-		return new BlockVector(gridMax.getBlockX() - roadWidth/2, gridMax.getBlockY(), gridMax.getBlockZ()-roadWidth/2);
+		return new BlockVector(gridMax.getBlockX() - (int)Math.ceil(roadWidth/2.0f), gridMax.getBlockY(), gridMax.getBlockZ()-(int)Math.ceil(roadWidth/2.0f));
 	}
 	
 	public BlockVector getGridMax(int row, int col) {
