@@ -65,7 +65,11 @@ public class MetropolisPlugin extends JavaPlugin {
 	int size = 1;
 	
 	private int plotSizeX = 24;
+	private int plotSizeY = 256;
 	private int plotSizeZ = 24;
+	private int gridSizeX = 28;
+	private int gridSizeY = 256;
+	private int gridSizeZ = 28;
 	private int roadWidth = 4;
 	private int roadLevel = 62;
 	private int spaceAboveRoad = 2;
@@ -186,6 +190,10 @@ public class MetropolisPlugin extends JavaPlugin {
 		if(world == null){
 			throw new RuntimeException(String.format("The world %s does not exist", worldName));
 		}
+		
+		gridSizeX = plotSizeX + roadWidth;
+		gridSizeY = world.getMaxHeight();
+		gridSizeZ = plotSizeZ + roadWidth;
 
 		regionManager = worldGuard.getRegionManager(world);
 		if(regionManager == null){
@@ -638,23 +646,39 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	public BlockVector getPlotMin(int row, int col){
-		return new BlockVector(col * plotSizeX, 0, row * plotSizeZ);
+		BlockVector gridMin = getGridMin(row, col);
+		
+		return new BlockVector(gridMin.getBlockX() + roadWidth/2, gridMin.getBlockY(), gridMin.getBlockZ() + roadWidth/2);
+	}
+	
+	public BlockVector getGridMin(int row, int col){
+		int level = 0;
+		
+		return new BlockVector(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
 	}
 	
 	public BlockVector getPlotMax(int row, int col){
-		return new BlockVector(col * plotSizeX + plotSizeX-1, 128, row * plotSizeZ + plotSizeZ-1);
+		BlockVector gridMax = getGridMax(row, col);
+		
+		return new BlockVector(gridMax.getBlockX() - roadWidth/2, gridMax.getBlockY(), gridMax.getBlockZ()-roadWidth/2);
 	}
 	
+	public BlockVector getGridMax(int row, int col) {
+		int level = 0;
+		
+		return new BlockVector((col+1) * gridSizeX - 1, (level+1) * gridSizeY - 1, (row+1) * gridSizeZ - 1);
+	}
+
 	private int getPlotXFromMin(Cuboid cuboid) {
 		int minX = cuboid.getMin().getBlockX() - roadWidth/2;
 		
-		return minX/plotSizeX;
+		return minX/gridSizeX;
 	}
 
 	private int getPlotZFromMin(Cuboid cuboid) {
 		int minZ = cuboid.getMin().getBlockZ() - roadWidth/2;
 		
-		return minZ/plotSizeZ;
+		return minZ/gridSizeZ;
 	}
 
 	private void setHomeOccupied(String owner, BlockVector minimumPoint, BlockVector maximumPoint) {
