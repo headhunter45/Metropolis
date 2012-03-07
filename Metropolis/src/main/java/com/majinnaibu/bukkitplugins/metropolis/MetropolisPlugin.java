@@ -21,6 +21,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeEvictCommand;
@@ -252,12 +253,9 @@ public class MetropolisPlugin extends JavaPlugin {
 
 		log.info(String.format("%s enabled", pdf.getFullName()));
 		
-		PluginCommand command = getCommand("metropolis-debug-generatetesthomes");
-		if(command != null){
-			command.setExecutor(new MetropolisDebugGenerateTestHomesCommand(this));
-		}else{
-			throw new RuntimeException("The metropolis-debug-generatetesthomes command does not appear to exist");
-		}
+		RegisterCommandHandler("metropolis", new MetropolisCommand(this));
+		
+		RegisterCommandHandler("metropolis-debug-generatetesthomes", new MetropolisDebugGenerateTestHomesCommand(this));
 		
 		RegisterCommandHandler("metropolis-flag-reset", new MetropolisFlagResetCommand(this));
 		
