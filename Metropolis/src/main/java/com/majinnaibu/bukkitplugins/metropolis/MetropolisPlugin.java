@@ -242,7 +242,6 @@ public class MetropolisPlugin extends JavaPlugin {
 			}
 		}
 		
-		
 		_occupiedPlots = new ArrayList<Plot>();
 		fillOccupiedPlots();
 		resizeCityRegion();
@@ -804,5 +803,35 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	public int getWallheight(){
 		return wallHeight;
+	}
+
+	public ProtectedRegion getRegion(String regionName) {
+		if(regionManager == null){
+			return null;
+		}
+		
+		return regionManager.getRegion(regionName);
+	}
+
+	public void removeRegion(String regionId) {
+		if(regionManager == null){
+			return;
+		}
+		
+		try{
+			regionManager.removeRegion(regionId);
+		}catch(Exception ex){
+			log.info(String.format("[ERROR] Metropolis: Unable to remove region {%s}.", regionId));
+			return;
+		}
+	}
+
+	public void saveRegions() {
+		try {
+			regionManager.save();
+		} catch (Exception ex) {
+			log.info(String.format("[SEVERE] Metropolis: Unable to save WorldGuard regions."));
+			return;
+		}
 	}
 }

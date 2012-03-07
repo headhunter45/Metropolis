@@ -7,14 +7,16 @@ import org.bukkit.command.CommandSender;
 import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
 
 public class MetropolisHomeMoveCommand implements CommandExecutor {
+	MetropolisPlugin _plugin;
 
-	public MetropolisHomeMoveCommand(MetropolisPlugin metropolisPlugin) {
-		// TODO Auto-generated constructor stub
+	public MetropolisHomeMoveCommand(MetropolisPlugin plugin) {
+		_plugin = plugin;
 	}
 
 	@Override
-	public boolean onCommand(CommandSender arg0, Command arg1, String arg2,
-			String[] arg3) {
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		
+		
 		// TODO Auto-generated method stub
 		return false;
 	}
