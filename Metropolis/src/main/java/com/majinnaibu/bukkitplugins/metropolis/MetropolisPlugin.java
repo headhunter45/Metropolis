@@ -108,22 +108,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		if(DEBUG){log.info("Checking config");}
 		Configuration config = getConfig();
 		if(!config.contains("version")){
-			//new or upgrading from ancient
-			if(config.contains("plot.sizeX")){
-				if(DEBUG){log.info("Upgrading from a 0.4.6 config or newer.");}
-				//upgrading from ancient
-				int oldSizeX = safeGetIntFromConfig(config, "plot.sizeX");
-				int oldSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
-				int oldRoadWidth = safeGetIntFromConfig(config, "road.width");
-				oldSizeX -= oldRoadWidth;
-				oldSizeZ -= oldRoadWidth;
-				config.set("plot.sizeX", oldSizeX);
-				config.set("plot.sizeZ", oldSizeZ);
-				saveConfig();
-				if(DEBUG){log.info("Plot size updated");}
-			}else{
-				if(DEBUG){log.info("No config exists.  Assuming new installation.");}
-			}
+			//new
+			if(DEBUG){log.info("No config exists.  Assuming new installation.");}
 		}else{
 			int configVersion = safeGetIntFromConfig(config, "version");
 			if(DEBUG){log.info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
@@ -134,6 +120,9 @@ public class MetropolisPlugin extends JavaPlugin {
 			saveConfig();
 			if(DEBUG){log.info("Config updated");}
 		}
+		
+		config.set("version", version);
+		saveConfig();
 		
 		config.options().copyDefaults(true);
 		
@@ -220,7 +209,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		_spawnRegion = regionManager.getRegion("Spawn");
 		if(_spawnRegion == null){
-			_spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0), this.getPlotMax(0,  0));
+			_spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0), getPlotMax(0, 0));
 			_spawnRegion.setPriority(1);
 			_spawnRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
 			_spawnRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
@@ -232,10 +221,26 @@ public class MetropolisPlugin extends JavaPlugin {
 			_spawnRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
 			_spawnRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
 			regionManager.addRegion(_spawnRegion);
+			
+			_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
+			
 			setupSpawn();
+		}else{
+			_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
 		}
 		
 		_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
+		
+		if(DEBUG){
+			log.info("Metropolis: first 9 plots");
+			
+			for (int ix=-1; ix<=1;ix++){
+				for (int iz=-1; iz<=1; iz++){
+					log.info(getCuboid(iz, ix).toString());				
+				}
+			}
+		}
+		
 		
 		_occupiedPlots = new ArrayList<Plot>();
 		fillOccupiedPlots();
@@ -266,6 +271,12 @@ public class MetropolisPlugin extends JavaPlugin {
 		RegisterCommandHandler("metropolis-plot-reserve", new MetropolisPlotReserveCommand(this));
 	}
 	
+	private Cuboid getCuboid(int row, int col) {
+		BlockVector min = getPlotMin(row, col);
+		BlockVector max = getPlotMax(row, col);
+		return new Cuboid(min, max);
+	}
+
 	private void RegisterCommandHandler(String commandName, CommandExecutor executor){
 		PluginCommand command = getCommand(commandName);
 		if(command == null){
@@ -322,16 +333,16 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private void setupSpawn() {
-		BlockVector min = getPlotMin(0, 0);
-		BlockVector max = getPlotMax(0, 0);
+		log.info("Metropolis: Spawn Cuboid is " + _spawnCuboid.toString());
 		
 		if(generateSpawn){
 			int x= 0;
 			int y=roadLevel;
 			int z=0;
 			
-			for(x=min.getBlockX(); x<= max.getBlockX(); x++){
-				for(z=min.getBlockZ(); z<= max.getBlockZ(); z++){
+			//floor
+			for(x=_spawnCuboid.getMinX(); x<= _spawnCuboid.getMaxX(); x++){
+				for(z=_spawnCuboid.getMinZ(); z<=_spawnCuboid.getMaxZ(); z++){
 					for(y=roadLevel+1; y<world.getMaxHeight(); y++){
 						Block block = world.getBlockAt(x, y, z);
 						block.setType(Material.AIR);
@@ -342,11 +353,13 @@ public class MetropolisPlugin extends JavaPlugin {
 					block.setType(spawnFloorMaterial);
 				}
 			}
+			
+			//roads
+			createRoads(_spawnCuboid);
 		}
 		
 		if(setWorldSpawn){
-			Cuboid spawnCuboid = new Cuboid(min, max);
-			world.setSpawnLocation(spawnCuboid.getCenterX(), roadLevel+1, spawnCuboid.getCenterZ());
+			world.setSpawnLocation(_spawnCuboid.getCenterX(), roadLevel+1, _spawnCuboid.getCenterZ());
 		}
 	}
 
@@ -396,8 +409,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		int y=roadLevel;
 		int z=0;
 		
-		for(x = plotCuboid.minX + roadWidth/2; x <= plotCuboid.maxX - roadWidth/2; x++){
-			for(z=plotCuboid.minZ + roadWidth/2; z<=plotCuboid.maxZ - roadWidth/2; z++){
+		for(x = plotCuboid.minX; x <= plotCuboid.maxX; x++){
+			for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 				Block block = world.getBlockAt(x, y, z);
 				//Set the floor block
 				block.setType(floorMaterial);
@@ -431,10 +444,13 @@ public class MetropolisPlugin extends JavaPlugin {
 				return;
 			}
 			
+			int roadWidth1 = roadWidth / 2;
+			int roadWidth2 = roadWidth - roadWidth1;
+			
 			//North West Corner
 			if((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0){
-				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -442,8 +458,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//North Strip
 			if((roadMask & ROAD_NORTH) != 0){
-				for(x=plotCuboid.minX; x<plotCuboid.maxX; x++){
-					for(z=plotCuboid.minZ - roadWidth; z<plotCuboid.minZ; z++){
+				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
+					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -451,8 +467,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//North East Corner
 			if((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0){
-				for(x=plotCuboid.maxX; x<plotCuboid.maxX + roadWidth;x++){
-					for(z=plotCuboid.minZ-roadWidth; z<plotCuboid.minZ; z++){
+				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
+					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -460,8 +476,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//East Strip
 			if((roadMask & ROAD_EAST) != 0){
-				for(x=plotCuboid.maxX; x<plotCuboid.maxX + roadWidth; x++){
-					for(z=plotCuboid.minZ; z<plotCuboid.maxZ; z++){
+				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
+					for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -469,8 +485,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//South East Corner
 			if((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0){
-				for(x=plotCuboid.maxX; x<plotCuboid.maxX + roadWidth; x++){
-					for(z=plotCuboid.maxZ; z<plotCuboid.maxZ + roadWidth; z++){
+				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
+					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -478,8 +494,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//South Strip
 			if((roadMask & ROAD_SOUTH) != 0){
-				for(x=plotCuboid.minX; x<plotCuboid.maxX; x++){
-					for(z=plotCuboid.maxZ; z<plotCuboid.maxZ+roadWidth; z++){
+				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
+					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -487,8 +503,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//South West Corner
 			if((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0){
-				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.maxZ; z<plotCuboid.maxZ + roadWidth; z++){
+				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -496,8 +512,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			//West Strip
 			if((roadMask & ROAD_WEST) != 0){
-				for(x=plotCuboid.minX - roadWidth; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.minZ; z<plotCuboid.maxZ; z++){
+				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
+					for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
 						setRoad(x, y, z);
 					}
 				}
@@ -513,6 +529,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		Block block = world.getBlockAt(x, y, z);
 		//Set the road block
 		block.setType(roadMaterial);
+		
 		//Set the support
 		if(generateRoadSupports && isPhysicsMaterial(block.getType())){
 			Block blockUnder = world.getBlockAt(x, y-1, z);
@@ -544,7 +561,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	public boolean isBlockOccupied(int row, int col){
-		Cuboid cuboid = new Cuboid(getPlotMin(row, col), getPlotMax(row, col));
+		Cuboid cuboid = new Cuboid(getGridMin(row, col), getGridMax(row, col));
 		for(Plot plot: _occupiedPlots){
 			if(plot.getCuboid().intersects(cuboid)){
 				return true;
@@ -660,7 +677,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	public BlockVector getPlotMax(int row, int col){
 		BlockVector gridMax = getGridMax(row, col);
 		
-		return new BlockVector(gridMax.getBlockX() - roadWidth/2, gridMax.getBlockY(), gridMax.getBlockZ()-roadWidth/2);
+		return new BlockVector(gridMax.getBlockX() - (int)Math.ceil(roadWidth/2.0f), gridMax.getBlockY(), gridMax.getBlockZ()-(int)Math.ceil(roadWidth/2.0f));
 	}
 	
 	public BlockVector getGridMax(int row, int col) {
@@ -670,15 +687,11 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private int getPlotXFromMin(Cuboid cuboid) {
-		int minX = cuboid.getMin().getBlockX() - roadWidth/2;
-		
-		return minX/gridSizeX;
+		return (cuboid.minX - roadWidth/2)/gridSizeX;
 	}
 
 	private int getPlotZFromMin(Cuboid cuboid) {
-		int minZ = cuboid.getMin().getBlockZ() - roadWidth/2;
-		
-		return minZ/gridSizeZ;
+		return (cuboid.minZ - roadWidth/2)/gridSizeZ;
 	}
 
 	private void setHomeOccupied(String owner, BlockVector minimumPoint, BlockVector maximumPoint) {
@@ -688,11 +701,9 @@ public class MetropolisPlugin extends JavaPlugin {
 			_occupiedPlots.add(home);
 		}
 	}
-
 	
 	public PlayerHome generateHome(String playerName) {
 		if(DEBUG){log.info(String.format("Generating home for %s", playerName));}
-		Cuboid plotCuboid = null;
 		Cuboid homeCuboid = null;
 		ProtectedRegion homeRegion = null;
 		String regionName = "h_" + playerName;
@@ -701,8 +712,8 @@ public class MetropolisPlugin extends JavaPlugin {
 			return PlayerHome.get(homeRegion);
 		}
 		
-		plotCuboid = findNextUnownedHomeRegion();
-		homeCuboid = plotCuboid.inset(roadWidth/2, roadWidth/2);
+		homeCuboid = findNextUnownedHomeRegion();
+		log.info("Metropolis Generating home in " + homeCuboid.toString());
 		homeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
 		homeRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
 		homeRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
@@ -725,15 +736,15 @@ public class MetropolisPlugin extends JavaPlugin {
 	
 		setHomeOccupied(playerName, homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint());
 		
-		createRoads(plotCuboid);
+		createRoads(homeCuboid);
 		
 		if(generateFloor){
-			generateFloor(plotCuboid);
+			generateFloor(homeCuboid);
 		}
 		
 		if(DEBUG){log.info(String.format("generateSign: %s", String.valueOf(generateSign)));}
 		if(generateSign){
-			generateSign(plotCuboid, playerName);
+			generateSign(homeCuboid, playerName);
 		}
 		
 		if(DEBUG){log.info(String.format("Done generating home for %s", playerName));}
@@ -753,7 +764,9 @@ public class MetropolisPlugin extends JavaPlugin {
 			if(playerName.length() > 45){
 				sign.setLine(3, playerName.substring(31, Math.min(45, playerName.length())));
 			}
-		}		
+		}
+		
+		sign.update(true);
 	}
 
 	public List<Plot> getCityBlocks() {

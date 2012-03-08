@@ -37,7 +37,6 @@
     </repository>
   </repositories>
 
-
   <dependencies>
     <!-- WorldEdit -->
     <dependency>

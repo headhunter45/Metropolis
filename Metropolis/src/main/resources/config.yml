@@ -3,6 +3,7 @@ plot:
   sizeZ: 24
   floor:
     generate: true
+    clearSpaceAbove: 66
     material: 2
     supports:
       generate: true
