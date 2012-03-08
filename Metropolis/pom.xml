@@ -64,7 +64,7 @@
   <distributionManagement>
     <repository>
       <id>majinnaibu-repository</id>
-      <url>ftp://www.majinnaibu.com/majinnaibu/repo</url>
+      <url>ftp://repo.majinnaibu.com</url>
     </repository>
   </distributionManagement>
 
