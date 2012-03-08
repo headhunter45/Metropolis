@@ -35,6 +35,7 @@ import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.domains.Domain;
 import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
@@ -806,5 +807,41 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	public int getWallheight(){
 		return wallHeight;
+	}
+
+	public int getMaxPlots(String name) {
+		Player player = null;
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getNumPlots(String name) {
+		// TODO Auto-generated method stub
+		return 1;
+	}
+
+	public void assignPlot(Player player) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public String setCurrentHome(Player player, int homeNumber) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Plot getPlot(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Player getPlayer(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String teleportPlayerToPlot(Player player, Plot plot) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

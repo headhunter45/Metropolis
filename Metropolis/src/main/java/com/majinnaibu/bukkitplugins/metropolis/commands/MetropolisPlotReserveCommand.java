@@ -14,7 +14,6 @@ public class MetropolisPlotReserveCommand implements CommandExecutor {
 
 	public MetropolisPlotReserveCommand(MetropolisPlugin metropolisPlugin) {
 		_plugin = metropolisPlugin;
-		
 	}
 
 	@Override
