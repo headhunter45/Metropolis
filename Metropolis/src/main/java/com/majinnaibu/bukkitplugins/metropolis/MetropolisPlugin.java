@@ -834,4 +834,34 @@ public class MetropolisPlugin extends JavaPlugin {
 			return;
 		}
 	}
+
+	public int getNumPlots(String name) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getMaxPlots(String name) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public void assignPlot(Player player) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public Plot getPlot(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Player getPlayer(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String teleportPlayerToPlot(Player player, Plot plot) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
