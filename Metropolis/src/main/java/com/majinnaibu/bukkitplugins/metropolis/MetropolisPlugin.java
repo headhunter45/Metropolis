@@ -2,7 +2,9 @@ package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.bukkit.Material;
@@ -15,6 +17,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -60,6 +63,8 @@ public class MetropolisPlugin extends JavaPlugin {
 	public RegionManager regionManager = null;
 
 	private List<Plot> _occupiedPlots;
+	private HashMap<String, List<Plot>> _ownedPlots;
+	private HashMap<String, UserOverride> _userOverrides;
 	
 	private PlayerJoinListener _playerJoinListener = null;
 	
@@ -90,6 +95,8 @@ public class MetropolisPlugin extends JavaPlugin {
 	private boolean generateWall = false;
 	private Material wallMaterial = Material.GLASS;
 	private int wallHeight = 128;
+	int _maxPlots = 1;
+	int _plotMultiplier = 1;
 		
 	private Cuboid _spawnCuboid = null;
 	private Cuboid _cityCuboid = null;
@@ -106,6 +113,9 @@ public class MetropolisPlugin extends JavaPlugin {
 	public void onEnable() {
 		pdf = getDescription();
 		
+		_ownedPlots = new HashMap<String, List<Plot>>();
+		_userOverrides = new HashMap<String, UserOverride>();
+		
 		if(DEBUG){log.info("Checking config");}
 		Configuration config = getConfig();
 		if(!config.contains("version")){
@@ -113,13 +123,15 @@ public class MetropolisPlugin extends JavaPlugin {
 			if(DEBUG){log.info("No config exists.  Assuming new installation.");}
 		}else{
 			int configVersion = safeGetIntFromConfig(config, "version");
-			if(DEBUG){log.info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
-			if(configVersion != version){
-				//upgrade config
-				config.set("version", version);
+			if(configVersion < version){
+				if(DEBUG){log.info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
+				if(configVersion != version){
+					//upgrade config
+					config.set("version", version);
+				}
+				saveConfig();
+				if(DEBUG){log.info("Config updated");}
 			}
-			saveConfig();
-			if(DEBUG){log.info("Config updated");}
 		}
 		
 		config.set("version", version);
@@ -149,6 +161,11 @@ public class MetropolisPlugin extends JavaPlugin {
 		wallMaterial = safeGetMaterialFromConfig(config, "wall.material");
 		wallHeight = safeGetIntFromConfig(config, "wall.material");
 		worldName = safeGetStringFromConfig(config, "worldname");
+		_maxPlots = safeGetIntFromConfig(config, "plot.multiplier");
+		_plotMultiplier = safeGetIntFromConfig(config, "plot.maxPerPlayer");
+		
+		buildUserOverrides();
+		
 		saveConfig();
 		if(DEBUG){log.info("Done reading config.");}
 		
@@ -268,6 +285,44 @@ public class MetropolisPlugin extends JavaPlugin {
 		RegisterCommandHandler("metropolis-plot-reserve", new MetropolisPlotReserveCommand(this));
 	}
 	
+	private void buildUserOverrides() {
+		if(getConfig().isList("userOverrides")){
+			List<?> list = getConfig().getList("userOverrides");
+			
+			for(Object o2 : list){
+				if(o2 instanceof HashMap<?, ?>){
+					HashMap<?, ?>map = (HashMap<?, ?>)o2;
+					String username = "";
+					if(map.containsKey("username")){ 
+						Object o3 = map.get("username");
+						if(o3 instanceof String){
+							username = (String)o3;
+						}
+					}
+					
+					int plotMultiplier = _plotMultiplier;
+					if(map.containsKey("plotMultiplier")){
+						Object o3 = map.get("plotMultiplier");
+						if(o3 instanceof Integer){
+							plotMultiplier = (Integer)o3;
+						}
+					}
+					
+					int maxPlots = _maxPlots;
+					if(map.containsKey("maxPlots")){
+						Object o3 = map.get("maxPlots");
+						if(o3 instanceof Integer){
+							maxPlots = (Integer)o3;
+						}
+					}
+					
+					UserOverride override = new UserOverride(username, plotMultiplier, maxPlots);
+					_userOverrides.put(username, override);
+				}
+			}
+		}
+	}
+
 	private Cuboid getCuboid(int row, int col) {
 		BlockVector min = getPlotMin(row, col);
 		BlockVector max = getPlotMax(row, col);
@@ -362,6 +417,7 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	private void fillOccupiedPlots(){
 		_occupiedPlots.clear();
+		_ownedPlots.clear();
 		
 		for(ProtectedRegion region: regionManager.getRegions().values()){
 			if(region instanceof ProtectedCuboidRegion){
@@ -375,7 +431,40 @@ public class MetropolisPlugin extends JavaPlugin {
 			}
 		}
 		
+		for(ProtectedRegion region: regionManager.getRegions().values()){
+			if(region instanceof ProtectedCuboidRegion){
+				ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) region;
+				if(cuboidRegion.getId().startsWith("h_")){
+					int homeNum = 0;
+					String regionId = cuboidRegion.getId();
+					try{
+						if(regionId.indexOf('_', 2) > 2){
+							homeNum = Integer.parseInt(regionId.substring(2, regionId.indexOf('_', 2)));
+						}
+					}catch(NumberFormatException ex){
+						homeNum = 0;
+					}
+					
+					if(homeNum > 0){
+						addOwnedPlot(regionId.substring(regionId.indexOf('_',2)), Plot.get(cuboidRegion));
+					}
+				}else if(cuboidRegion.getId().startsWith("r_")){
+				}
+			}
+		}
+		
 		size=calculateCitySize();
+	}
+
+	private void addOwnedPlot(String substring, Plot plot) {
+		if(_ownedPlots.containsKey(substring)){
+			List<Plot> plots = _ownedPlots.get(substring);
+			plots.add(plot);
+		}else{
+			List<Plot> plots = new ArrayList<Plot>();
+			plots.add(plot);
+			_ownedPlots.put(substring, plots);
+		}
 	}
 
 	@Override
@@ -836,13 +925,24 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	public int getNumPlots(String name) {
-		// TODO Auto-generated method stub
-		return 0;
+		if(_ownedPlots.containsKey(name)){
+			List<Plot> plots = _ownedPlots.get(name);
+			if(plots == null){
+				return 0;
+			}else{
+				return plots.size();
+			}
+		}else{
+			return 0;
+		}
 	}
 
 	public int getMaxPlots(String name) {
-		// TODO Auto-generated method stub
-		return 0;
+		if(_userOverrides.containsKey(name)){
+			return _userOverrides.get(name).getMaxPlots();
+		}else{
+			return _maxPlots;
+		}
 	}
 
 	public void assignPlot(Player player) {
@@ -863,5 +963,15 @@ public class MetropolisPlugin extends JavaPlugin {
 	public String teleportPlayerToPlot(Player player, Plot plot) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public boolean homeExists(String name, int newHomeNumber) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void setHome(String name, int newHomeNumber) {
+		// TODO Auto-generated method stub
+		
 	}
 }

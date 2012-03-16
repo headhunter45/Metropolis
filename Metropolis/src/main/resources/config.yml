@@ -1,6 +1,6 @@
 plot:
-  sizeX: 32   sizeY: 256
-  sizeZ: 32   ovvsetX: 0   offsetY: 0   offsetZ: 0   defaultMultiplier: 1   maxPerPlayer: 1   initial: 1
+  sizeX: 32  sizeY: 256
+  sizeZ: 32  ovvsetX: 0  offsetY: 0  offsetZ: 0  multiplier: 1  maxPerPlayer: 1  initial: 1
   floor:
     generate: true
     clearSpaceAbove: 66
@@ -9,8 +9,7 @@ plot:
       generate: true
       material: 1
   sign:
-    generate: true   userOverrides:   	- username: majinnaibu   	  plotMultiplier: 2   	  maxPlots: 2   	- username: hoggrim   	  plotMultiplier: 2   	  maxPlots: 2
-road:
+    generate: trueroad:
   width: 4
   clearSpaceAbove: 66
   level: 62
@@ -27,3 +26,10 @@ wall:
   material: 7
   height: 66
 worldname: world
+userOverrides:
+  - username: majinnaibu
+    plotMultiplier: 2
+    maxPlots: 2
+  - username: hoggrim
+    plotMultiplier: 2
+    maxPlots: 2
