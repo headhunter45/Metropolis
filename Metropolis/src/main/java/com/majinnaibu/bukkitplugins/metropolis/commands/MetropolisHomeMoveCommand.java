@@ -36,7 +36,7 @@ public class MetropolisHomeMoveCommand implements CommandExecutor {
 				return false;
 			}
 			
-			player = _plugin.getPlayer(args[1]);
+			player = _plugin.getOfflinePlayer(args[1]);
 		}else{
 			return false;
 		}

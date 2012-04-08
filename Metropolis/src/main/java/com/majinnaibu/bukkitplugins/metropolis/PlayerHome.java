@@ -6,7 +6,6 @@ import javax.persistence.Table;
 import com.avaje.ebean.validation.NotNull;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 @Entity()
@@ -16,6 +15,8 @@ public class PlayerHome extends Plot{
 	private String playerName;
 	public String getPlayerName(){return this.playerName;}
 	public void setPlayerName(String playerName){this.playerName = playerName;}
+	
+	private int number;
 		
 	public PlayerHome(String owner, BlockVector min, BlockVector max) {
 		super("h_" + owner, min, max);
@@ -27,24 +28,30 @@ public class PlayerHome extends Plot{
 	}
 	
 	public PlayerHome(ProtectedRegion homeRegion){
-		if(homeRegion instanceof ProtectedCuboidRegion){
-			ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) homeRegion;
-			if(cuboidRegion.getId().startsWith("h_") && cuboidRegion.getId().length() > 2){
-				this.playerName = cuboidRegion.getId().substring(2);
-			}else{
-				this.playerName = cuboidRegion.getId();
-			}
+		try{
+			String rname = homeRegion.getId();
 			
-			setCuboid(new Cuboid(cuboidRegion.getMinimumPoint(), cuboidRegion.getMaximumPoint()));
-		}else if(homeRegion instanceof ProtectedPolygonalRegion){
-			ProtectedPolygonalRegion polygonalRegion = (ProtectedPolygonalRegion)homeRegion;
-			if(polygonalRegion.getId().startsWith("h_") && polygonalRegion.getId().length() > 2){
-				this.playerName = polygonalRegion.getId().substring(2);
-			}else{
-				this.playerName = polygonalRegion.getId();
+			if(rname.startsWith("h_")){
+				int secondUnderscore = rname.indexOf('_', 2);
+				if(secondUnderscore > 2){
+					try{
+						this.number = Integer.parseInt(rname.substring(2, secondUnderscore));
+						this.playerName = rname.substring(secondUnderscore+1);
+					}catch(Exception ex){
+						this.number = 0;
+					}
+				}else{
+					this.number = 0;
+					this.playerName = rname.substring(2);
+				}
+				
+				setCuboid(new Cuboid(homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint()));
 			}
-			
-			setCuboid(new Cuboid(polygonalRegion.getMinimumPoint(), polygonalRegion.getMaximumPoint()));
+			else{
+				throw new RuntimeException("Method not implemented.");
+			}
+		}catch(Exception ex){
+			throw new RuntimeException("Method not implemented.", ex);
 		}
 	}
 
@@ -81,5 +88,13 @@ public class PlayerHome extends Plot{
 		}else{
 			return null;
 		}
+	}
+	
+	public Integer getNumber() {
+		return number;
+	}
+	
+	public void setNumber(int number){
+		this.number = number;
 	}
 }

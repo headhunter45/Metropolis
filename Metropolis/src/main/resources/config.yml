@@ -1,6 +1,6 @@
 plot:
   sizeX: 32  sizeY: 256
-  sizeZ: 32  ovvsetX: 0  offsetY: 0  offsetZ: 0  multiplier: 1  maxPerPlayer: 1  initial: 1
+  sizeZ: 32  offsetX: 0  offsetY: 0  offsetZ: 0  multiplier: 1  maxPerPlayer: 1  initial: 1
   floor:
     generate: true
     clearSpaceAbove: 66
@@ -27,9 +27,9 @@ wall:
   height: 66
 worldname: world
 userOverrides:
-  - username: majinnaibu
-    plotMultiplier: 2
-    maxPlots: 2
-  - username: hoggrim
-    plotMultiplier: 2
-    maxPlots: 2
+- username: majinnaibu
+  plotMultiplier: 2
+  maxPlots: 2
+- username: hoggrim
+  plotMultiplier: 2
+  maxPlots: 2
