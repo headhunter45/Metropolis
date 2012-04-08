@@ -50,7 +50,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class MetropolisPlugin extends JavaPlugin {
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	public static final Logger log=Logger.getLogger("Minecraft");
 	private static final int version = 1;
 	
