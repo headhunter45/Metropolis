@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.majinnaibu.bukkitplugins</groupId>
   <artifactId>Metropolis</artifactId>
-  <version>0.5-SNAPSHOT</version>
+  <version>1.0-SNAPSHOT</version>
   <name>Metropolis</name>
   <description>Metropolis generates homes and streets for players as they connect to your server.</description>
   <url>http://www.github.com/headhunter45/Metropolis</url>
