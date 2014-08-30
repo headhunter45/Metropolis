@@ -29,6 +29,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGetMaterialCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugMatchMaterialCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeEvictCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
@@ -284,6 +286,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		RegisterCommandHandler("metropolis", new MetropolisCommand(this));
 		
 		RegisterCommandHandler("metropolis-debug-generatetesthomes", new MetropolisDebugGenerateTestHomesCommand(this));
+		RegisterCommandHandler("metropolis-debug-getmaterial", new MetropolisDebugGetMaterialCommand(this));
+		RegisterCommandHandler("metropolis-debug-matchmaterial", new MetropolisDebugMatchMaterialCommand(this));
 		
 		RegisterCommandHandler("metropolis-flag-reset", new MetropolisFlagResetCommand(this));
 		
@@ -352,6 +356,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private Cuboid getCuboid(int row, int col) {
 		//This is only used for debug info
 		BlockVector min = getPlotMin(row, col, 1);
@@ -396,12 +401,10 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	
 	private Material safeGetMaterialFromConfig(Configuration config, String name){
-		Material material = null;
-		if(config.isInt(name)){
-			material = Material.getMaterial(config.getInt(name));
-		}else if(config.isString(name)){
-			material = Material.getMaterial(config.getString(name));
-			if(material== null){
+		Material material = Material.AIR;
+		if(config.isString(name)){
+			material = Material.matchMaterial(config.getString(name));
+			if(material == null){
 				material = Material.matchMaterial(config.getString(name));
 			}
 		}
@@ -1078,7 +1081,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private void saveCurrentHomes() {
-		File outFile = new File(getDataFolder(), "currentHomes.yml");
+		//File outFile = new File(getDataFolder(), "currentHomes.yml");
 				
 		// TODO Auto-generated method stub
 		

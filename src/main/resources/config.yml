@@ -4,26 +4,27 @@ plot:
   floor:
     generate: true
     clearSpaceAbove: 66
-    material: 2
+    material: GRASS
     supports:
       generate: true
-      material: 1
+      material: STONE
   sign:
-    generate: trueroad:
+    generate: true
+road:
   width: 4
   clearSpaceAbove: 66
   level: 62
-  material: 4
+  material: COBBLESTONE
   supports:
     generate: true
-    material: 1
+    material: STONE
 spawn:
   generate: true
   setAsWorldSpawn: true
-  material: 2
+  material: GRASS
 wall:
   generate: true
-  material: 7
+  material: BEDROCK
   height: 66
 worldname: world
 userOverrides:
