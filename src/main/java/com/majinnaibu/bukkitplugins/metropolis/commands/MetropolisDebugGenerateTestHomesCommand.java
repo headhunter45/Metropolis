@@ -1,5 +1,6 @@
 package com.majinnaibu.bukkitplugins.metropolis.commands;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,7 +21,7 @@ public class MetropolisDebugGenerateTestHomesCommand implements CommandExecutor 
 		try{
 			int numHomes = Integer.parseInt(args[0]);
 			for(int i=1; i<= numHomes; i++){
-				_plugin.generateHome(String.format("test%d", i));
+				_plugin.generateHome(Bukkit.getOfflinePlayer(String.format("test%d", i)));
 			}
 		
 			return true;

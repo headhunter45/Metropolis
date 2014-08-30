@@ -1,5 +1,6 @@
 package com.majinnaibu.bukkitplugins.metropolis.commands;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,13 +15,14 @@ public class MetropolisHomeGenerateCommand implements CommandExecutor {
 		_plugin = plugin;
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if(args.length < 1){
 			return false;
 		}
 		
-		_plugin.generateHome(args[0]);
+		_plugin.generateHome(Bukkit.getOfflinePlayer(args[0]));
 		
 		sender.sendMessage("[Metropolis] Home generated for " + args[0]);
 		

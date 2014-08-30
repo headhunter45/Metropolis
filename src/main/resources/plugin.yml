@@ -1,8 +1,8 @@
 name: Metropolis
 main: com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin
+version: 1.0
 depend: [WorldGuard]
 softdepend: [WorldEdit,CommandBook]
-version: 1.0
 database: false
 commands:
   metropolis:

@@ -18,31 +18,33 @@ public class MetropolisHomeEvictCommand implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		//get the player and region
-		String playerName = "";
+		String targetUUIDString = null;
+
+		OfflinePlayer targetPlayer = null;
 		
 		if(args.length == 0){
 			return false;
 		}
 		
 		if(args.length >= 1){
-			playerName = args[0];
+			targetUUIDString = args[0];
+			targetPlayer = _plugin.getOfflinePlayer(targetUUIDString);
 		}
 		
-		OfflinePlayer player = _plugin.getServer().getOfflinePlayer(playerName);
-		if(player == null){
-			sender.sendMessage(String.format("The requested player {%s}does not appear to exist.", playerName));
+		if(targetPlayer == null){
+			sender.sendMessage(String.format("The requested player {%s}does not appear to exist.", targetUUIDString));
 			return false;
 		}
 		
-		ProtectedRegion region = _plugin.getRegion(String.format("h_%s", player.getName()));
+		ProtectedRegion region = _plugin.getRegion(String.format("h_%s", targetPlayer.getUniqueId().toString()));
 		if(region == null){
 			sender.sendMessage(String.format("The player {%s} has no home to be evicted from."));
 			return false;
 		}
 		
 		//remove the player as owner and/or member of the region
-		region.getMembers().removePlayer(playerName);
-		region.getOwners().removePlayer(playerName);
+		region.getMembers().removePlayer(targetPlayer.getName());//playerName);
+		region.getOwners().removePlayer(targetPlayer.getName());
 		
 		//if the region has no owners delete the region
 		if(region.getMembers().size() == 0 && region.getOwners().size() == 0){
