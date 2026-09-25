@@ -1,0 +1,25 @@
+{
+  "id": "metropolis",
+  "title": "Metropolis",
+  "description": "Legacy Bukkit plugin that automatically creates protected home plots and roads as players join a Minecraft server.",
+  "docId": "Metropolis",
+  "image": {
+    "url": "Pixel-art aerial view of a growing Minecraft city planned in a square grid, small player home plots connected by pale roads, a protected central spawn, blocky green landscape, subtle WorldGuard-inspired boundary lines, warm daylight, clean game-plugin thumbnail composition, no words or logos.",
+    "alt": "Pixel-art aerial view of a Minecraft city with player home plots and connecting roads",
+    "prompt": "Pixel-art aerial view of a growing Minecraft city planned in a square grid, small player home plots connected by pale roads, a protected central spawn, blocky green landscape, subtle WorldGuard-inspired boundary lines, warm daylight, clean game-plugin thumbnail composition, no words or logos.",
+    "width": 0,
+    "height": 0,
+    "backgroundClassName": "bg-surface"
+  },
+  "url": "/projects/metropolis",
+  "tags": [
+    "open-source"
+  ],
+  "source": {
+    "type": "github",
+    "url": "https://github.com/headhunter45/Metropolis"
+  },
+  "feedback": {
+    "url": "https://github.com/headhunter45/Metropolis/issues"
+  }
+}
