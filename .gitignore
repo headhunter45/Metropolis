@@ -1,6 +1,15 @@
+.gradle/
+build/
+target/
+.worktrees/
+bin/
+/backups/
+/server/
+.env
+
+# Old entries double check these later.
 /server
 /Plugin.jardesc
 /Plugin-Release.jardesc
 /lib
 /target
-.worktrees/
