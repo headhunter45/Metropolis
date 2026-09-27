@@ -9,7 +9,7 @@ description = 'Metropolis'
 
 gitSemVer {
     minimumVersion.set('0.5.0')
-    versionPrefix.set('')
+    versionPrefix.set('v')
 }
 
 repositories {

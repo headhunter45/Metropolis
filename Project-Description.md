@@ -1,12 +1,5 @@
 # Metropolis
 
-Metropolis is a Paper plugin that expands a protected Minecraft city as players join. It generates home plots and connecting roads, uses WorldGuard to protect the city and homes, and supports reserved plots and home teleportation.
+Metropolis turns player onboarding into city planning. As players arrive, the Paper plugin finds the next available plot, builds the surrounding roads and infrastructure, and extends a WorldGuard-protected city that feels designed rather than randomly generated.
 
-## Platform
-
-- Paper 26.2, Java 25+
-- WorldGuard 7.0.19 and WorldEdit 7.4.5
-- Built with Gradle 9.8 and Git-sensitive semantic versioning
-- Configuration: `plugins/Metropolis/config.yml`
-- Unit tests run without a server; live integration tests use the separate Gradle `integrationTest` task.
-- License: GNU General Public License v3
+The project combines procedural spatial logic, persistent UUID-based ownership, configurable construction rules, WorldEdit-assisted reservations, and a command suite for moving, acquiring, listing, and administering homes. It is also a modernization case study: a legacy plugin brought forward to Paper 26.2 and 26.3 with Gradle, focused unit tests, and opt-in live-server integration tests. Bukkit and Spigot servers are outside the support target.

@@ -2,9 +2,18 @@
 
 Metropolis expands a protected Minecraft city as players join. Each player can receive a home plot connected by generated roads; WorldGuard protects the city, homes, and reserved plots.
 
+## Features
+
+- Assigns a protected home plot when a player joins and supports acquiring additional homes up to the configured player limit.
+- Expands the City region as plots are occupied, with optional spawn generation, world-spawn placement, floors, support blocks, signs, and perimeter walls.
+- Generates roads around plots with configurable width, level, material, clearance, and supports.
+- Creates named protected reservations from coordinates or a WorldEdit selection so reserved plots are not assigned as homes.
+- Persists selected homes by player UUID and recognizes legacy name-based home data during migration.
+- Supports online/offline player administration for home generation, movement, and eviction.
+
 ## Requirements
 
-- Paper 26.2, with Java 25 or newer
+- Paper 26.2 or 26.3, with Java 25 or newer
 - WorldGuard 7.0.19
 - WorldEdit 7.4.5
 
@@ -41,26 +50,28 @@ Copy `.env.example` to `.env` and configure the Paper version/build and server p
 - `tools/start-server.sh` downloads the configured Paper build if needed and starts it.
 - `tools/backup-server.sh` and `tools/restore-server.sh` back up or restore the configured server.
 - `tools/publish-local.sh` publishes the artifact to the local Maven repository.
-- `tools/publish-modrinth.sh` uploads a built jar after checking its version.
+- `tools/publish-modrinth.sh` uploads a built jar after checking its version and generates a Markdown changelog from Git commits since the previous version tag. Set `MODRINTH_CHANGELOG` to override it with curated notes.
+
 
 ## Configuration
 
-The default configuration is in `src/main/resources/config.yml` and is copied to `plugins/Metropolis/config.yml` on first startup. Materials use Bukkit names; the previous numeric IDs for stone, grass, cobblestone, and bedrock are still accepted when loading a configuration.
-
-Player home ownership and selected-home data use UUIDs. Existing name-keyed `currentHomes.yml` entries and name-based WorldGuard home regions are recognized during migration.
+`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. The bundled configuration provides the defaults. Metropolis targets Paper 26.2 and 26.3 only; Bukkit and Spigot servers are not supported.
 
 ## Commands
 
-- `/metropolis` displays the plugin version.
-- `/metropolis-home-acquire` acquires an available home plot.
-- `/metropolis-home-generate <player>` generates a home for a known online or cached offline player.
-- `/metropolis-home-list` lists Metropolis plots.
-- `/metropolis-home-go [player]` teleports to a home.
-- `/metropolis-home-move <home-number> [player]` changes a player's selected home.
-- `/metropolis-home-evict <player>` removes a player's home ownership.
-- `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` reserves coordinates; a player may instead provide a WorldEdit selection.
-- `/metropolis-plot-go <plot-name> [player]` teleports to a plot.
-- `/metropolis-flag-reset` reapplies Metropolis protection flags.
+| Command | Permission | Description |
+| --- | --- | --- |
+| `/metropolis` | None | Displays the plugin version. |
+| `/metropolis-home-acquire` | Player only | Acquires an available home if the player's home limit is not reached. |
+| `/metropolis-home-generate <playerName>` | `metropolis.home.generate` | Generates a home for an online or cached offline player. |
+| `/metropolis-home-list` | `metropolis.home.list` | Lists the occupied and reserved Metropolis plots with their bounds. |
+| `/metropolis-home-go [playerName]` | `metropolis.home.go` | Teleports the sender, or a permitted target player, to their home. |
+| `/metropolis-home-move <homeNumber> [playerName]` | `metropolis.home.move` | Selects one of a player's existing home regions. The player argument defaults to the sender. |
+| `/metropolis-home-evict <playerName>` | `metropolis.home.evict` | Removes the player's ownership from their selected home region. |
+| `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` | `metropolis.plot.reserve` | Creates a named reservation from explicit bounds. A player can instead run `/metropolis-plot-reserve <name>` with a WorldEdit selection. |
+| `/metropolis-plot-go <plotName> [playerName]` | `metropolis.plot.go` | Teleports the sender or target player to a named occupied or reserved plot. |
+| `/metropolis-flag-reset` | `metropolis.flag.reset` | Reapplies Metropolis protection flags to the City and home regions. |
+| `/metropolis-debug-generatetesthomes <count>` | `metropolis.debug` | Generates test homes; intended for development servers. |
 
 ## License
 

@@ -1,0 +1,13 @@
+{
+  "name": "Metropolis",
+  "url": "https://modrinth.com/plugin/metropolis-builder",
+  "summary": "Grow a protected Minecraft city with automatic UUID-owned homes, configurable roads, WorldGuard protection, and reserved plots.",
+  "visibility": "public",
+  "links": {
+    "issueTracker": "https://github.com/headhunter45/Metropolis/issues",
+    "sourceCode": "https://github.com/headhunter45/Metropolis",
+    "wikiPage": null,
+    "discordInvite": null,
+    "donationLinks": []
+  }
+}
