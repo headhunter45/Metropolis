@@ -56,6 +56,7 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.type.Stairs;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -100,11 +101,16 @@ public class MetropolisPlugin extends JavaPlugin {
   private int maxLevels = 1;
   private int gridSizeZ = 28;
   private int roadWidth = 4;
+  private int avenueWidth = 4;
   private int roadLevel = 62;
   private int spaceAboveRoad = 2;
   private Material roadMaterial = Material.COBBLESTONE;
   private boolean generateRoadSupports = true;
   private Material roadSupportMaterial = Material.STONE;
+  private boolean generateAvenueStairs;
+  private Material avenueStairMaterial = Material.COBBLESTONE_STAIRS;
+  private int avenueStairWidth;
+  private int avenueStairsEveryNBlocks;
   private String worldName = "world";
   private boolean generateFloor = false;
   private Material floorMaterial = Material.GRASS_BLOCK;
@@ -190,6 +196,7 @@ public class MetropolisPlugin extends JavaPlugin {
     generateSign = safeGetBooleanFromConfig(config, "plot.sign.generate");
     roadWidth =
         safeGetIntFromConfig(config, "road.streets.width", "road.avenues.width", "road.width");
+    avenueWidth = safeGetIntFromConfig(config, "road.avenues.width");
     spaceAboveRoad =
         safeGetIntFromConfig(
             config,
@@ -213,6 +220,32 @@ public class MetropolisPlugin extends JavaPlugin {
             "road.streets.supports.material",
             "road.avenues.supports.material",
             "road.supports.material");
+    generateAvenueStairs = safeGetBooleanFromConfig(config, "road.avenues.stairs.generate");
+    if (generateAvenueStairs) {
+      avenueStairMaterial = safeGetMaterialFromConfig(config, "road.avenues.stairs.material");
+      avenueStairWidth = safeGetIntFromConfig(config, "road.avenues.stairs.width");
+      avenueStairsEveryNBlocks = safeGetIntFromConfig(config, "road.avenues.stairs.everyNBlocks");
+
+      if (avenueStairWidth < 1 || avenueStairWidth >= avenueWidth) {
+        getLogger()
+            .severe(
+                "road.avenues.stairs.width must be positive and narrower than road.avenues.width;"
+                    + " avenue stairs are disabled.");
+        generateAvenueStairs = false;
+      }
+      if (avenueStairsEveryNBlocks < 1) {
+        getLogger()
+            .severe(
+                "road.avenues.stairs.everyNBlocks must be positive; avenue stairs are disabled.");
+        generateAvenueStairs = false;
+      }
+      if (!(avenueStairMaterial.createBlockData() instanceof Stairs)) {
+        getLogger()
+            .severe(
+                "road.avenues.stairs.material must be a stair block; avenue stairs are disabled.");
+        generateAvenueStairs = false;
+      }
+    }
     generateSpawn = safeGetBooleanFromConfig(config, "spawn.generate");
     setWorldSpawn = safeGetBooleanFromConfig(config, "spawn.setAsWorldSpawn");
     spawnFloorMaterial = safeGetMaterialFromConfig(config, "spawn.material");
@@ -695,18 +728,19 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   private void createRoads(Cuboid plotCuboid, int roadMask) {
+    if (plotCuboid == null) {
+      if (DEBUG) {
+        getLogger().warning("plotCuboid is null");
+      }
+      return;
+    }
+
     if (roadWidth > 0) {
       int x = 0;
       int y = plotCuboid.minY;
       int z = 0;
 
-      if (plotCuboid == null) {
-        if (DEBUG) {
-          getLogger().warning("plotCuboid is null");
-        }
-        return;
-      }
-
+      List<AvenueStairwayLayout.Step> stairOpenings = getUpperRoadOpenings(plotCuboid, y);
       int roadWidth1 = roadWidth / 2;
       int roadWidth2 = roadWidth - roadWidth1;
 
@@ -714,7 +748,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0) {
         for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
           for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -723,7 +757,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & ROAD_NORTH) != 0) {
         for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
           for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -732,7 +766,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0) {
         for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
           for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -741,7 +775,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & ROAD_EAST) != 0) {
         for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
           for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -750,7 +784,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0) {
         for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
           for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -759,7 +793,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & ROAD_SOUTH) != 0) {
         for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
           for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -768,7 +802,7 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0) {
         for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
           for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
       }
@@ -777,9 +811,14 @@ public class MetropolisPlugin extends JavaPlugin {
       if ((roadMask & ROAD_WEST) != 0) {
         for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
           for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
-            setRoad(x, y, z);
+            setRoad(x, y, z, stairOpenings);
           }
         }
+      }
+
+      int upperLevel = Math.floorDiv(y - roadLevel, getLevelPitchY());
+      if (upperLevel > 0 && getLevelStartY(upperLevel) == y) {
+        generateAvenueStairs(plotCuboid, upperLevel - 1);
       }
     }
   }
@@ -788,7 +827,11 @@ public class MetropolisPlugin extends JavaPlugin {
     createRoads(plotCuboid, ROAD_NORTH | ROAD_SOUTH | ROAD_EAST | ROAD_WEST);
   }
 
-  private void setRoad(int x, int y, int z) {
+  private void setRoad(int x, int y, int z, List<AvenueStairwayLayout.Step> stairOpenings) {
+    if (stairOpenings.contains(new AvenueStairwayLayout.Step(x, y, z))) {
+      return;
+    }
+
     // if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
 
     Block block = world.getBlockAt(x, y, z);
@@ -1191,6 +1234,61 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     sign.update(true);
+  }
+
+  private void generateAvenueStairs(Cuboid plotCuboid, int lowerLevel) {
+    if (!generateAvenueStairs || lowerLevel < 0 || lowerLevel >= getEffectiveMaxLevels() - 1) {
+      return;
+    }
+
+    int avenueBlockIndex = getPlotZFromMin(plotCuboid);
+    if (Math.floorMod(avenueBlockIndex + 1, avenueStairsEveryNBlocks) != 0) {
+      return;
+    }
+
+    int lowerY = getLevelStartY(lowerLevel);
+    AvenueStairwayLayout.Flight flight =
+        AvenueStairwayLayout.forUpperRoad(
+            plotCuboid, avenueWidth, avenueStairWidth, lowerY, getLevelPitchY(), 3);
+    if (flight.stairBlocks().isEmpty()) {
+      getLogger()
+          .warning(
+              "Avenue stair run does not fit beside plot at "
+                  + plotCuboid.minX
+                  + ","
+                  + plotCuboid.minY
+                  + ","
+                  + plotCuboid.minZ);
+      return;
+    }
+
+    AvenueStairwayBuilder.build(world, flight, avenueStairMaterial);
+  }
+
+  private List<AvenueStairwayLayout.Step> getUpperRoadOpenings(Cuboid plotCuboid, int roadY) {
+    if (!generateAvenueStairs || roadY <= roadLevel) {
+      return List.of();
+    }
+
+    int upperLevel = Math.floorDiv(roadY - roadLevel, getLevelPitchY());
+    if (getLevelStartY(upperLevel) != roadY) {
+      return List.of();
+    }
+
+    int lowerLevel = upperLevel - 1;
+    int avenueBlockIndex = getPlotZFromMin(plotCuboid);
+    if (lowerLevel < 0 || Math.floorMod(avenueBlockIndex + 1, avenueStairsEveryNBlocks) != 0) {
+      return List.of();
+    }
+
+    return AvenueStairwayLayout.forUpperRoad(
+            plotCuboid,
+            avenueWidth,
+            avenueStairWidth,
+            getLevelStartY(lowerLevel),
+            getLevelPitchY(),
+            3)
+        .roadOpenings();
   }
 
   public List<Plot> getCityBlocks() {

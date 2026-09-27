@@ -31,6 +31,7 @@ road:
       generate: true
       material: COBBLESTONE_STAIRS
       everyNBlocks: 4
+      width: 2
   streets:
     width: 4
     clearSpaceAbove: 9

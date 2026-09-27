@@ -26,6 +26,8 @@ road:
     supports:
       generate: true
       material: STONE
+    stairs:
+      generate: false
   streets:
     width: 4
     clearSpaceAbove: 66
