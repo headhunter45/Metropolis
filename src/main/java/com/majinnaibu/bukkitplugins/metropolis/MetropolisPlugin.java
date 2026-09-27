@@ -21,8 +21,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -302,34 +300,13 @@ public class MetropolisPlugin extends JavaPlugin {
 	
 	private void loadCurrentHomes() {
 		File homesFile = new File(getDataFolder(), "currentHomes.yml");
-		if (!homesFile.exists()) {
-			return;
-		}
-		YamlConfiguration homes = new YamlConfiguration();
 		try {
-			homes.load(homesFile);
-		} catch (IOException | InvalidConfigurationException e) {
-			getLogger().log(java.util.logging.Level.SEVERE, "Unable to load currentHomes.yml", e);
-			return;
-		}
-		
-		_currentHomes.clear();
-		boolean migratedLegacyNames = false;
-		for(String ownerKey : homes.getKeys(false)){
-			UUID ownerId;
-			try {
-				ownerId = UUID.fromString(ownerKey);
-			} catch (IllegalArgumentException ex) {
-				ownerId = getServer().getOfflinePlayer(ownerKey).getUniqueId();
-				migratedLegacyNames = true;
-			}
-			int homeNumber = homes.getInt(ownerKey, 0);
-			if (homeNumber > 0) {
-				_currentHomes.put(ownerId, homeNumber);
-			}
-		}
-		if (migratedLegacyNames) {
+			_currentHomes.putAll(CurrentHomesStore.load(
+					homesFile,
+					ownerName -> getServer().getOfflinePlayer(ownerName).getUniqueId()));
 			saveCurrentHomes();
+		} catch (IOException | org.bukkit.configuration.InvalidConfigurationException e) {
+			getLogger().log(java.util.logging.Level.SEVERE, "Unable to load currentHomes.yml", e);
 		}
 	}
 
@@ -1095,12 +1072,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		if (player != null) {
 			return player;
 		}
-		for (Player onlinePlayer : getServer().getOnlinePlayers()) {
-			if (onlinePlayer.getName().equalsIgnoreCase(name)) {
-				return onlinePlayer;
-			}
-		}
-		return null;
+		return PlayerLookup.findOnline(name, getServer().getOnlinePlayers());
 	}
 	
 	public OfflinePlayer getOfflinePlayer(String name){
@@ -1167,11 +1139,8 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	private void saveCurrentHomes() {
 		File homesFile = new File(getDataFolder(), "currentHomes.yml");
-		YamlConfiguration homes = new YamlConfiguration();
-		_currentHomes.forEach((playerId, homeNumber) -> homes.set(playerId.toString(), homeNumber));
 		try {
-			getDataFolder().mkdirs();
-			homes.save(homesFile);
+			CurrentHomesStore.save(homesFile, _currentHomes);
 		} catch (IOException e) {
 			getLogger().log(java.util.logging.Level.SEVERE, "Unable to save currentHomes.yml", e);
 		}

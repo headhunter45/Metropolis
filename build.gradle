@@ -21,6 +21,10 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.24.0'
+    testImplementation 'io.papermc.paper:paper-api:26.2.build.129-stable'
+    testImplementation 'com.sk89q.worldedit:worldedit-bukkit:7.4.5'
+    testImplementation 'com.sk89q.worldguard:worldguard-bukkit:7.0.19'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
 }
 
 java {
