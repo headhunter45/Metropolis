@@ -68,6 +68,7 @@ public class MetropolisPlotReserveCommand implements CommandExecutor {
 		String regionName = args[0];
 		
 		_plugin.reserveCuboid(regionName, cuboid);
+		sender.sendMessage("Reserved plot region " + regionName + ".");
 		
 		return true;
 	}

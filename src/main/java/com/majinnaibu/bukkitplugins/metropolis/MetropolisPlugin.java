@@ -972,6 +972,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		regionManager.addRegion(reservedRegion);
 		
 		_occupiedPlots.add(Plot.get(reservedRegion));
+		saveRegions();
 	}
 	
 	public Cuboid getCityCuboid(){
