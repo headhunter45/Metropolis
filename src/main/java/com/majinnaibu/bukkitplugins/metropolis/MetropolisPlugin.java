@@ -779,9 +779,14 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			min = getPlotMin(-size/2, -size/2, 1);
 			max = getPlotMax(size/2, size/2, 1);
-			
-			region.setMinimumPoint(min);
-			region.setMaximumPoint(max);
+
+			ProtectedCuboidRegion resizedRegion = new ProtectedCuboidRegion(region.getId(), min, max);
+			resizedRegion.copyFrom(region);
+			regionManager.removeRegion(region.getId());
+			regionManager.addRegion(resizedRegion);
+			_cityRegion = resizedRegion;
+			_cityCuboid = new Cuboid(min, max);
+			saveRegions();
 		}
 	}
 

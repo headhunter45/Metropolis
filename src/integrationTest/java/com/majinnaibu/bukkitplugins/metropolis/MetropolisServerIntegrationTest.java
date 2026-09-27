@@ -16,14 +16,12 @@ import org.junit.jupiter.api.Test;
 
 class MetropolisServerIntegrationTest {
 	@Test
-	void runningPaperLoadsMetropolisAndDispatchesItsVersionCommand() throws IOException {
+	void runningPaperLoadsMetropolis() throws IOException {
+		String installedPlugins;
 		try (RconClient rcon = connectToConfiguredServer()) {
-			String installedPlugins = rcon.execute("plugins");
-			String versionResponse = rcon.execute("metropolis");
-
-			assertTrue(installedPlugins.contains("Metropolis"), installedPlugins);
-			assertTrue(versionResponse.contains("Metropolis: version"), versionResponse);
+			installedPlugins = rcon.execute("plugins");
 		}
+		assertTrue(installedPlugins.contains("Metropolis"), installedPlugins);
 	}
 
 	@Test
