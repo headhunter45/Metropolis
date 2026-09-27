@@ -8,7 +8,7 @@
 | MET-004 |   Done   | Move or verify plugin.yml under src/main/resources, configure Gradle resource processing, and update its Paper api-version, dependencies, commands, permissions, and required fields. |
 | MET-005 |   Done   | Add JUnit 5 test infrastructure and keep the default Gradle `test` task server-free. Use an in-memory Paper harness such as MockBukkit for Bukkit/Paper behavior and mocks or test doubles for WorldEdit, WorldGuard, and narrow API boundaries where appropriate. |
 | MET-006 |   Done   | Build the initial Gradle project and run its tests; resolve build setup issues before removing the existing Maven build. |
-| MET-007 |   Ready  | Update .gitignore for Gradle and remove obsolete Maven and Eclipse project files after the Gradle build succeeds. |
+| MET-007 |   Done   | Update .gitignore for Gradle and remove obsolete Maven and Eclipse project files after the Gradle build succeeds. |
 | MET-008 |   Done   | Analyze Java sources for deprecated or removed Bukkit/Paper APIs and legacy patterns, including logging, event registration, configuration, player lookup, and player-keyed storage. |
 | MET-009 |   Done   | Review custom scripts and resources for required updates to the Gradle build and modern Paper server workflow. |
 | MET-010 |   Done   | Refactor plugin logging to use JavaPlugin.getLogger(). |
