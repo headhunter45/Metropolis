@@ -21,6 +21,7 @@ Metropolis targets Paper only; Bukkit and Spigot servers are not supported.
 - Expands the protected city region as plots are occupied.
 - Configures plot dimensions, roads, floors, supports, signs, spawn behavior, and perimeter walls.
 - Reserves named plots by coordinates or a WorldEdit selection.
+- Lets WorldGuard owners and members teleport to reservations they belong to, with a named choice when they have multiple.
 - Tracks home ownership and selected homes by player UUID.
 - Supports home and plot teleportation, administration, and WorldGuard protection flags.
 
@@ -38,7 +39,7 @@ Metropolis creates `plugins/Metropolis/config.yml` on first startup. Configure p
 - `/metropolis-home-move <homeNumber> [playerName]` - Selects an existing home as active. The player name defaults to the sender; authorized administrators and console can target online or cached offline players.
 - `/metropolis-home-evict <playerName>` - Removes a player's ownership from their selected home region.
 - `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` - Reserves a region by coordinates; players can use `/metropolis-plot-reserve <name>` with a WorldEdit selection.
-- `/metropolis-plot-go <plotName> [playerName]` - Teleports to a named plot.
+- `/metropolis-plot-go [playerName]` - Teleports to the sender's or an online player's reservation. Specify a reservation name to choose among multiple memberships; `metropolis.plot.go` allows targeting others or bypassing membership.
 - `/metropolis-flag-reset` - Reapplies Metropolis protection flags.
 - `/metropolis-debug-generatetesthomes <count>` - Generates test homes; intended for development servers.
 

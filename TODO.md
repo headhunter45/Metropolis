@@ -35,7 +35,7 @@
 | GIT-005 | Planning | Add the possibility to create multiple plot homes in shapes. |
 | GIT-004 | Planning | Add a command to request home allocation. |
 | GIT-003 |   Ready  | Add support for multiple homes. |
-| GIT-002 | Planning | Add a command to teleport to a reservation you are part of. |
+| GIT-002 | Done     | Add a command to teleport to a reservation you are part of. |
 | GIT-001 | Done     | Add a command to move to a different home. |
 
 # GIT-001 - Add a command to move to a different home.
@@ -46,13 +46,11 @@
 `/metropolis-home-move <homeNumber> [playerName]` selects one of a player's existing homes as active. Without a player name, the command acts on the player who ran it; console and authorized administrators can specify an online or cached offline player. Reject non-positive or malformed numbers, unknown players, nonexistent homes, and extra arguments with clear feedback. Persist the selection by player UUID and confirm the change to the sender and, when online, the target player.
 
 # GIT-002 - Add a command to teleport to a reservation you are part of.
-**Status:** Ready
+**Status:** Done
 **Depends On:** [GIT-003](#git-003---add-support-for-multiple-homes)
 **Description:**
 
-/metropolis-plot-go [playerName]
-The target player should be [playerName] if specified and otherwise should be the callee.
-The reservation to teleport to is
+`/metropolis-plot-go [playerName]` teleports the sender, or the specified online player, to a Metropolis WorldGuard cuboid reservation where that player is an owner or member. If the player belongs to more than one reservation, report the available region names and require an explicit choice with `/metropolis-plot-go <reservationName> [playerName]`. The explicit-name form only permits destinations where the target is a member/owner, unless the sender has `metropolis.plot.go`. Remove the command-level permission gate so reservation members can use self-service teleportation; enforce admin-only target and membership bypass checks in the command. Report unknown players, missing membership, ambiguous reservations, and reservations without a safe teleport location. Do not report success unless teleportation succeeds.
 
 ### Comments
 

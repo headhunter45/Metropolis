@@ -41,6 +41,11 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - As the home owner, build and interact inside the home. As another non-op player, try the same actions. Verify ownership and protection behave as intended in homes, reservations, City, and Spawn.
 - Verify representative protection flags in-game, including PvP, mob damage/spawning, explosions, and fire/lava behavior where applicable. Run `/metropolis-flag-reset` and confirm the expected flags are restored without changing region bounds or ownership.
 - Restart the server and confirm reservations and their protection are still present in WorldGuard and remain excluded from home allocation.
+- Add a non-op test player as a WorldGuard member of a Metropolis reservation. Run `/metropolis-plot-go` and confirm they arrive inside that reservation at a safe location; repeat with an owner.
+- Confirm a player who is neither owner nor member cannot use a reservation name to teleport there. Check that a region they own/member outside homes, City, and Spawn is treated as expected by the Metropolis reservation lookup.
+- Add a player to two reservations. Confirm the no-argument form reports both names without teleporting, then specify one reservation and verify the chosen destination.
+- As an authorized admin, target another online member with `/metropolis-plot-go <playerName>`. Confirm the target receives a notification. Repeat without `metropolis.plot.go` and verify targeting another player is denied.
+- Test a reservation with no safe destination. Confirm the command reports failure and does not claim teleportation succeeded. Also test console use with an online player name and an unknown/offline name.
 
 ### Commands, permissions, and player state
 
@@ -65,7 +70,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 20 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 26 tests covering:
 
 - `CuboidTest`: WorldEdit bound conversion, vector ordering/null handling, touching intersections, and point containment.
 - `CurrentHomesStoreTest`: UUID-based persistence and resolving a legacy player-name key.
@@ -75,6 +80,8 @@ Run `./gradlew test` for the server-free JUnit suite. It has 20 tests covering:
 - `HomePermissionOverrideTest`: dotted permission-node parsing, priority and tie resolution, invalid entries, and username/permission/default precedence.
 - `HomeNumberAllocatorTest`: choosing the first unused positive home number.
 - `MetropolisHomeMoveCommandTest`: selecting a sender's home, selecting an offline target's home, and rejecting invalid requests.
+- `PlotReservationLookupTest`: owner/member matching, exclusion of homes/City/Spawn, legacy reservation markers, and region-name aliases.
+- `MetropolisPlotGoCommandTest`: self and target teleportation, ambiguous memberships, absent membership, and unsafe-destination feedback.
 - `MetropolisPlotReserveCommandTest`: parsing six coordinates and rejecting malformed coordinates.
 - `MetropolisHomeAcquireTest`: acquisition below the limit and refusal at the limit.
 
