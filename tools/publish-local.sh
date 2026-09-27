@@ -42,8 +42,4 @@ ensure_java_25() {
 
 ensure_java_25
 cd "$PROJECT_ROOT"
-if [[ -x ./mvnw ]]; then
-  ./mvnw install -DskipTests "$@"
-else
-  mvn install -DskipTests "$@"
-fi
+exec ./gradlew publishToMavenLocal "$@"

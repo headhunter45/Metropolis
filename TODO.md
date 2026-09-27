@@ -10,7 +10,7 @@
 | MET-006 |   Ready  | Build the initial Gradle project and run its tests; resolve build setup issues before removing the existing Maven build. |
 | MET-007 |   Ready  | Update .gitignore for Gradle and remove obsolete Maven and Eclipse project files after the Gradle build succeeds. |
 | MET-008 |   Done   | Analyze Java sources for deprecated or removed Bukkit/Paper APIs and legacy patterns, including logging, event registration, configuration, player lookup, and player-keyed storage. |
-| MET-009 |   Ready  | Review custom scripts and resources for required updates to the Gradle build and modern Paper server workflow. |
+| MET-009 |   Done   | Review custom scripts and resources for required updates to the Gradle build and modern Paper server workflow. |
 | MET-010 |   Ready  | Refactor plugin logging to use JavaPlugin.getLogger(). |
 | MET-011 |   Ready  | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
 | MET-012 |   Ready  | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
