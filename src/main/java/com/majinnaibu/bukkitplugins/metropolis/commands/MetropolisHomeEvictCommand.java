@@ -34,15 +34,15 @@ public class MetropolisHomeEvictCommand implements CommandExecutor {
 			return false;
 		}
 		
-		ProtectedRegion region = _plugin.getRegion(String.format("h_%s", player.getName()));
+		ProtectedRegion region = _plugin.getRegion(_plugin.getCurrentHomeRegionName(player.getUniqueId()));
 		if(region == null){
 			sender.sendMessage(String.format("The player {%s} has no home to be evicted from."));
 			return false;
 		}
 		
 		//remove the player as owner and/or member of the region
-		region.getMembers().removePlayer(playerName);
-		region.getOwners().removePlayer(playerName);
+		region.getMembers().removePlayer(player.getUniqueId());
+		region.getOwners().removePlayer(player.getUniqueId());
 		
 		//if the region has no owners delete the region
 		if(region.getMembers().size() == 0 && region.getOwners().size() == 0){

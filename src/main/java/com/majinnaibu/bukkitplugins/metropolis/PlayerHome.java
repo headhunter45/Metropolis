@@ -1,7 +1,13 @@
 package com.majinnaibu.bukkitplugins.metropolis;
 
+import java.util.Set;
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 import com.avaje.ebean.validation.NotNull;
 import com.sk89q.worldedit.BlockVector;
@@ -11,48 +17,56 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 @Entity()
 @Table(name="Metropolis_PlayerHome")
 public class PlayerHome extends Plot{
+	private UUID playerId;
 	@NotNull
 	private String playerName;
+	public UUID getPlayerId(){return this.playerId;}
 	public String getPlayerName(){return this.playerName;}
 	public void setPlayerName(String playerName){this.playerName = playerName;}
 	
 	private int number;
 		
-	public PlayerHome(String owner, BlockVector min, BlockVector max) {
-		super("h_" + owner, min, max);
-		this.playerName = owner;
+	public PlayerHome(UUID ownerId, String ownerName, int homeNumber, BlockVector min, BlockVector max) {
+		super(String.format("h_%d_%s", homeNumber, ownerId), min, max);
+		this.playerId = ownerId;
+		this.playerName = ownerName;
+		this.number = homeNumber;
 	}
 	
 	public PlayerHome() {
+		this.playerId = null;
 		this.playerName = "";
 	}
 	
 	public PlayerHome(ProtectedRegion homeRegion){
-		try{
-			String rname = homeRegion.getId();
-			
-			if(rname.startsWith("h_")){
-				int secondUnderscore = rname.indexOf('_', 2);
-				if(secondUnderscore > 2){
-					try{
-						this.number = Integer.parseInt(rname.substring(2, secondUnderscore));
-						this.playerName = rname.substring(secondUnderscore+1);
-					}catch(Exception ex){
-						this.number = 0;
-					}
-				}else{
-					this.number = 0;
-					this.playerName = rname.substring(2);
-				}
-				
-				setCuboid(new Cuboid(homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint()));
-			}
-			else{
-				throw new RuntimeException("Method not implemented.");
-			}
-		}catch(Exception ex){
-			throw new RuntimeException("Method not implemented.", ex);
+		String regionName = homeRegion.getId();
+		if (!regionName.startsWith("h_")) {
+			throw new IllegalArgumentException("Not a Metropolis home region: " + regionName);
 		}
+		String regionOwner = regionName.substring(2);
+		int separator = regionOwner.indexOf('_');
+		if (separator > 0) {
+			try {
+				this.number = Integer.parseInt(regionOwner.substring(0, separator));
+				regionOwner = regionOwner.substring(separator + 1);
+			} catch (NumberFormatException ex) {
+				this.number = 1;
+			}
+		} else {
+			this.number = 1;
+		}
+		try {
+			this.playerId = UUID.fromString(regionOwner);
+			OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerId);
+			this.playerName = offlinePlayer.getName() == null ? regionOwner : offlinePlayer.getName();
+		} catch (IllegalArgumentException ex) {
+			Set<UUID> ownerIds = homeRegion.getOwners().getUniqueIds();
+			this.playerId = ownerIds.isEmpty()
+					? Bukkit.getOfflinePlayer(regionOwner).getUniqueId()
+					: ownerIds.iterator().next();
+			this.playerName = regionOwner;
+		}
+		setCuboid(new Cuboid(homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint()));
 	}
 
 	@Override
@@ -63,7 +77,7 @@ public class PlayerHome extends Plot{
 		
 		PlayerHome otherPlayerHome = (PlayerHome)other;
 		
-		if(!this.playerName.equals(otherPlayerHome.playerName)){
+		if(!java.util.Objects.equals(this.playerId, otherPlayerHome.playerId)){
 			return false;
 		}
 		

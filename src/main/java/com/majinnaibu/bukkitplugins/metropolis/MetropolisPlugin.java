@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -66,9 +67,9 @@ public class MetropolisPlugin extends JavaPlugin {
 	public RegionManager regionManager = null;
 
 	private List<Plot> _occupiedPlots;
-	private HashMap<String, List<Plot>> _ownedPlots;
-	private HashMap<String, UserOverride> _userOverrides;
-	private HashMap<String, Integer> _currentHomes;
+	private HashMap<UUID, List<Plot>> _ownedPlots;
+	private HashMap<UUID, UserOverride> _userOverrides;
+	private HashMap<UUID, Integer> _currentHomes;
 	
 	private PlayerJoinListener _playerJoinListener = null;
 	
@@ -117,9 +118,9 @@ public class MetropolisPlugin extends JavaPlugin {
 	public void onEnable() {
 		pdf = getDescription();
 		
-		_ownedPlots = new HashMap<String, List<Plot>>();
-		_userOverrides = new HashMap<String, UserOverride>();
-		_currentHomes = new HashMap<String, Integer>();
+		_ownedPlots = new HashMap<UUID, List<Plot>>();
+		_userOverrides = new HashMap<UUID, UserOverride>();
+		_currentHomes = new HashMap<UUID, Integer>();
 		loadCurrentHomes();
 		
 		if(DEBUG){getLogger().info("Checking config");}
@@ -311,11 +312,22 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 		
 		_currentHomes.clear();
-		for(String username : homes.getKeys(false)){
-			int homeNumber = homes.getInt(username, 0);
-			if (homeNumber > 0) {
-				_currentHomes.put(username, homeNumber);
+		boolean migratedLegacyNames = false;
+		for(String ownerKey : homes.getKeys(false)){
+			UUID ownerId;
+			try {
+				ownerId = UUID.fromString(ownerKey);
+			} catch (IllegalArgumentException ex) {
+				ownerId = getServer().getOfflinePlayer(ownerKey).getUniqueId();
+				migratedLegacyNames = true;
 			}
+			int homeNumber = homes.getInt(ownerKey, 0);
+			if (homeNumber > 0) {
+				_currentHomes.put(ownerId, homeNumber);
+			}
+		}
+		if (migratedLegacyNames) {
+			saveCurrentHomes();
 		}
 	}
 
@@ -350,8 +362,9 @@ public class MetropolisPlugin extends JavaPlugin {
 						}
 					}
 					
+					UUID playerId = getServer().getOfflinePlayer(username).getUniqueId();
 					UserOverride override = new UserOverride(username, plotMultiplier, maxPlots);
-					_userOverrides.put(username, override);
+					_userOverrides.put(playerId, override);
 				}
 			}
 		}
@@ -465,12 +478,12 @@ public class MetropolisPlugin extends JavaPlugin {
 				ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) region;
 				if(cuboidRegion.getId().startsWith("h_")){
 					PlayerHome home = PlayerHome.get(region);
-					if(!_currentHomes.containsKey(home.getPlayerName()))
+					if(!_currentHomes.containsKey(home.getPlayerId()))
 					{
-						_currentHomes.put(home.getPlayerName(), home.getNumber());
+						_currentHomes.put(home.getPlayerId(), home.getNumber());
 					}
 					_occupiedPlots.add(home);
-					addOwnedPlot(home.getPlayerName(), home);
+					addOwnedPlot(home.getPlayerId(), home);
 				}else if(cuboidRegion.getId().startsWith("r_")){
 					_occupiedPlots.add(Plot.get(cuboidRegion));
 				}
@@ -480,14 +493,14 @@ public class MetropolisPlugin extends JavaPlugin {
 		size=calculateCitySize();
 	}
 
-	private void addOwnedPlot(String substring, Plot plot) {
-		if(_ownedPlots.containsKey(substring)){
-			List<Plot> plots = _ownedPlots.get(substring);
+	private void addOwnedPlot(UUID playerId, Plot plot) {
+		if(_ownedPlots.containsKey(playerId)){
+			List<Plot> plots = _ownedPlots.get(playerId);
 			plots.add(plot);
 		}else{
 			List<Plot> plots = new ArrayList<Plot>();
 			plots.add(plot);
-			_ownedPlots.put(substring, plots);
+			_ownedPlots.put(playerId, plots);
 		}
 	}
 
@@ -499,16 +512,23 @@ public class MetropolisPlugin extends JavaPlugin {
 	public PlayerHome getPlayerHome(Player player) {
 		PlayerHome home = null;
 		
-		String regionName = "h_" + player.getName();
+		int homeNumber = _currentHomes.getOrDefault(player.getUniqueId(), 1);
+		String regionName = String.format("h_%d_%s", homeNumber, player.getUniqueId());
 		ProtectedRegion homeRegion = regionManager.getRegion(regionName);
 
 		if(homeRegion == null){
+			PlayerHome existingHome = getOwnedHome(player.getUniqueId(), homeNumber);
+			if (existingHome != null) {
+				existingHome.setPlayerName(player.getName());
+				return existingHome;
+			}
 			if(DEBUG){
 				getLogger().info(String.format("Creating home for player %s", player.getName()));
 			}
-			home = generateHome(player.getName());
+			home = generateHome(player);
 		}else{
 			home = new PlayerHome(homeRegion);
+			home.setPlayerName(player.getName());
 		}
 		
 		return home;
@@ -841,24 +861,35 @@ public class MetropolisPlugin extends JavaPlugin {
 		return (cuboid.minZ - roadWidth/2)/gridSizeZ;
 	}
 
-	private void setHomeOccupied(String owner, BlockVector minimumPoint, BlockVector maximumPoint) {
-		
-		PlayerHome home = new PlayerHome(owner, minimumPoint, maximumPoint);
+	private void setHomeOccupied(UUID ownerId, String ownerName, int homeNumber, BlockVector minimumPoint, BlockVector maximumPoint) {
+		PlayerHome home = new PlayerHome(ownerId, ownerName, homeNumber, minimumPoint, maximumPoint);
 		if(!_occupiedPlots.contains(home)){
 			_occupiedPlots.add(home);
+			addOwnedPlot(ownerId, home);
 		}
 	}
 	
 	public PlayerHome generateHome(String playerName) {
-		int multiplier = getPlotMultiplier(playerName);
+		return generateHome(getServer().getOfflinePlayer(playerName));
+	}
+
+	public PlayerHome generateHome(OfflinePlayer player) {
+		UUID playerId = player.getUniqueId();
+		String playerName = player.getName() == null ? playerId.toString() : player.getName();
+		int homeNumber = _currentHomes.getOrDefault(playerId, 1);
+		int multiplier = getPlotMultiplier(playerId);
 		
 		if(DEBUG){getLogger().info(String.format("Generating home for %s", playerName));}
 		Cuboid homeCuboid = null;
 		ProtectedRegion phomeRegion = null;
-		String regionName = "h_1_" + playerName;
+		String regionName = getHomeRegionName(playerId, homeNumber);
 		phomeRegion = regionManager.getRegion(regionName);
 		if(phomeRegion != null){
 			return PlayerHome.get(phomeRegion); 
+		}
+		PlayerHome existingHome = getOwnedHome(playerId, homeNumber);
+		if (existingHome != null) {
+			return existingHome;
 		}
 		
 		homeCuboid = findNextUnownedHomeRegion(multiplier);
@@ -875,7 +906,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		newHomeRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
 
 		DefaultDomain d = newHomeRegion.getOwners();
-		d.addPlayer(playerName);
+		d.addPlayer(playerId);
 		newHomeRegion.setPriority(1);
 
 		regionManager.addRegion(newHomeRegion);
@@ -902,7 +933,9 @@ public class MetropolisPlugin extends JavaPlugin {
 				newHomeRegion.getMaximumPoint().getBlockZ()
 				));
 	
-		setHomeOccupied(playerName, newHomeRegion.getMinimumPoint(), newHomeRegion.getMaximumPoint());
+		setHomeOccupied(playerId, playerName, homeNumber, newHomeRegion.getMinimumPoint(), newHomeRegion.getMaximumPoint());
+		_currentHomes.putIfAbsent(playerId, homeNumber);
+		saveCurrentHomes();
 		
 		createRoads(homeCuboid);
 		
@@ -917,7 +950,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		if(DEBUG){getLogger().info(String.format("Done generating home for %s", playerName));}
 		
-		return new PlayerHome(newHomeRegion);
+		PlayerHome home = new PlayerHome(newHomeRegion);
+		home.setPlayerName(playerName);
+		return home;
 	}
 
 	private void generateSign(Cuboid plotCuboid, String playerName) {
@@ -1006,9 +1041,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 
-	public int getNumPlots(String name) {
-		if(_ownedPlots.containsKey(name)){
-			List<Plot> plots = _ownedPlots.get(name);
+	public int getNumPlots(UUID playerId) {
+		if(_ownedPlots.containsKey(playerId)){
+			List<Plot> plots = _ownedPlots.get(playerId);
 			if(plots == null){
 				return 0;
 			}else{
@@ -1019,22 +1054,21 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 	}
 
-	public int getMaxPlots(String name) {
-		if(_userOverrides.containsKey(name)){
-			return _userOverrides.get(name).getMaxPlots();
+	public int getMaxPlots(UUID playerId) {
+		if(_userOverrides.containsKey(playerId)){
+			return _userOverrides.get(playerId).getMaxPlots();
 		}else{
 			return _maxPlots;
 		}
 	}
 
 	public void assignPlot(OfflinePlayer player) {
-		//PlayerHome home = generateHome(player.getName());
-		generateHome(player.getName());
+		generateHome(player);
 	}
 
-	private int getPlotMultiplier(String name) {
-		if(_userOverrides.containsKey(name)){
-			return _userOverrides.get(name).getPlotMultiplier();
+	private int getPlotMultiplier(UUID playerId) {
+		if(_userOverrides.containsKey(playerId)){
+			return _userOverrides.get(playerId).getPlotMultiplier();
 		}else{
 			return _plotMultiplier;
 		}
@@ -1073,9 +1107,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		return null;
 	}
 
-	public boolean homeExists(String playerName, int homeNumber) {
+	public boolean homeExists(UUID playerId, int homeNumber) {
 		for(Plot plot: _occupiedPlots){
-			if(plot.getRegionName().equalsIgnoreCase(String.format("h_%d_%s", homeNumber, playerName))){
+			if(plot instanceof PlayerHome home && home.getPlayerId().equals(playerId) && home.getNumber() == homeNumber){
 				return true;
 			}
 		}
@@ -1083,15 +1117,39 @@ public class MetropolisPlugin extends JavaPlugin {
 		return false;
 	}
 
-	public void setHome(String name, int newHomeNumber) {
-		_currentHomes.put(name, newHomeNumber);
+	public void setHome(UUID playerId, int newHomeNumber) {
+		_currentHomes.put(playerId, newHomeNumber);
 		saveCurrentHomes();
+	}
+
+	public String getHomeRegionName(UUID playerId, int homeNumber) {
+		PlayerHome existingHome = getOwnedHome(playerId, homeNumber);
+		return existingHome == null
+				? String.format("h_%d_%s", homeNumber, playerId)
+				: existingHome.getRegionName();
+	}
+
+	public String getCurrentHomeRegionName(UUID playerId) {
+		return getHomeRegionName(playerId, _currentHomes.getOrDefault(playerId, 1));
+	}
+
+	private PlayerHome getOwnedHome(UUID playerId, int homeNumber) {
+		List<Plot> plots = _ownedPlots.get(playerId);
+		if (plots == null) {
+			return null;
+		}
+		for (Plot plot : plots) {
+			if (plot instanceof PlayerHome home && home.getNumber() == homeNumber) {
+				return home;
+			}
+		}
+		return null;
 	}
 
 	private void saveCurrentHomes() {
 		File homesFile = new File(getDataFolder(), "currentHomes.yml");
 		YamlConfiguration homes = new YamlConfiguration();
-		_currentHomes.forEach(homes::set);
+		_currentHomes.forEach((playerId, homeNumber) -> homes.set(playerId.toString(), homeNumber));
 		try {
 			getDataFolder().mkdirs();
 			homes.save(homesFile);

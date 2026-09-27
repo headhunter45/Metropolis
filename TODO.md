@@ -14,7 +14,7 @@
 | MET-010 |   Done   | Refactor plugin logging to use JavaPlugin.getLogger(). |
 | MET-011 |   Done   | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
 | MET-012 |   Done   | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
-| MET-013 |   Ready  | Replace Player-keyed storage with UUID-based storage wherever player identity is persisted or tracked. |
+| MET-013 |   Done   | Replace Player-keyed storage with UUID-based storage wherever player identity is persisted or tracked. |
 | MET-014 |   Ready  | Review player lookup logic and use exact or otherwise explicit name-matching behavior where appropriate. |
 | MET-015 |   Ready  | Refactor remaining code that uses deprecated or removed Bukkit, Spigot, or Paper APIs so it is compatible with the target Paper API. |
 | MET-016 |   Ready  | Add fast unit tests for plot and home allocation, reservation validation, player lookup and UUID-based ownership, configuration persistence, command validation, and event behavior. Keep domain rules independent of a running Minecraft server and mock external plugin boundaries as needed. |

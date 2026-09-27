@@ -41,11 +41,11 @@ public class MetropolisHomeMoveCommand implements CommandExecutor {
 			return false;
 		}
 		
-		if(player == null || !_plugin.homeExists(player.getName(), newHomeNumber)){
+		if(player == null || !_plugin.homeExists(player.getUniqueId(), newHomeNumber)){
 			return false;
 		}
 		
-		_plugin.setHome(player.getName(), newHomeNumber);
+		_plugin.setHome(player.getUniqueId(), newHomeNumber);
 				
 		return true;
 	}
