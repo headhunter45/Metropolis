@@ -15,7 +15,6 @@ public class PlayerJoinListener implements Listener {
 	
 	public PlayerJoinListener(MetropolisPlugin plugin){
 		_plugin = plugin;
-		plugin.getServer().getPluginManager().registerEvents(this, plugin);
 	}
 	
 	@EventHandler(priority=EventPriority.MONITOR)

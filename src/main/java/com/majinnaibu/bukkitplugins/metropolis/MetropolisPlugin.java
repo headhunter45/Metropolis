@@ -274,9 +274,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		fillOccupiedPlots();
 		resizeCityRegion();
 
-		if(_playerJoinListener == null){
-			_playerJoinListener = new PlayerJoinListener(this);
-		}
+		_playerJoinListener = new PlayerJoinListener(this);
+		getServer().getPluginManager().registerEvents(_playerJoinListener, this);
 
 		getLogger().info(String.format("%s enabled", pdf.getFullName()));
 		

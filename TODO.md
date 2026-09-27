@@ -12,7 +12,7 @@
 | MET-008 |   Done   | Analyze Java sources for deprecated or removed Bukkit/Paper APIs and legacy patterns, including logging, event registration, configuration, player lookup, and player-keyed storage. |
 | MET-009 |   Done   | Review custom scripts and resources for required updates to the Gradle build and modern Paper server workflow. |
 | MET-010 |   Done   | Refactor plugin logging to use JavaPlugin.getLogger(). |
-| MET-011 |   Ready  | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
+| MET-011 |   Done   | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
 | MET-012 |   Ready  | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
 | MET-013 |   Ready  | Replace Player-keyed storage with UUID-based storage wherever player identity is persisted or tracked. |
 | MET-014 |   Ready  | Review player lookup logic and use exact or otherwise explicit name-matching behavior where appropriate. |
