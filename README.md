@@ -4,7 +4,7 @@ Metropolis expands a protected Minecraft city as players join. Each player can r
 
 ## Features
 
-- Assigns a protected home plot when a player joins and supports acquiring additional homes up to the configured player limit.
+- Assigns a protected home plot when a player joins by default and supports acquiring additional homes up to the configured player limit; set `plot.initial` to `0` to require `/metropolis-home-acquire` for the first home.
 - Supports per-player plot sizes and home limits through `userOverrides` or configurable permission tiers; acquired homes can be selected as the active home.
 - Expands the City region as plots are occupied, with optional spawn generation, world-spawn placement, floors, support blocks, signs, and perimeter walls.
 - Generates roads around plots with configurable width, level, material, clearance, and supports.
@@ -57,7 +57,7 @@ Copy `.env.example` to `.env` and configure the Paper version/build and server p
 
 ## Configuration
 
-`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. `plot.multiplier` sets the default plot-size multiplier; `plot.maxPerPlayer` sets the default home limit.
+`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. `plot.multiplier` sets the default plot-size multiplier; `plot.maxPerPlayer` sets the default home limit; `plot.initial` sets how many homes are auto-generated on join, and `0` requires `/metropolis-home-acquire` for the player's first home.
 
 Use `permissionOverrides` to assign plot size and home limits through any permission manager. Each permission node maps to a `priority`, `plotMultiplier`, and `maxPlots`; the matching node with the highest priority wins, and the last matching entry in YAML order wins ties. An explicit username entry in `userOverrides` takes precedence over permission rules. If no override matches, the global `plot.*` defaults apply. Permission rules are checked for online players; offline home generation uses username overrides or global defaults. For example:
 

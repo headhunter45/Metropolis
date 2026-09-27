@@ -119,6 +119,7 @@ public class MetropolisPlugin extends JavaPlugin {
   private int wallHeight = 128;
   int _maxPlots = 1;
   int _plotMultiplier = 1;
+  private int initialHomeCount = 1;
 
   private Cuboid _spawnCuboid = null;
   private Cuboid _cityCuboid = null;
@@ -199,6 +200,7 @@ public class MetropolisPlugin extends JavaPlugin {
     worldName = safeGetStringFromConfig(config, "worldname");
     _plotMultiplier = safeGetIntFromConfig(config, "plot.multiplier");
     _maxPlots = safeGetIntFromConfig(config, "plot.maxPerPlayer");
+    initialHomeCount = normalizeInitialHomeCount(safeGetIntFromConfig(config, "plot.initial"));
 
     buildUserOverrides();
     _permissionOverrides =
@@ -556,6 +558,9 @@ public class MetropolisPlugin extends JavaPlugin {
         setHome(playerId, existingHome.getNumber());
         return existingHome;
       }
+      if (!shouldAutoGenerateInitialHome()) {
+        return null;
+      }
       if (DEBUG) {
         getLogger().info(String.format("Creating home for player %s", player.getName()));
       }
@@ -566,6 +571,26 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     return home;
+  }
+
+  public static int normalizeInitialHomeCount(int count) {
+    return Math.max(0, count);
+  }
+
+  public static boolean shouldAutoGenerateInitialHome(int count) {
+    return count > 0;
+  }
+
+  public int getInitialHomeCount() {
+    return initialHomeCount;
+  }
+
+  public void setInitialHomeCount(int count) {
+    initialHomeCount = normalizeInitialHomeCount(count);
+  }
+
+  public boolean shouldAutoGenerateInitialHome() {
+    return shouldAutoGenerateInitialHome(initialHomeCount);
   }
 
   private void generateFloor(Cuboid plotCuboid) {

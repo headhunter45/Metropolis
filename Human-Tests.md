@@ -21,6 +21,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 ### Join and plot allocation
 
 - Join as a new player. Confirm one home is allocated and the welcome message reports its actual bounds. Check the corresponding `h_1_<UUID>` region has the player as owner and its bounds match the configured plot size.
+- Set `plot.initial: 0` on a disposable server, restart, and join as a fresh player. Confirm no home is created until the player runs `/metropolis-home-acquire`; then verify the command creates the initial home and makes it active.
 - Join with a second new player. Confirm the new home is distinct, does not overlap the first home or spawn, and the City region grows to include it.
 - Join again as an existing player. Confirm the same home is selected and no duplicate region or plot is created.
 - Reserve an area before allocating another home. Confirm future allocations skip it. Repeat with reservations near the city edge and near existing roads to look for overlaps or gaps.
