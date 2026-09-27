@@ -1,107 +1,144 @@
+/*
+This file is part of Metropolis.
+
+Metropolis is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Metropolis is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with Metropolis. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
+*/
+
 package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.util.Set;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
-public class PlayerHome extends Plot{
-	private UUID playerId;
-	private String playerName;
-	public UUID getPlayerId(){return this.playerId;}
-	public String getPlayerName(){return this.playerName;}
-	public void setPlayerName(String playerName){this.playerName = playerName;}
-	
-	private int number;
-		
-	public PlayerHome(UUID ownerId, String ownerName, int homeNumber, BlockVector3 min, BlockVector3 max) {
-		super(String.format("h_%d_%s", homeNumber, ownerId), min, max);
-		this.playerId = ownerId;
-		this.playerName = ownerName;
-		this.number = homeNumber;
-	}
-	
-	public PlayerHome() {
-		this.playerId = null;
-		this.playerName = "";
-	}
-	
-	public PlayerHome(ProtectedRegion homeRegion){
-		String regionName = homeRegion.getId();
-		if (!regionName.startsWith("h_")) {
-			throw new IllegalArgumentException("Not a Metropolis home region: " + regionName);
-		}
-		String regionOwner = regionName.substring(2);
-		int separator = regionOwner.indexOf('_');
-		if (separator > 0) {
-			try {
-				this.number = Integer.parseInt(regionOwner.substring(0, separator));
-				regionOwner = regionOwner.substring(separator + 1);
-			} catch (NumberFormatException ex) {
-				this.number = 1;
-			}
-		} else {
-			this.number = 1;
-		}
-		try {
-			this.playerId = UUID.fromString(regionOwner);
-			OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerId);
-			this.playerName = offlinePlayer.getName() == null ? regionOwner : offlinePlayer.getName();
-		} catch (IllegalArgumentException ex) {
-			Set<UUID> ownerIds = homeRegion.getOwners().getUniqueIds();
-			this.playerId = ownerIds.isEmpty()
-					? Bukkit.getOfflinePlayer(regionOwner).getUniqueId()
-					: ownerIds.iterator().next();
-			this.playerName = regionOwner;
-		}
-		setCuboid(new Cuboid(homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint()));
-	}
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
-	@Override
-	public boolean equals(Object other) {
-		if(!(other instanceof PlayerHome)){
-			return super.equals(other);
-		}
-		
-		PlayerHome otherPlayerHome = (PlayerHome)other;
-		
-		if(!java.util.Objects.equals(this.playerId, otherPlayerHome.playerId)){
-			return false;
-		}
-		
-		if(!getCuboid().equals(otherPlayerHome.getCuboid())){
-			return false;
-		}
-		
-		return true;
-	}
+public class PlayerHome extends Plot {
+  private UUID playerId;
+  private String playerName;
 
-	public String toFriendlyString() {
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append(String.format("Metropolis Home {Owner: %s min: (%d, %d, %d) max: (%d, %d, %d)}", getPlayerName(), getCuboid().getMinX(), getCuboid().getMinY(), getCuboid().getMinZ(), getCuboid().getMaxX(), getCuboid().getMaxY(), getCuboid().getMaxZ()));
-		
-		return sb.toString();
-	}
-	
-	public static PlayerHome get(ProtectedRegion homeRegion){
-		if(homeRegion instanceof ProtectedCuboidRegion){
-			return new PlayerHome((ProtectedCuboidRegion) homeRegion);
-		}else{
-			return null;
-		}
-	}
-	
-	public Integer getNumber() {
-		return number;
-	}
-	
-	public void setNumber(int number){
-		this.number = number;
-	}
+  public UUID getPlayerId() {
+    return this.playerId;
+  }
+
+  public String getPlayerName() {
+    return this.playerName;
+  }
+
+  public void setPlayerName(String playerName) {
+    this.playerName = playerName;
+  }
+
+  private int number;
+
+  public PlayerHome(
+      UUID ownerId, String ownerName, int homeNumber, BlockVector3 min, BlockVector3 max) {
+    super(String.format("h_%d_%s", homeNumber, ownerId), min, max);
+    this.playerId = ownerId;
+    this.playerName = ownerName;
+    this.number = homeNumber;
+  }
+
+  public PlayerHome() {
+    this.playerId = null;
+    this.playerName = "";
+  }
+
+  public PlayerHome(ProtectedRegion homeRegion) {
+    String regionName = homeRegion.getId();
+    if (!regionName.startsWith("h_")) {
+      throw new IllegalArgumentException("Not a Metropolis home region: " + regionName);
+    }
+    String regionOwner = regionName.substring(2);
+    int separator = regionOwner.indexOf('_');
+    if (separator > 0) {
+      try {
+        this.number = Integer.parseInt(regionOwner.substring(0, separator));
+        regionOwner = regionOwner.substring(separator + 1);
+      } catch (NumberFormatException ex) {
+        this.number = 1;
+      }
+    } else {
+      this.number = 1;
+    }
+    try {
+      this.playerId = UUID.fromString(regionOwner);
+      OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerId);
+      this.playerName = offlinePlayer.getName() == null ? regionOwner : offlinePlayer.getName();
+    } catch (IllegalArgumentException ex) {
+      Set<UUID> ownerIds = homeRegion.getOwners().getUniqueIds();
+      this.playerId =
+          ownerIds.isEmpty()
+              ? Bukkit.getOfflinePlayer(regionOwner).getUniqueId()
+              : ownerIds.iterator().next();
+      this.playerName = regionOwner;
+    }
+    setCuboid(new Cuboid(homeRegion.getMinimumPoint(), homeRegion.getMaximumPoint()));
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof PlayerHome)) {
+      return super.equals(other);
+    }
+
+    PlayerHome otherPlayerHome = (PlayerHome) other;
+
+    if (!java.util.Objects.equals(this.playerId, otherPlayerHome.playerId)) {
+      return false;
+    }
+
+    if (!getCuboid().equals(otherPlayerHome.getCuboid())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public String toFriendlyString() {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(
+        String.format(
+            "Metropolis Home {Owner: %s min: (%d, %d, %d) max: (%d, %d, %d)}",
+            getPlayerName(),
+            getCuboid().getMinX(),
+            getCuboid().getMinY(),
+            getCuboid().getMinZ(),
+            getCuboid().getMaxX(),
+            getCuboid().getMaxY(),
+            getCuboid().getMaxZ()));
+
+    return sb.toString();
+  }
+
+  public static PlayerHome get(ProtectedRegion homeRegion) {
+    if (homeRegion instanceof ProtectedCuboidRegion) {
+      return new PlayerHome((ProtectedCuboidRegion) homeRegion);
+    } else {
+      return null;
+    }
+  }
+
+  public Integer getNumber() {
+    return number;
+  }
+
+  public void setNumber(int number) {
+    this.number = number;
+  }
 }

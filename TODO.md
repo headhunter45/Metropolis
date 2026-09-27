@@ -26,13 +26,13 @@
 | MET-022 | Planning | (Optional) Add new features, quality-of-life improvements, or CI configuration after the modernization and documentation tasks are complete. |
 | GIT-009 | Planning | i have three reserve plots and one just got overwritten when a new player joined. |
 | GIT-008 |   Ready  | Implement multiple plot sizes by granting multiple plots around each other. 
-| GIT-007 |   Ready  | Allow buying and selling of homes via an ecnoomy plugin. |
+| GIT-007 | Planning | Allow buying and selling of homes via an ecnoomy plugin. |
 | GIT-006 |   Ready  | Add levels support. |
 | GIT-005 | Planning | Add the possibility to create multiple plot homes in shapes. |
-| GIT-004 |   Ready  | Add a command to request home allocation. |
+| GIT-004 | Planning | Add a command to request home allocation. |
 | GIT-003 |   Ready  | Add support for multiple homes. |
-| GIT-002 |   Ready  | Add a command to teleport to a reservation you are part of. |
-| GIT-001 |   Ready  | Add a command to move to a different home. |
+| GIT-002 | Planning | Add a command to teleport to a reservation you are part of. |
+| GIT-001 | Planning | Add a command to move to a different home. |
 
 # GIT-001 - Add a command to move to a different home.
 **Status:** Ready

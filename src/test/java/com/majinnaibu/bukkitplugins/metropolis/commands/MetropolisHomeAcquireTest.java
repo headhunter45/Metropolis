@@ -1,7 +1,24 @@
+/*
+This file is part of Metropolis.
+
+Metropolis is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Metropolis is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with Metropolis. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
+*/
+
 package com.majinnaibu.bukkitplugins.metropolis.commands;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -9,40 +26,40 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
+import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
+
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 
-import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
-
 class MetropolisHomeAcquireTest {
-	@Test
-	void assignsAPlotWhenThePlayerIsBelowTheirLimit() {
-		MetropolisPlugin plugin = mock(MetropolisPlugin.class);
-		Player player = mock(Player.class);
-		UUID playerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-		when(player.getUniqueId()).thenReturn(playerId);
-		when(plugin.getNumPlots(playerId)).thenReturn(0);
-		when(plugin.getMaxPlots(playerId)).thenReturn(1);
-		MetropolisHomeAcquire executor = new MetropolisHomeAcquire(plugin);
+  @Test
+  void assignsAPlotWhenThePlayerIsBelowTheirLimit() {
+    MetropolisPlugin plugin = mock(MetropolisPlugin.class);
+    Player player = mock(Player.class);
+    UUID playerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    when(player.getUniqueId()).thenReturn(playerId);
+    when(plugin.getNumPlots(playerId)).thenReturn(0);
+    when(plugin.getMaxPlots(playerId)).thenReturn(1);
+    MetropolisHomeAcquire executor = new MetropolisHomeAcquire(plugin);
 
-		assertTrue(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
+    assertTrue(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
 
-		verify(plugin).assignPlot(player);
-	}
+    verify(plugin).assignPlot(player);
+  }
 
-	@Test
-	void doesNotAssignAPlotAfterThePlayerReachesTheirLimit() {
-		MetropolisPlugin plugin = mock(MetropolisPlugin.class);
-		Player player = mock(Player.class);
-		UUID playerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-		when(player.getUniqueId()).thenReturn(playerId);
-		when(plugin.getNumPlots(playerId)).thenReturn(1);
-		when(plugin.getMaxPlots(playerId)).thenReturn(1);
-		MetropolisHomeAcquire executor = new MetropolisHomeAcquire(plugin);
+  @Test
+  void doesNotAssignAPlotAfterThePlayerReachesTheirLimit() {
+    MetropolisPlugin plugin = mock(MetropolisPlugin.class);
+    Player player = mock(Player.class);
+    UUID playerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    when(player.getUniqueId()).thenReturn(playerId);
+    when(plugin.getNumPlots(playerId)).thenReturn(1);
+    when(plugin.getMaxPlots(playerId)).thenReturn(1);
+    MetropolisHomeAcquire executor = new MetropolisHomeAcquire(plugin);
 
-		assertFalse(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
+    assertFalse(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
 
-		verify(plugin, never()).assignPlot(player);
-	}
+    verify(plugin, never()).assignPlot(player);
+  }
 }

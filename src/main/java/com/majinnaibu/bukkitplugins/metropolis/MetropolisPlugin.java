@@ -1,3 +1,20 @@
+/*
+This file is part of Metropolis.
+
+Metropolis is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Metropolis is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with Metropolis. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
+*/
+
 package com.majinnaibu.bukkitplugins.metropolis;
 
 import java.io.File;
@@ -6,8 +23,31 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeAcquire;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeEvictCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGoCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeListCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeMoveCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotGoCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotReserveCommand;
+import com.majinnaibu.bukkitplugins.metropolis.eventlisteners.PlayerJoinListener;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.protection.flags.Flags;
+import com.sk89q.worldguard.protection.flags.StateFlag;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -27,1128 +67,1174 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeEvictCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeAcquire;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGoCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeListCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeMoveCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotGoCommand;
-import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotReserveCommand;
-import com.majinnaibu.bukkitplugins.metropolis.eventlisteners.PlayerJoinListener;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.domains.DefaultDomain;
-import com.sk89q.worldguard.protection.flags.Flags;
-import com.sk89q.worldguard.protection.flags.StateFlag;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-
 public class MetropolisPlugin extends JavaPlugin {
-	public static final boolean DEBUG = false;
-	private static final int version = 1;
-	
-	public static final int ROAD_NORTH=1;
-	public static final int ROAD_SOUTH=2;
-	public static final int ROAD_EAST=4;
-	public static final int ROAD_WEST=8;
-	
-	public PluginDescriptionFile pdf = null;
-	public WorldGuardPlugin worldGuard = null;
-	public WorldEditPlugin worldEdit = null;
-	public World world = null;
-	public RegionManager regionManager = null;
+  public static final boolean DEBUG = false;
+  private static final int version = 1;
 
-	private List<Plot> _occupiedPlots;
-	private HashMap<UUID, List<Plot>> _ownedPlots;
-	private HashMap<UUID, UserOverride> _userOverrides;
-	private HashMap<UUID, Integer> _currentHomes;
-	
-	private PlayerJoinListener _playerJoinListener = null;
-	
-	int size = 1;
-	
-	private int plotSizeX = 24;
-	//private int plotSizeY = 256;
-	private int plotSizeZ = 24;
-	private int gridSizeX = 28;
-	private int gridSizeY = 256;
-	private int gridSizeZ = 28;
-	private int roadWidth = 4;
-	private int roadLevel = 62;
-	private int spaceAboveRoad = 2;
-	private Material roadMaterial = Material.COBBLESTONE;
-	private boolean generateRoadSupports = true;
-	private Material roadSupportMaterial = Material.STONE;
-	private String worldName = "world";
-	private boolean generateFloor = false;
-	private Material floorMaterial = Material.GRASS_BLOCK;
-	private int spaceAboveFloor = 2;
-	private boolean generateSign = false;
-	private boolean generateSpawn = true;
-	private boolean setWorldSpawn = true;
-	private Material spawnFloorMaterial = Material.COBBLESTONE;
-	private boolean generateFloorSupports = false;
-	private Material floorSupportMaterial = Material.STONE;
-	private boolean generateWall = false;
-	private Material wallMaterial = Material.GLASS;
-	private int wallHeight = 128;
-	int _maxPlots = 1;
-	int _plotMultiplier = 1;
-		
-	private Cuboid _spawnCuboid = null;
-	private Cuboid _cityCuboid = null;
-	private ProtectedRegion _spawnRegion = null;
-	private ProtectedRegion _cityRegion = null;
-	
-	
-	@Override
-	public void onDisable() {
-		getLogger().info(String.format("%s disabled", pdf.getFullName()));
-	}
+  public static final int ROAD_NORTH = 1;
+  public static final int ROAD_SOUTH = 2;
+  public static final int ROAD_EAST = 4;
+  public static final int ROAD_WEST = 8;
 
-	@Override
-	public void onEnable() {
-		pdf = getDescription();
-		
-		_ownedPlots = new HashMap<UUID, List<Plot>>();
-		_userOverrides = new HashMap<UUID, UserOverride>();
-		_currentHomes = new HashMap<UUID, Integer>();
-		loadCurrentHomes();
-		
-		if(DEBUG){getLogger().info("Checking config");}
-		Configuration config = getConfig();
-		if(!config.contains("version")){
-			//new
-			if(DEBUG){getLogger().info("No config exists.  Assuming new installation.");}
-		}else{
-			int configVersion = safeGetIntFromConfig(config, "version");
-			if(configVersion < version){
-				if(DEBUG){getLogger().info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
-				if(configVersion != version){
-					//upgrade config
-					config.set("version", version);
-				}
-				saveConfig();
-				if(DEBUG){getLogger().info("Config updated");}
-			}
-		}
-		
-		config.set("version", version);
-		saveConfig();
-		
-		config.options().copyDefaults(true);
-		
-		if(DEBUG){getLogger().info("Reading configuration from file.");}
-		plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
-		plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
-		generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
-		floorMaterial = safeGetMaterialFromConfig(config, "plot.floor.material");
-		spaceAboveFloor = safeGetIntFromConfig(config, "plot.floor.clearSpaceAbove");
-		generateFloorSupports = safeGetBooleanFromConfig(config, "plot.floor.supports.generate");
-		floorSupportMaterial = safeGetMaterialFromConfig(config, "plot.floor.supports.material");
-		generateSign = safeGetBooleanFromConfig(config, "plot.sign.generate");
-		roadWidth = safeGetIntFromConfig(config, "road.width");
-		spaceAboveRoad = safeGetIntFromConfig(config, "road.clearSpaceAbove");
-		roadLevel = safeGetIntFromConfig(config, "road.level");
-		roadMaterial = safeGetMaterialFromConfig(config, "road.material");
-		generateRoadSupports = safeGetBooleanFromConfig(config, "road.supports.generate");
-		roadSupportMaterial = safeGetMaterialFromConfig(config, "road.supports.material");
-		generateSpawn = safeGetBooleanFromConfig(config, "spawn.generate");
-		setWorldSpawn = safeGetBooleanFromConfig(config, "spawn.setAsWorldSpawn");
-		spawnFloorMaterial = safeGetMaterialFromConfig(config, "spawn.material");
-		generateWall = safeGetBooleanFromConfig(config, "wall.generate");
-		wallMaterial = safeGetMaterialFromConfig(config, "wall.material");
-		wallHeight = safeGetIntFromConfig(config, "wall.height");
-		worldName = safeGetStringFromConfig(config, "worldname");
-		_maxPlots = safeGetIntFromConfig(config, "plot.multiplier");
-		_plotMultiplier = safeGetIntFromConfig(config, "plot.maxPerPlayer");
-		
-		buildUserOverrides();
-		
-		saveConfig();
-		if(DEBUG){getLogger().info("Done reading config.");}
-		
-		getLogger().info(String.format("Metropolis: world name is %s", worldName));
-		
-		Server server = getServer();
-		if(server == null){
-			throw new RuntimeException("getServer() is null");
-		}
-		PluginManager pluginManager = server.getPluginManager();
-		if(pluginManager == null){
-			throw new RuntimeException("server.getPluginManager() is null");
-		}
-		
-		Plugin plugin = pluginManager.getPlugin("WorldGuard");
-		if(plugin == null || !(plugin instanceof WorldGuardPlugin)){
-			throw new RuntimeException("WorldGuard must be loaded first");
-		}
-		
-		worldGuard = (WorldGuardPlugin) plugin;
-		
-		plugin = pluginManager.getPlugin("WorldEdit");
-		if(plugin == null || !(plugin instanceof WorldEditPlugin)){
-			throw new RuntimeException("WorldEdit must be loaded first");
-		}
-		worldEdit = (WorldEditPlugin) plugin;
-		
-		world = server.getWorld(worldName);
-		if(world == null){
-			throw new RuntimeException(String.format("The world %s does not exist", worldName));
-		}
-		
-		gridSizeX = plotSizeX + roadWidth;
-		gridSizeY = world.getMaxHeight();
-		gridSizeZ = plotSizeZ + roadWidth;
+  public PluginDescriptionFile pdf = null;
+  public WorldGuardPlugin worldGuard = null;
+  public WorldEditPlugin worldEdit = null;
+  public World world = null;
+  public RegionManager regionManager = null;
 
-		regionManager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
-		if(regionManager == null){
-			throw new RuntimeException("WorldGuard regions don't seem to be enabled.");
-		}
-			
-		_cityRegion = regionManager.getRegion("City");
-		if(_cityRegion == null){
-			_cityRegion = new ProtectedCuboidRegion("City", getPlotMin(0, 0, 1), this.getPlotMax(0, 0, 1));
-			_cityRegion.setPriority(0);
-			_cityRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
-			_cityRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
-			regionManager.addRegion(_cityRegion);
-		}
-		
-		_cityCuboid = new Cuboid(_cityRegion.getMinimumPoint(), _cityRegion.getMaximumPoint());
-		
-		_spawnRegion = regionManager.getRegion("Spawn");
-		if(_spawnRegion == null){
-			_spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0, 1), getPlotMax(0, 0, 1));
-			_spawnRegion.setPriority(1);
-			_spawnRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
-			_spawnRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
-			regionManager.addRegion(_spawnRegion);
-			
-			_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
-			
-			setupSpawn();
-		}else{
-			_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
-		}
-		
-		_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
-		
-		if(DEBUG){
-			/*
-			getLogger().info("Metropolis: first 25 plots");
-			
-			int n = 5;
-			
-			for (int ix=-n; ix<=n; ix++){
-				for (int iz=-n; iz<=n; iz++){
-					getLogger().info(getCuboid(iz, ix).toString());				
-				}
-			}
-			*/
-			
-			getLogger().info(String.format("roadWidth = %d", roadWidth));
-		}
-		
-		_occupiedPlots = new ArrayList<Plot>();
-		fillOccupiedPlots();
-		resizeCityRegion();
+  private List<Plot> _occupiedPlots;
+  private HashMap<UUID, List<Plot>> _ownedPlots;
+  private HashMap<UUID, UserOverride> _userOverrides;
+  private HashMap<UUID, Integer> _currentHomes;
 
-		_playerJoinListener = new PlayerJoinListener(this);
-		getServer().getPluginManager().registerEvents(_playerJoinListener, this);
+  private PlayerJoinListener _playerJoinListener = null;
 
-		getLogger().info(String.format("%s enabled", pdf.getFullName()));
-		
-		RegisterCommandHandler("metropolis", new MetropolisCommand(this));
-		
-		RegisterCommandHandler("metropolis-debug-generatetesthomes", new MetropolisDebugGenerateTestHomesCommand(this));
-		
-		RegisterCommandHandler("metropolis-flag-reset", new MetropolisFlagResetCommand(this));
-		
-		RegisterCommandHandler("metropolis-home-evict", new MetropolisHomeEvictCommand(this));
-		RegisterCommandHandler("metropolis-home-acquire", new MetropolisHomeAcquire(this));
-		RegisterCommandHandler("metropolis-home-generate", new MetropolisHomeGenerateCommand(this));
-		RegisterCommandHandler("metropolis-home-go", new MetropolisHomeGoCommand(this));
-		RegisterCommandHandler("metropolis-home-list", new MetropolisHomeListCommand(this));
-		RegisterCommandHandler("metropolis-home-move", new MetropolisHomeMoveCommand(this));
-		
-		RegisterCommandHandler("metropolis-plot-go", new MetropolisPlotGoCommand(this));
-		RegisterCommandHandler("metropolis-plot-reserve", new MetropolisPlotReserveCommand(this));
-	}
-	
-	private void loadCurrentHomes() {
-		File homesFile = new File(getDataFolder(), "currentHomes.yml");
-		try {
-			_currentHomes.putAll(CurrentHomesStore.load(
-					homesFile,
-					ownerName -> getServer().getOfflinePlayer(ownerName).getUniqueId()));
-			saveCurrentHomes();
-		} catch (IOException | org.bukkit.configuration.InvalidConfigurationException e) {
-			getLogger().log(java.util.logging.Level.SEVERE, "Unable to load currentHomes.yml", e);
-		}
-	}
+  int size = 1;
 
-	private void buildUserOverrides() {
-		if(getConfig().isList("userOverrides")){
-			List<?> list = getConfig().getList("userOverrides");
-			
-			for(Object o2 : list){
-				if(o2 instanceof HashMap<?, ?>){
-					HashMap<?, ?>map = (HashMap<?, ?>)o2;
-					String username = "";
-					if(map.containsKey("username")){ 
-						Object o3 = map.get("username");
-						if(o3 instanceof String){
-							username = (String)o3;
-						}
-					}
-					
-					int plotMultiplier = _plotMultiplier;
-					if(map.containsKey("plotMultiplier")){
-						Object o3 = map.get("plotMultiplier");
-						if(o3 instanceof Integer){
-							plotMultiplier = (Integer)o3;
-						}
-					}
-					
-					int maxPlots = _maxPlots;
-					if(map.containsKey("maxPlots")){
-						Object o3 = map.get("maxPlots");
-						if(o3 instanceof Integer){
-							maxPlots = (Integer)o3;
-						}
-					}
-					
-					UUID playerId = getServer().getOfflinePlayer(username).getUniqueId();
-					UserOverride override = new UserOverride(username, plotMultiplier, maxPlots);
-					_userOverrides.put(playerId, override);
-				}
-			}
-		}
-	}
+  private int plotSizeX = 24;
+  // private int plotSizeY = 256;
+  private int plotSizeZ = 24;
+  private int gridSizeX = 28;
+  private int gridSizeY = 256;
+  private int gridSizeZ = 28;
+  private int roadWidth = 4;
+  private int roadLevel = 62;
+  private int spaceAboveRoad = 2;
+  private Material roadMaterial = Material.COBBLESTONE;
+  private boolean generateRoadSupports = true;
+  private Material roadSupportMaterial = Material.STONE;
+  private String worldName = "world";
+  private boolean generateFloor = false;
+  private Material floorMaterial = Material.GRASS_BLOCK;
+  private int spaceAboveFloor = 2;
+  private boolean generateSign = false;
+  private boolean generateSpawn = true;
+  private boolean setWorldSpawn = true;
+  private Material spawnFloorMaterial = Material.COBBLESTONE;
+  private boolean generateFloorSupports = false;
+  private Material floorSupportMaterial = Material.STONE;
+  private boolean generateWall = false;
+  private Material wallMaterial = Material.GLASS;
+  private int wallHeight = 128;
+  int _maxPlots = 1;
+  int _plotMultiplier = 1;
 
-	private Cuboid getCuboid(int row, int col) {
-		//This is only used for debug info
-		BlockVector3 min = getPlotMin(row, col, 1);
-		BlockVector3 max = getPlotMax(row, col, 1);
-		return new Cuboid(min, max);
-	}
+  private Cuboid _spawnCuboid = null;
+  private Cuboid _cityCuboid = null;
+  private ProtectedRegion _spawnRegion = null;
+  private ProtectedRegion _cityRegion = null;
 
-	private void RegisterCommandHandler(String commandName, CommandExecutor executor){
-		PluginCommand command = getCommand(commandName);
-		if(command == null){
-			throw new RuntimeException(String.format("The command %s does not appear to exist", commandName));
-		}else{
-			command.setExecutor(executor);
-		}
-	}
-	
-	private String safeGetStringFromConfig(Configuration config, String name) {
-		if(config.isString(name)){
-			return config.getString(name);
-		}else{
-			throwInvalidConfigException();
-			return null;
-		}
-	}
+  @Override
+  public void onDisable() {
+    getLogger().info(String.format("%s disabled", pdf.getFullName()));
+  }
 
-	private boolean safeGetBooleanFromConfig(Configuration config, String name) {
-		if(config.isBoolean(name)){
-			return config.getBoolean(name);
-		}else{
-			throwInvalidConfigException();
-			return false;
-		}
-	}
+  @Override
+  public void onEnable() {
+    pdf = getDescription();
 
-	private int safeGetIntFromConfig(Configuration config, String name) {
-		if(config.isInt(name)){
-			return config.getInt(name);
-		}else{
-			throwInvalidConfigException();
-			return 0;
-		}
-	}
-	
-	private Material safeGetMaterialFromConfig(Configuration config, String name){
-		Material material = null;
-		if(config.isInt(name)){
-			material = switch (config.getInt(name)) {
-				case 1 -> Material.STONE;
-				case 2 -> Material.GRASS_BLOCK;
-				case 4 -> Material.COBBLESTONE;
-				case 7 -> Material.BEDROCK;
-				default -> null;
-			};
-		}else if(config.isString(name)){
-			material = Material.matchMaterial(config.getString(name));
-		}
-		if (material == null) {
-			getLogger().severe("Invalid material configured at " + name);
-			throwInvalidConfigException();
-		}
-		return material;
-	}
+    _ownedPlots = new HashMap<UUID, List<Plot>>();
+    _userOverrides = new HashMap<UUID, UserOverride>();
+    _currentHomes = new HashMap<UUID, Integer>();
+    loadCurrentHomes();
 
-	private void throwInvalidConfigException() {
-		getLogger().info("Metropolis: ERROR config file is invalid.  Please correct Metropolis/config.yml and restart the server.");
-		throw new RuntimeException("Config file is invalid.");
-	}
+    if (DEBUG) {
+      getLogger().info("Checking config");
+    }
+    Configuration config = getConfig();
+    if (!config.contains("version")) {
+      // new
+      if (DEBUG) {
+        getLogger().info("No config exists.  Assuming new installation.");
+      }
+    } else {
+      int configVersion = safeGetIntFromConfig(config, "version");
+      if (configVersion < version) {
+        if (DEBUG) {
+          getLogger()
+              .info(
+                  String.format(
+                      "Updating config from version v%s to v%s.", configVersion, version));
+        }
+        if (configVersion != version) {
+          // upgrade config
+          config.set("version", version);
+        }
+        saveConfig();
+        if (DEBUG) {
+          getLogger().info("Config updated");
+        }
+      }
+    }
 
-	private void setupSpawn() {
-		getLogger().info("Metropolis: Spawn Cuboid is " + _spawnCuboid.toString());
-		
-		if(generateSpawn){
-			int x= 0;
-			int y=roadLevel;
-			int z=0;
-			
-			//floor
-			for(x=_spawnCuboid.getMinX(); x<= _spawnCuboid.getMaxX(); x++){
-				for(z=_spawnCuboid.getMinZ(); z<=_spawnCuboid.getMaxZ(); z++){
-					for(y=roadLevel+1; y<world.getMaxHeight(); y++){
-						Block block = world.getBlockAt(x, y, z);
-						block.setType(Material.AIR);
-					}
-					
-					y=roadLevel;
-					Block block = world.getBlockAt(x, y, z);
-					block.setType(spawnFloorMaterial);
-				}
-			}
-			
-			//roads
-			createRoads(_spawnCuboid);
-		}
-		
-		if(setWorldSpawn){
-			world.setSpawnLocation(_spawnCuboid.getCenterX(), roadLevel+1, _spawnCuboid.getCenterZ());
-		}
-	}
+    config.set("version", version);
+    saveConfig();
 
-	private void fillOccupiedPlots(){
-		_occupiedPlots.clear();
-		_ownedPlots.clear();
-		
-		for(ProtectedRegion region: regionManager.getRegions().values()){
-			if(region instanceof ProtectedCuboidRegion){
-				ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) region;
-				if(cuboidRegion.getId().startsWith("h_")){
-					PlayerHome home = PlayerHome.get(region);
-					if(!_currentHomes.containsKey(home.getPlayerId()))
-					{
-						_currentHomes.put(home.getPlayerId(), home.getNumber());
-					}
-					_occupiedPlots.add(home);
-					addOwnedPlot(home.getPlayerId(), home);
-				}else if(cuboidRegion.getId().startsWith("r_")){
-					_occupiedPlots.add(Plot.get(cuboidRegion));
-				}
-			}
-		}
-		
-		size=calculateCitySize();
-	}
+    config.options().copyDefaults(true);
 
-	private void addOwnedPlot(UUID playerId, Plot plot) {
-		if(_ownedPlots.containsKey(playerId)){
-			List<Plot> plots = _ownedPlots.get(playerId);
-			plots.add(plot);
-		}else{
-			List<Plot> plots = new ArrayList<Plot>();
-			plots.add(plot);
-			_ownedPlots.put(playerId, plots);
-		}
-	}
+    if (DEBUG) {
+      getLogger().info("Reading configuration from file.");
+    }
+    plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
+    plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
+    generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
+    floorMaterial = safeGetMaterialFromConfig(config, "plot.floor.material");
+    spaceAboveFloor = safeGetIntFromConfig(config, "plot.floor.clearSpaceAbove");
+    generateFloorSupports = safeGetBooleanFromConfig(config, "plot.floor.supports.generate");
+    floorSupportMaterial = safeGetMaterialFromConfig(config, "plot.floor.supports.material");
+    generateSign = safeGetBooleanFromConfig(config, "plot.sign.generate");
+    roadWidth = safeGetIntFromConfig(config, "road.width");
+    spaceAboveRoad = safeGetIntFromConfig(config, "road.clearSpaceAbove");
+    roadLevel = safeGetIntFromConfig(config, "road.level");
+    roadMaterial = safeGetMaterialFromConfig(config, "road.material");
+    generateRoadSupports = safeGetBooleanFromConfig(config, "road.supports.generate");
+    roadSupportMaterial = safeGetMaterialFromConfig(config, "road.supports.material");
+    generateSpawn = safeGetBooleanFromConfig(config, "spawn.generate");
+    setWorldSpawn = safeGetBooleanFromConfig(config, "spawn.setAsWorldSpawn");
+    spawnFloorMaterial = safeGetMaterialFromConfig(config, "spawn.material");
+    generateWall = safeGetBooleanFromConfig(config, "wall.generate");
+    wallMaterial = safeGetMaterialFromConfig(config, "wall.material");
+    wallHeight = safeGetIntFromConfig(config, "wall.height");
+    worldName = safeGetStringFromConfig(config, "worldname");
+    _maxPlots = safeGetIntFromConfig(config, "plot.multiplier");
+    _plotMultiplier = safeGetIntFromConfig(config, "plot.maxPerPlayer");
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		return super.onCommand(sender, command, label, args);
-	}
+    buildUserOverrides();
 
-	public PlayerHome getPlayerHome(Player player) {
-		PlayerHome home = null;
-		
-		int homeNumber = _currentHomes.getOrDefault(player.getUniqueId(), 1);
-		String regionName = String.format("h_%d_%s", homeNumber, player.getUniqueId());
-		ProtectedRegion homeRegion = regionManager.getRegion(regionName);
+    saveConfig();
+    if (DEBUG) {
+      getLogger().info("Done reading config.");
+    }
 
-		if(homeRegion == null){
-			PlayerHome existingHome = getOwnedHome(player.getUniqueId(), homeNumber);
-			if (existingHome != null) {
-				existingHome.setPlayerName(player.getName());
-				return existingHome;
-			}
-			if(DEBUG){
-				getLogger().info(String.format("Creating home for player %s", player.getName()));
-			}
-			home = generateHome(player);
-		}else{
-			home = new PlayerHome(homeRegion);
-			home.setPlayerName(player.getName());
-		}
-		
-		return home;
-	}
+    getLogger().info(String.format("Metropolis: world name is %s", worldName));
 
-	private void generateFloor(Cuboid plotCuboid){
-		int x=0;
-		int y=roadLevel;
-		int z=0;
+    Server server = getServer();
+    if (server == null) {
+      throw new RuntimeException("getServer() is null");
+    }
+    PluginManager pluginManager = server.getPluginManager();
+    if (pluginManager == null) {
+      throw new RuntimeException("server.getPluginManager() is null");
+    }
 
-		for(x = plotCuboid.minX; x <= plotCuboid.maxX; x++){
-			for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
-				setFloor(x, y, z);
-				
-				clearSpaceAbove(x, y, z);
-			}
-		}
-	}
-	
-	private void clearSpaceAbove(int x, int y, int z) {
-		Block block = null;
-		
-		for(int i=0; i<spaceAboveFloor; i++){
-			block = world.getBlockAt(x, y+1+i, z);
-			block.setType(Material.AIR);
-		}
-	}
+    Plugin plugin = pluginManager.getPlugin("WorldGuard");
+    if (plugin == null || !(plugin instanceof WorldGuardPlugin)) {
+      throw new RuntimeException("WorldGuard must be loaded first");
+    }
 
-	private void setFloor(int x, int y, int z) {
-		//if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
-		
-		Block block = world.getBlockAt(x, y, z);
-		
-		//Set the floor block
-		block.setType(floorMaterial);
-		
-		//Set the support
-		if(generateFloorSupports && isPhysicsMaterial(block.getType())){
-			Block blockUnder = world.getBlockAt(x, y-1, z);
-			if(!isSolidMaterial(blockUnder.getType())){
-				blockUnder.setType(floorSupportMaterial);
-			}
-		}
-	}
+    worldGuard = (WorldGuardPlugin) plugin;
 
-	private void createRoads(Cuboid plotCuboid, int roadMask){
-		if(roadWidth>0){
-			int x=0;
-			int y= roadLevel;
-			int z=0;
-			
-			if(plotCuboid == null){
-				if(DEBUG){
-					getLogger().warning("plotCuboid is null");
-				}
-				return;
-			}
-			
-			int roadWidth1 = roadWidth / 2;
-			int roadWidth2 = roadWidth - roadWidth1;
-			
-			//North West Corner
-			if((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0){
-				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//North Strip
-			if((roadMask & ROAD_NORTH) != 0){
-				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
-					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//North East Corner
-			if((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0){
-				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
-					for(z=plotCuboid.minZ - roadWidth1; z<plotCuboid.minZ; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//East Strip
-			if((roadMask & ROAD_EAST) != 0){
-				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
-					for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//South East Corner
-			if((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0){
-				for(x=plotCuboid.maxX+1; x<=plotCuboid.maxX + roadWidth2; x++){
-					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//South Strip
-			if((roadMask & ROAD_SOUTH) != 0){
-				for(x=plotCuboid.minX; x<=plotCuboid.maxX; x++){
-					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//South West Corner
-			if((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0){
-				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.maxZ+1; z<=plotCuboid.maxZ + roadWidth2; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-			
-			//West Strip
-			if((roadMask & ROAD_WEST) != 0){
-				for(x=plotCuboid.minX - roadWidth1; x<plotCuboid.minX; x++){
-					for(z=plotCuboid.minZ; z<=plotCuboid.maxZ; z++){
-						setRoad(x, y, z);
-					}
-				}
-			}
-		}
-	}
-	
-	private void createRoads(Cuboid plotCuboid) {
-		createRoads(plotCuboid, ROAD_NORTH|ROAD_SOUTH|ROAD_EAST|ROAD_WEST);
-	}
-	
-	private void setRoad(int x, int y, int z) {
-		//if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
-		
-		Block block = world.getBlockAt(x, y, z);
-		//Set the road block
-		block.setType(roadMaterial);
-		
-		//Set the support
-		if(generateRoadSupports && isPhysicsMaterial(block.getType())){
-			Block blockUnder = world.getBlockAt(x, y-1, z);
-			if(!isSolidMaterial(blockUnder.getType())){
-				blockUnder.setType(roadSupportMaterial);
-			}
-		}
-		
-		//Clear the space above
-		for(int y1 = 0; y1 < spaceAboveRoad; y1++){
-			block = world.getBlockAt(x, y+y1+1, z);
-			block.setType(Material.AIR);
-		}
-	}
+    plugin = pluginManager.getPlugin("WorldEdit");
+    if (plugin == null || !(plugin instanceof WorldEditPlugin)) {
+      throw new RuntimeException("WorldEdit must be loaded first");
+    }
+    worldEdit = (WorldEditPlugin) plugin;
 
-	private boolean isSolidMaterial(Material material) {
-		return 	material.isBlock() &&
-				material != Material.AIR && 
-				material != Material.WATER && 
-				material != Material.LAVA && 
-				material != Material.TORCH && 
-				material != Material.REDSTONE_TORCH;
-	}
+    world = server.getWorld(worldName);
+    if (world == null) {
+      throw new RuntimeException(String.format("The world %s does not exist", worldName));
+    }
 
-	private boolean isPhysicsMaterial(Material material) {
-		return 	material == Material.GRAVEL ||
-				material == Material.SAND;
-	}
+    gridSizeX = plotSizeX + roadWidth;
+    gridSizeY = world.getMaxHeight();
+    gridSizeZ = plotSizeZ + roadWidth;
 
-	public boolean isBlockOccupied(int row, int col){
-		Cuboid cuboid = new Cuboid(getGridMin(row, col, 1), getGridMax(row, col, 1));
-		for(Plot plot: _occupiedPlots){
-			if(plot.getCuboid().intersects(cuboid)){
-				return true;
-			}
-		}		
-		
-		if(cuboid.intersects(_spawnCuboid)){
-			return true;
-		}
+    regionManager =
+        WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
+    if (regionManager == null) {
+      throw new RuntimeException("WorldGuard regions don't seem to be enabled.");
+    }
 
-		return false;
-	}
-	
-	private boolean areBlocksOccupied(int row, int col, int i) {
-		for(int ix = col; ix < col+i; ix++){
-			for(int iy = row; iy < row+i; iy++){
-				if(isBlockOccupied(iy, ix)){
-					return true;
-				}
-			}
-		}
+    _cityRegion = regionManager.getRegion("City");
+    if (_cityRegion == null) {
+      _cityRegion =
+          new ProtectedCuboidRegion("City", getPlotMin(0, 0, 1), this.getPlotMax(0, 0, 1));
+      _cityRegion.setPriority(0);
+      _cityRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
+      _cityRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
+      regionManager.addRegion(_cityRegion);
+    }
 
-		return false;
-	}
+    _cityCuboid = new Cuboid(_cityRegion.getMinimumPoint(), _cityRegion.getMaximumPoint());
 
-	private Cuboid findNextUnownedHomeRegion(int plotMultiplier) {
-		int row = 0;
-		int col = 0;
-		int ring = 0;
-		int min = -ring;
-		int max = ring - (plotMultiplier-1); 
-		boolean done = false;
-		
-		while(!done){
-			row = min;
-			col = min;
+    _spawnRegion = regionManager.getRegion("Spawn");
+    if (_spawnRegion == null) {
+      _spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0, 1), getPlotMax(0, 0, 1));
+      _spawnRegion.setPriority(1);
+      _spawnRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
+      _spawnRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
+      regionManager.addRegion(_spawnRegion);
 
-			//Top
-			for(col = min; col <= max; col++){
-				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
-					return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-				}
-			}
-			
-			//Right side
-			col = max;
-			for(row=min + 1; row < max; row++){
-				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
-					return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-				}
-			}
-			
-			//Bottom
-			row = max;
-			for(col = max; col >= min; col--){
-				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
-					return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-				}
-			}
-			
-			//Left
-			col = min;
-			for(row = max; row > min; row--){
-				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(row != 0 || col != 0){
-						if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
-						return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-					}
-				}
-			}
-			
-			ring++;
-			min = -ring;
-			max = ring - (plotMultiplier-1); 
-		}
-		
-		if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
-		return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-	}
-	
-	private void resizeCityRegion() {
-		size=calculateCitySize();
-		ProtectedRegion cityRegion = regionManager.getRegion("City");
-		if(cityRegion instanceof ProtectedCuboidRegion){
-			ProtectedCuboidRegion region = (ProtectedCuboidRegion)cityRegion;
-			
-			BlockVector3 min;
-			BlockVector3 max;
-			
-			min = getPlotMin(-size/2, -size/2, 1);
-			max = getPlotMax(size/2, size/2, 1);
+      _spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
 
-			ProtectedCuboidRegion resizedRegion = new ProtectedCuboidRegion(region.getId(), min, max);
-			resizedRegion.copyFrom(region);
-			regionManager.removeRegion(region.getId());
-			regionManager.addRegion(resizedRegion);
-			_cityRegion = resizedRegion;
-			_cityCuboid = new Cuboid(min, max);
-			saveRegions();
-		}
-	}
+      setupSpawn();
+    } else {
+      _spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
+    }
 
-	private int calculateCitySize() {
-		int iSize = 3;
-		
-		for(Plot home: _occupiedPlots){
-			int plotCol=Math.abs(getPlotXFromMin(home.getCuboid()));
-			int plotRow=Math.abs(getPlotZFromMin(home.getCuboid()));
-			if(DEBUG){getLogger().info(String.format("col: %d, row: %d, iSize: %d", plotCol, plotRow, iSize));}
-			iSize = Math.max(Math.max(plotRow*2+1, plotCol*2+1), iSize);
-		}
+    _spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
 
-		if(DEBUG){getLogger().info(String.format("City size is %d", iSize));}
-		return iSize;
-	}
+    if (DEBUG) {
+      /*
+      getLogger().info("Metropolis: first 25 plots");
 
-	public BlockVector3 getPlotMin(int row, int col, int plotMultiplier){
-		BlockVector3 gridMin = getGridMin(row, col, plotMultiplier);
-		
-		BlockVector3 bv = BlockVector3.at(gridMin.x() + roadWidth/2, gridMin.y(), gridMin.z() + roadWidth/2);
-		getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
-		return bv;
-	}
-	
-	public BlockVector3 getPlotMax(int row, int col, int plotMultiplier){
-		BlockVector3 gridMax = getGridMax(row, col, plotMultiplier);
-		
-		BlockVector3 bv = BlockVector3.at(gridMax.x() - (roadWidth - roadWidth/2), gridMax.y(), gridMax.z() - (roadWidth-roadWidth/2));
-		getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
-		return bv;
-	}
-	
-	public BlockVector3 getGridMin(int row, int col, int plotMultiplier){
-		int level = 0;
-		
-		BlockVector3 bv = BlockVector3.at(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
-		getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
-		return bv;
-	}
-	
-	public BlockVector3 getGridMax(int row, int col, int plotMultiplier){
-		int level = 0;
-		
-		BlockVector3 bv = BlockVector3.at((col+plotMultiplier) * gridSizeX*plotMultiplier-1, (level+1/*plotMultiplier*/) * gridSizeY-1, (row+plotMultiplier) * gridSizeZ-1); 
-		getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
-		return bv;
-	}
+      int n = 5;
 
-	private int getPlotXFromMin(Cuboid cuboid) {
-		return (cuboid.minX - roadWidth/2)/gridSizeX;
-	}
+      for (int ix=-n; ix<=n; ix++){
+      	for (int iz=-n; iz<=n; iz++){
+      		getLogger().info(getCuboid(iz, ix).toString());
+      	}
+      }
+      */
 
-	private int getPlotZFromMin(Cuboid cuboid) {
-		return (cuboid.minZ - roadWidth/2)/gridSizeZ;
-	}
+      getLogger().info(String.format("roadWidth = %d", roadWidth));
+    }
 
-	private void setHomeOccupied(UUID ownerId, String ownerName, int homeNumber, BlockVector3 minimumPoint, BlockVector3 maximumPoint) {
-		PlayerHome home = new PlayerHome(ownerId, ownerName, homeNumber, minimumPoint, maximumPoint);
-		if(!_occupiedPlots.contains(home)){
-			_occupiedPlots.add(home);
-			addOwnedPlot(ownerId, home);
-		}
-	}
-	
-	public PlayerHome generateHome(String playerName) {
-		return generateHome(getServer().getOfflinePlayer(playerName));
-	}
+    _occupiedPlots = new ArrayList<Plot>();
+    fillOccupiedPlots();
+    resizeCityRegion();
 
-	public PlayerHome generateHome(OfflinePlayer player) {
-		UUID playerId = player.getUniqueId();
-		String playerName = player.getName() == null ? playerId.toString() : player.getName();
-		int homeNumber = _currentHomes.getOrDefault(playerId, 1);
-		int multiplier = getPlotMultiplier(playerId);
-		
-		if(DEBUG){getLogger().info(String.format("Generating home for %s", playerName));}
-		Cuboid homeCuboid = null;
-		ProtectedRegion phomeRegion = null;
-		String regionName = getHomeRegionName(playerId, homeNumber);
-		phomeRegion = regionManager.getRegion(regionName);
-		if(phomeRegion != null){
-			return PlayerHome.get(phomeRegion); 
-		}
-		PlayerHome existingHome = getOwnedHome(playerId, homeNumber);
-		if (existingHome != null) {
-			return existingHome;
-		}
-		
-		homeCuboid = findNextUnownedHomeRegion(multiplier);
+    _playerJoinListener = new PlayerJoinListener(this);
+    getServer().getPluginManager().registerEvents(_playerJoinListener, this);
 
-		getLogger().info("Metropolis Generating home in " + homeCuboid.toString());
+    getLogger().info(String.format("%s enabled", pdf.getFullName()));
 
-		ProtectedCuboidRegion newHomeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
-		newHomeRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
-		newHomeRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
-		newHomeRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
-		newHomeRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
-		newHomeRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
-		newHomeRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
-		newHomeRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+    RegisterCommandHandler("metropolis", new MetropolisCommand(this));
 
-		DefaultDomain d = newHomeRegion.getOwners();
-		d.addPlayer(playerId);
-		newHomeRegion.setPriority(1);
+    RegisterCommandHandler(
+        "metropolis-debug-generatetesthomes", new MetropolisDebugGenerateTestHomesCommand(this));
 
-		regionManager.addRegion(newHomeRegion);
-		try {
-			regionManager.save();
-		} catch (Exception e) {
-			getLogger().info("Metropolis: ERROR Problem saving region");
-			e.printStackTrace();
-		}
+    RegisterCommandHandler("metropolis-flag-reset", new MetropolisFlagResetCommand(this));
 
-		try {
-			regionManager.save();
-		} catch (Exception e) {
-			getLogger().info("Metropolis: ERROR Problem saving region");
-			e.printStackTrace();
-		}
-		getLogger().info(String.format(
-				"New home region (%d, %d, %d) (%d, %d, %d)",
-				newHomeRegion.getMinimumPoint().x(),
-				newHomeRegion.getMinimumPoint().y(),
-				newHomeRegion.getMinimumPoint().z(),
-				newHomeRegion.getMaximumPoint().x(),
-				newHomeRegion.getMaximumPoint().y(),
-				newHomeRegion.getMaximumPoint().z()
-				));
-	
-		setHomeOccupied(playerId, playerName, homeNumber, newHomeRegion.getMinimumPoint(), newHomeRegion.getMaximumPoint());
-		_currentHomes.putIfAbsent(playerId, homeNumber);
-		saveCurrentHomes();
-		
-		createRoads(homeCuboid);
-		
-		if(generateFloor){
-			generateFloor(homeCuboid);
-		}
-		
-		if(DEBUG){getLogger().info(String.format("generateSign: %s", String.valueOf(generateSign)));}
-		if(generateSign){
-			generateSign(homeCuboid, playerName);
-		}
-		
-		if(DEBUG){getLogger().info(String.format("Done generating home for %s", playerName));}
-		
-		PlayerHome home = new PlayerHome(newHomeRegion);
-		home.setPlayerName(playerName);
-		return home;
-	}
+    RegisterCommandHandler("metropolis-home-evict", new MetropolisHomeEvictCommand(this));
+    RegisterCommandHandler("metropolis-home-acquire", new MetropolisHomeAcquire(this));
+    RegisterCommandHandler("metropolis-home-generate", new MetropolisHomeGenerateCommand(this));
+    RegisterCommandHandler("metropolis-home-go", new MetropolisHomeGoCommand(this));
+    RegisterCommandHandler("metropolis-home-list", new MetropolisHomeListCommand(this));
+    RegisterCommandHandler("metropolis-home-move", new MetropolisHomeMoveCommand(this));
 
-	private void generateSign(Cuboid plotCuboid, String playerName) {
-		Block signBlock = world.getBlockAt(plotCuboid.getCenterX(), roadLevel+1, plotCuboid.getCenterZ());
-		signBlock.setType(Material.OAK_SIGN);
-		Sign sign = (Sign)signBlock.getState();
-		sign.setLine(0, "Home of");
-		
-		sign.setLine(1, playerName.substring(0, Math.min(15, playerName.length())));
-		if(playerName.length() > 15){
-			sign.setLine(2, playerName.substring(16, Math.min(30, playerName.length())));
-			if(playerName.length() > 45){
-				sign.setLine(3, playerName.substring(31, Math.min(45, playerName.length())));
-			}
-		}
-		
-		sign.update(true);
-	}
+    RegisterCommandHandler("metropolis-plot-go", new MetropolisPlotGoCommand(this));
+    RegisterCommandHandler("metropolis-plot-reserve", new MetropolisPlotReserveCommand(this));
+  }
 
-	public List<Plot> getCityBlocks() {
-		return Collections.unmodifiableList(_occupiedPlots);
-	}
-	
-	public World getWorld(){
-		return world;
-	}
+  private void loadCurrentHomes() {
+    File homesFile = new File(getDataFolder(), "currentHomes.yml");
+    try {
+      _currentHomes.putAll(
+          CurrentHomesStore.load(
+              homesFile, ownerName -> getServer().getOfflinePlayer(ownerName).getUniqueId()));
+      saveCurrentHomes();
+    } catch (IOException | org.bukkit.configuration.InvalidConfigurationException e) {
+      getLogger().log(java.util.logging.Level.SEVERE, "Unable to load currentHomes.yml", e);
+    }
+  }
 
-	public void reserveCuboid(String regionName, Cuboid cuboid) {
-		ProtectedCuboidRegion reservedRegion = new ProtectedCuboidRegion(regionName, cuboid.getMin(), cuboid.getMax());
-		reservedRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
-		reservedRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
-		regionManager.addRegion(reservedRegion);
-		
-		_occupiedPlots.add(Plot.get(reservedRegion));
-		saveRegions();
-	}
-	
-	public Cuboid getCityCuboid(){
-		return _cityCuboid;
-	}
-	
-	public boolean getGenerateWall(){
-		return generateWall;
-	}
-	
-	public Material getWallMaterial(){
-		return wallMaterial;
-	}
-	public int getWallheight(){
-		return wallHeight;
-	}
+  private void buildUserOverrides() {
+    if (getConfig().isList("userOverrides")) {
+      List<?> list = getConfig().getList("userOverrides");
 
-	public ProtectedRegion getRegion(String regionName) {
-		if(regionManager == null){
-			return null;
-		}
-		
-		return regionManager.getRegion(regionName);
-	}
+      for (Object o2 : list) {
+        if (o2 instanceof HashMap<?, ?>) {
+          HashMap<?, ?> map = (HashMap<?, ?>) o2;
+          String username = "";
+          if (map.containsKey("username")) {
+            Object o3 = map.get("username");
+            if (o3 instanceof String) {
+              username = (String) o3;
+            }
+          }
 
-	public void removeRegion(String regionId) {
-		if(regionManager == null){
-			return;
-		}
-		
-		try{
-			regionManager.removeRegion(regionId);
-		}catch(Exception ex){
-			getLogger().info(String.format("[ERROR] Metropolis: Unable to remove region {%s}.", regionId));
-			return;
-		}
-	}
+          int plotMultiplier = _plotMultiplier;
+          if (map.containsKey("plotMultiplier")) {
+            Object o3 = map.get("plotMultiplier");
+            if (o3 instanceof Integer) {
+              plotMultiplier = (Integer) o3;
+            }
+          }
 
-	public void saveRegions() {
-		try {
-			regionManager.save();
-		} catch (Exception ex) {
-			getLogger().info(String.format("[SEVERE] Metropolis: Unable to save WorldGuard regions."));
-			return;
-		}
-	}
+          int maxPlots = _maxPlots;
+          if (map.containsKey("maxPlots")) {
+            Object o3 = map.get("maxPlots");
+            if (o3 instanceof Integer) {
+              maxPlots = (Integer) o3;
+            }
+          }
 
-	public int getNumPlots(UUID playerId) {
-		if(_ownedPlots.containsKey(playerId)){
-			List<Plot> plots = _ownedPlots.get(playerId);
-			if(plots == null){
-				return 0;
-			}else{
-				return plots.size();
-			}
-		}else{
-			return 0;
-		}
-	}
+          UUID playerId = getServer().getOfflinePlayer(username).getUniqueId();
+          UserOverride override = new UserOverride(username, plotMultiplier, maxPlots);
+          _userOverrides.put(playerId, override);
+        }
+      }
+    }
+  }
 
-	public int getMaxPlots(UUID playerId) {
-		if(_userOverrides.containsKey(playerId)){
-			return _userOverrides.get(playerId).getMaxPlots();
-		}else{
-			return _maxPlots;
-		}
-	}
+  private Cuboid getCuboid(int row, int col) {
+    // This is only used for debug info
+    BlockVector3 min = getPlotMin(row, col, 1);
+    BlockVector3 max = getPlotMax(row, col, 1);
+    return new Cuboid(min, max);
+  }
 
-	public void assignPlot(OfflinePlayer player) {
-		generateHome(player);
-	}
+  private void RegisterCommandHandler(String commandName, CommandExecutor executor) {
+    PluginCommand command = getCommand(commandName);
+    if (command == null) {
+      throw new RuntimeException(
+          String.format("The command %s does not appear to exist", commandName));
+    } else {
+      command.setExecutor(executor);
+    }
+  }
 
-	private int getPlotMultiplier(UUID playerId) {
-		if(_userOverrides.containsKey(playerId)){
-			return _userOverrides.get(playerId).getPlotMultiplier();
-		}else{
-			return _plotMultiplier;
-		}
-	}
+  private String safeGetStringFromConfig(Configuration config, String name) {
+    if (config.isString(name)) {
+      return config.getString(name);
+    } else {
+      throwInvalidConfigException();
+      return null;
+    }
+  }
 
-	public Plot getPlot(String string) {
-		/**
-		 * string is the name of the region to get a plot for
-		 * 
-		 * loop through all regions and find one with the specified name return null if there is none
-		 */
-		for(Plot plot : _occupiedPlots){
-			if(plot.getRegionName().equals(string)){
-				return plot;
-			}
-		}
-		
-		return null;
-	}
+  private boolean safeGetBooleanFromConfig(Configuration config, String name) {
+    if (config.isBoolean(name)) {
+      return config.getBoolean(name);
+    } else {
+      throwInvalidConfigException();
+      return false;
+    }
+  }
 
-	public Player getPlayer(String name) {
-		Player player = getServer().getPlayerExact(name);
-		if (player != null) {
-			return player;
-		}
-		return PlayerLookup.findOnline(name, getServer().getOnlinePlayers());
-	}
-	
-	public OfflinePlayer getOfflinePlayer(String name){
-		Player onlinePlayer = getPlayer(name);
-		if (onlinePlayer != null) {
-			return onlinePlayer;
-		}
-		for (OfflinePlayer offlinePlayer : getServer().getOfflinePlayers()) {
-			if (name.equalsIgnoreCase(offlinePlayer.getName())) {
-				return offlinePlayer;
-			}
-		}
-		return null;
-	}
+  private int safeGetIntFromConfig(Configuration config, String name) {
+    if (config.isInt(name)) {
+      return config.getInt(name);
+    } else {
+      throwInvalidConfigException();
+      return 0;
+    }
+  }
 
-	public String teleportPlayerToPlot(Player player, Plot plot) {
-		Location loc = plot.getViableSpawnLocation(world);
-		
-		if(loc != null){
-			player.teleport(loc);
-		}
+  private Material safeGetMaterialFromConfig(Configuration config, String name) {
+    Material material = null;
+    if (config.isInt(name)) {
+      material =
+          switch (config.getInt(name)) {
+            case 1 -> Material.STONE;
+            case 2 -> Material.GRASS_BLOCK;
+            case 4 -> Material.COBBLESTONE;
+            case 7 -> Material.BEDROCK;
+            default -> null;
+          };
+    } else if (config.isString(name)) {
+      material = Material.matchMaterial(config.getString(name));
+    }
+    if (material == null) {
+      getLogger().severe("Invalid material configured at " + name);
+      throwInvalidConfigException();
+    }
+    return material;
+  }
 
-		return null;
-	}
+  private void throwInvalidConfigException() {
+    getLogger()
+        .info(
+            "Metropolis: ERROR config file is invalid.  Please correct Metropolis/config.yml and restart the server.");
+    throw new RuntimeException("Config file is invalid.");
+  }
 
-	public boolean homeExists(UUID playerId, int homeNumber) {
-		for(Plot plot: _occupiedPlots){
-			if(plot instanceof PlayerHome home && home.getPlayerId().equals(playerId) && home.getNumber() == homeNumber){
-				return true;
-			}
-		}
-		
-		return false;
-	}
+  private void setupSpawn() {
+    getLogger().info("Metropolis: Spawn Cuboid is " + _spawnCuboid.toString());
 
-	public void setHome(UUID playerId, int newHomeNumber) {
-		_currentHomes.put(playerId, newHomeNumber);
-		saveCurrentHomes();
-	}
+    if (generateSpawn) {
+      int x = 0;
+      int y = roadLevel;
+      int z = 0;
 
-	public String getHomeRegionName(UUID playerId, int homeNumber) {
-		PlayerHome existingHome = getOwnedHome(playerId, homeNumber);
-		return existingHome == null
-				? String.format("h_%d_%s", homeNumber, playerId)
-				: existingHome.getRegionName();
-	}
+      // floor
+      for (x = _spawnCuboid.getMinX(); x <= _spawnCuboid.getMaxX(); x++) {
+        for (z = _spawnCuboid.getMinZ(); z <= _spawnCuboid.getMaxZ(); z++) {
+          for (y = roadLevel + 1; y < world.getMaxHeight(); y++) {
+            Block block = world.getBlockAt(x, y, z);
+            block.setType(Material.AIR);
+          }
 
-	public String getCurrentHomeRegionName(UUID playerId) {
-		return getHomeRegionName(playerId, _currentHomes.getOrDefault(playerId, 1));
-	}
+          y = roadLevel;
+          Block block = world.getBlockAt(x, y, z);
+          block.setType(spawnFloorMaterial);
+        }
+      }
 
-	private PlayerHome getOwnedHome(UUID playerId, int homeNumber) {
-		List<Plot> plots = _ownedPlots.get(playerId);
-		if (plots == null) {
-			return null;
-		}
-		for (Plot plot : plots) {
-			if (plot instanceof PlayerHome home && home.getNumber() == homeNumber) {
-				return home;
-			}
-		}
-		return null;
-	}
+      // roads
+      createRoads(_spawnCuboid);
+    }
 
-	private void saveCurrentHomes() {
-		File homesFile = new File(getDataFolder(), "currentHomes.yml");
-		try {
-			CurrentHomesStore.save(homesFile, _currentHomes);
-		} catch (IOException e) {
-			getLogger().log(java.util.logging.Level.SEVERE, "Unable to save currentHomes.yml", e);
-		}
-	}
+    if (setWorldSpawn) {
+      world.setSpawnLocation(_spawnCuboid.getCenterX(), roadLevel + 1, _spawnCuboid.getCenterZ());
+    }
+  }
+
+  private void fillOccupiedPlots() {
+    _occupiedPlots.clear();
+    _ownedPlots.clear();
+
+    for (ProtectedRegion region : regionManager.getRegions().values()) {
+      if (region instanceof ProtectedCuboidRegion) {
+        ProtectedCuboidRegion cuboidRegion = (ProtectedCuboidRegion) region;
+        if (cuboidRegion.getId().startsWith("h_")) {
+          PlayerHome home = PlayerHome.get(region);
+          if (!_currentHomes.containsKey(home.getPlayerId())) {
+            _currentHomes.put(home.getPlayerId(), home.getNumber());
+          }
+          _occupiedPlots.add(home);
+          addOwnedPlot(home.getPlayerId(), home);
+        } else if (cuboidRegion.getId().startsWith("r_")) {
+          _occupiedPlots.add(Plot.get(cuboidRegion));
+        }
+      }
+    }
+
+    size = calculateCitySize();
+  }
+
+  private void addOwnedPlot(UUID playerId, Plot plot) {
+    if (_ownedPlots.containsKey(playerId)) {
+      List<Plot> plots = _ownedPlots.get(playerId);
+      plots.add(plot);
+    } else {
+      List<Plot> plots = new ArrayList<Plot>();
+      plots.add(plot);
+      _ownedPlots.put(playerId, plots);
+    }
+  }
+
+  @Override
+  public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    return super.onCommand(sender, command, label, args);
+  }
+
+  public PlayerHome getPlayerHome(Player player) {
+    PlayerHome home = null;
+
+    int homeNumber = _currentHomes.getOrDefault(player.getUniqueId(), 1);
+    String regionName = String.format("h_%d_%s", homeNumber, player.getUniqueId());
+    ProtectedRegion homeRegion = regionManager.getRegion(regionName);
+
+    if (homeRegion == null) {
+      PlayerHome existingHome = getOwnedHome(player.getUniqueId(), homeNumber);
+      if (existingHome != null) {
+        existingHome.setPlayerName(player.getName());
+        return existingHome;
+      }
+      if (DEBUG) {
+        getLogger().info(String.format("Creating home for player %s", player.getName()));
+      }
+      home = generateHome(player);
+    } else {
+      home = new PlayerHome(homeRegion);
+      home.setPlayerName(player.getName());
+    }
+
+    return home;
+  }
+
+  private void generateFloor(Cuboid plotCuboid) {
+    int x = 0;
+    int y = roadLevel;
+    int z = 0;
+
+    for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
+      for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
+        setFloor(x, y, z);
+
+        clearSpaceAbove(x, y, z);
+      }
+    }
+  }
+
+  private void clearSpaceAbove(int x, int y, int z) {
+    Block block = null;
+
+    for (int i = 0; i < spaceAboveFloor; i++) {
+      block = world.getBlockAt(x, y + 1 + i, z);
+      block.setType(Material.AIR);
+    }
+  }
+
+  private void setFloor(int x, int y, int z) {
+    // if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
+
+    Block block = world.getBlockAt(x, y, z);
+
+    // Set the floor block
+    block.setType(floorMaterial);
+
+    // Set the support
+    if (generateFloorSupports && isPhysicsMaterial(block.getType())) {
+      Block blockUnder = world.getBlockAt(x, y - 1, z);
+      if (!isSolidMaterial(blockUnder.getType())) {
+        blockUnder.setType(floorSupportMaterial);
+      }
+    }
+  }
+
+  private void createRoads(Cuboid plotCuboid, int roadMask) {
+    if (roadWidth > 0) {
+      int x = 0;
+      int y = roadLevel;
+      int z = 0;
+
+      if (plotCuboid == null) {
+        if (DEBUG) {
+          getLogger().warning("plotCuboid is null");
+        }
+        return;
+      }
+
+      int roadWidth1 = roadWidth / 2;
+      int roadWidth2 = roadWidth - roadWidth1;
+
+      // North West Corner
+      if ((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0) {
+        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
+          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // North Strip
+      if ((roadMask & ROAD_NORTH) != 0) {
+        for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
+          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // North East Corner
+      if ((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0) {
+        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
+          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // East Strip
+      if ((roadMask & ROAD_EAST) != 0) {
+        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
+          for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // South East Corner
+      if ((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0) {
+        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
+          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // South Strip
+      if ((roadMask & ROAD_SOUTH) != 0) {
+        for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
+          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // South West Corner
+      if ((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0) {
+        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
+          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+
+      // West Strip
+      if ((roadMask & ROAD_WEST) != 0) {
+        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
+          for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
+            setRoad(x, y, z);
+          }
+        }
+      }
+    }
+  }
+
+  private void createRoads(Cuboid plotCuboid) {
+    createRoads(plotCuboid, ROAD_NORTH | ROAD_SOUTH | ROAD_EAST | ROAD_WEST);
+  }
+
+  private void setRoad(int x, int y, int z) {
+    // if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
+
+    Block block = world.getBlockAt(x, y, z);
+    // Set the road block
+    block.setType(roadMaterial);
+
+    // Set the support
+    if (generateRoadSupports && isPhysicsMaterial(block.getType())) {
+      Block blockUnder = world.getBlockAt(x, y - 1, z);
+      if (!isSolidMaterial(blockUnder.getType())) {
+        blockUnder.setType(roadSupportMaterial);
+      }
+    }
+
+    // Clear the space above
+    for (int y1 = 0; y1 < spaceAboveRoad; y1++) {
+      block = world.getBlockAt(x, y + y1 + 1, z);
+      block.setType(Material.AIR);
+    }
+  }
+
+  private boolean isSolidMaterial(Material material) {
+    return material.isBlock()
+        && material != Material.AIR
+        && material != Material.WATER
+        && material != Material.LAVA
+        && material != Material.TORCH
+        && material != Material.REDSTONE_TORCH;
+  }
+
+  private boolean isPhysicsMaterial(Material material) {
+    return material == Material.GRAVEL || material == Material.SAND;
+  }
+
+  public boolean isBlockOccupied(int row, int col) {
+    Cuboid cuboid = new Cuboid(getGridMin(row, col, 1), getGridMax(row, col, 1));
+    for (Plot plot : _occupiedPlots) {
+      if (plot.getCuboid().intersects(cuboid)) {
+        return true;
+      }
+    }
+
+    if (cuboid.intersects(_spawnCuboid)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private boolean areBlocksOccupied(int row, int col, int i) {
+    for (int ix = col; ix < col + i; ix++) {
+      for (int iy = row; iy < row + i; iy++) {
+        if (isBlockOccupied(iy, ix)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private Cuboid findNextUnownedHomeRegion(int plotMultiplier) {
+    int row = 0;
+    int col = 0;
+    int ring = 0;
+    int min = -ring;
+    int max = ring - (plotMultiplier - 1);
+    boolean done = false;
+
+    while (!done) {
+      row = min;
+      col = min;
+
+      // Top
+      for (col = min; col <= max; col++) {
+        if (!areBlocksOccupied(row, col, plotMultiplier)) {
+          if (DEBUG) {
+            getLogger().info(String.format("row: %d, col: %d", row, col));
+          }
+          return new Cuboid(
+              getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+        }
+      }
+
+      // Right side
+      col = max;
+      for (row = min + 1; row < max; row++) {
+        if (!areBlocksOccupied(row, col, plotMultiplier)) {
+          if (DEBUG) {
+            getLogger().info(String.format("row: %d, col: %d", row, col));
+          }
+          return new Cuboid(
+              getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+        }
+      }
+
+      // Bottom
+      row = max;
+      for (col = max; col >= min; col--) {
+        if (!areBlocksOccupied(row, col, plotMultiplier)) {
+          if (DEBUG) {
+            getLogger().info(String.format("row: %d, col: %d", row, col));
+          }
+          return new Cuboid(
+              getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+        }
+      }
+
+      // Left
+      col = min;
+      for (row = max; row > min; row--) {
+        if (!areBlocksOccupied(row, col, plotMultiplier)) {
+          if (row != 0 || col != 0) {
+            if (DEBUG) {
+              getLogger().info(String.format("row: %d, col: %d", row, col));
+            }
+            return new Cuboid(
+                getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+          }
+        }
+      }
+
+      ring++;
+      min = -ring;
+      max = ring - (plotMultiplier - 1);
+    }
+
+    if (DEBUG) {
+      getLogger().info(String.format("row: %d, col: %d", row, col));
+    }
+    return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+  }
+
+  private void resizeCityRegion() {
+    size = calculateCitySize();
+    ProtectedRegion cityRegion = regionManager.getRegion("City");
+    if (cityRegion instanceof ProtectedCuboidRegion) {
+      ProtectedCuboidRegion region = (ProtectedCuboidRegion) cityRegion;
+
+      BlockVector3 min;
+      BlockVector3 max;
+
+      min = getPlotMin(-size / 2, -size / 2, 1);
+      max = getPlotMax(size / 2, size / 2, 1);
+
+      ProtectedCuboidRegion resizedRegion = new ProtectedCuboidRegion(region.getId(), min, max);
+      resizedRegion.copyFrom(region);
+      regionManager.removeRegion(region.getId());
+      regionManager.addRegion(resizedRegion);
+      _cityRegion = resizedRegion;
+      _cityCuboid = new Cuboid(min, max);
+      saveRegions();
+    }
+  }
+
+  private int calculateCitySize() {
+    int iSize = 3;
+
+    for (Plot home : _occupiedPlots) {
+      int plotCol = Math.abs(getPlotXFromMin(home.getCuboid()));
+      int plotRow = Math.abs(getPlotZFromMin(home.getCuboid()));
+      if (DEBUG) {
+        getLogger().info(String.format("col: %d, row: %d, iSize: %d", plotCol, plotRow, iSize));
+      }
+      iSize = Math.max(Math.max(plotRow * 2 + 1, plotCol * 2 + 1), iSize);
+    }
+
+    if (DEBUG) {
+      getLogger().info(String.format("City size is %d", iSize));
+    }
+    return iSize;
+  }
+
+  public BlockVector3 getPlotMin(int row, int col, int plotMultiplier) {
+    BlockVector3 gridMin = getGridMin(row, col, plotMultiplier);
+
+    BlockVector3 bv =
+        BlockVector3.at(gridMin.x() + roadWidth / 2, gridMin.y(), gridMin.z() + roadWidth / 2);
+    getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
+    return bv;
+  }
+
+  public BlockVector3 getPlotMax(int row, int col, int plotMultiplier) {
+    BlockVector3 gridMax = getGridMax(row, col, plotMultiplier);
+
+    BlockVector3 bv =
+        BlockVector3.at(
+            gridMax.x() - (roadWidth - roadWidth / 2),
+            gridMax.y(),
+            gridMax.z() - (roadWidth - roadWidth / 2));
+    getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
+    return bv;
+  }
+
+  public BlockVector3 getGridMin(int row, int col, int plotMultiplier) {
+    int level = 0;
+
+    BlockVector3 bv = BlockVector3.at(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
+    getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
+    return bv;
+  }
+
+  public BlockVector3 getGridMax(int row, int col, int plotMultiplier) {
+    int level = 0;
+
+    BlockVector3 bv =
+        BlockVector3.at(
+            (col + plotMultiplier) * gridSizeX * plotMultiplier - 1,
+            (level + 1 /*plotMultiplier*/) * gridSizeY - 1,
+            (row + plotMultiplier) * gridSizeZ - 1);
+    getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
+    return bv;
+  }
+
+  private int getPlotXFromMin(Cuboid cuboid) {
+    return (cuboid.minX - roadWidth / 2) / gridSizeX;
+  }
+
+  private int getPlotZFromMin(Cuboid cuboid) {
+    return (cuboid.minZ - roadWidth / 2) / gridSizeZ;
+  }
+
+  private void setHomeOccupied(
+      UUID ownerId,
+      String ownerName,
+      int homeNumber,
+      BlockVector3 minimumPoint,
+      BlockVector3 maximumPoint) {
+    PlayerHome home = new PlayerHome(ownerId, ownerName, homeNumber, minimumPoint, maximumPoint);
+    if (!_occupiedPlots.contains(home)) {
+      _occupiedPlots.add(home);
+      addOwnedPlot(ownerId, home);
+    }
+  }
+
+  public PlayerHome generateHome(String playerName) {
+    return generateHome(getServer().getOfflinePlayer(playerName));
+  }
+
+  public PlayerHome generateHome(OfflinePlayer player) {
+    UUID playerId = player.getUniqueId();
+    String playerName = player.getName() == null ? playerId.toString() : player.getName();
+    int homeNumber = _currentHomes.getOrDefault(playerId, 1);
+    int multiplier = getPlotMultiplier(playerId);
+
+    if (DEBUG) {
+      getLogger().info(String.format("Generating home for %s", playerName));
+    }
+    Cuboid homeCuboid = null;
+    ProtectedRegion phomeRegion = null;
+    String regionName = getHomeRegionName(playerId, homeNumber);
+    phomeRegion = regionManager.getRegion(regionName);
+    if (phomeRegion != null) {
+      return PlayerHome.get(phomeRegion);
+    }
+    PlayerHome existingHome = getOwnedHome(playerId, homeNumber);
+    if (existingHome != null) {
+      return existingHome;
+    }
+
+    homeCuboid = findNextUnownedHomeRegion(multiplier);
+
+    getLogger().info("Metropolis Generating home in " + homeCuboid.toString());
+
+    ProtectedCuboidRegion newHomeRegion =
+        new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
+    newHomeRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+    newHomeRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+    newHomeRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+    newHomeRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+    newHomeRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+    newHomeRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+    newHomeRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+
+    DefaultDomain d = newHomeRegion.getOwners();
+    d.addPlayer(playerId);
+    newHomeRegion.setPriority(1);
+
+    regionManager.addRegion(newHomeRegion);
+    try {
+      regionManager.save();
+    } catch (Exception e) {
+      getLogger().info("Metropolis: ERROR Problem saving region");
+      e.printStackTrace();
+    }
+
+    try {
+      regionManager.save();
+    } catch (Exception e) {
+      getLogger().info("Metropolis: ERROR Problem saving region");
+      e.printStackTrace();
+    }
+    getLogger()
+        .info(
+            String.format(
+                "New home region (%d, %d, %d) (%d, %d, %d)",
+                newHomeRegion.getMinimumPoint().x(),
+                newHomeRegion.getMinimumPoint().y(),
+                newHomeRegion.getMinimumPoint().z(),
+                newHomeRegion.getMaximumPoint().x(),
+                newHomeRegion.getMaximumPoint().y(),
+                newHomeRegion.getMaximumPoint().z()));
+
+    setHomeOccupied(
+        playerId,
+        playerName,
+        homeNumber,
+        newHomeRegion.getMinimumPoint(),
+        newHomeRegion.getMaximumPoint());
+    _currentHomes.putIfAbsent(playerId, homeNumber);
+    saveCurrentHomes();
+
+    createRoads(homeCuboid);
+
+    if (generateFloor) {
+      generateFloor(homeCuboid);
+    }
+
+    if (DEBUG) {
+      getLogger().info(String.format("generateSign: %s", String.valueOf(generateSign)));
+    }
+    if (generateSign) {
+      generateSign(homeCuboid, playerName);
+    }
+
+    if (DEBUG) {
+      getLogger().info(String.format("Done generating home for %s", playerName));
+    }
+
+    PlayerHome home = new PlayerHome(newHomeRegion);
+    home.setPlayerName(playerName);
+    return home;
+  }
+
+  private void generateSign(Cuboid plotCuboid, String playerName) {
+    Block signBlock =
+        world.getBlockAt(plotCuboid.getCenterX(), roadLevel + 1, plotCuboid.getCenterZ());
+    signBlock.setType(Material.OAK_SIGN);
+    Sign sign = (Sign) signBlock.getState();
+    sign.setLine(0, "Home of");
+
+    sign.setLine(1, playerName.substring(0, Math.min(15, playerName.length())));
+    if (playerName.length() > 15) {
+      sign.setLine(2, playerName.substring(16, Math.min(30, playerName.length())));
+      if (playerName.length() > 45) {
+        sign.setLine(3, playerName.substring(31, Math.min(45, playerName.length())));
+      }
+    }
+
+    sign.update(true);
+  }
+
+  public List<Plot> getCityBlocks() {
+    return Collections.unmodifiableList(_occupiedPlots);
+  }
+
+  public World getWorld() {
+    return world;
+  }
+
+  public void reserveCuboid(String regionName, Cuboid cuboid) {
+    ProtectedCuboidRegion reservedRegion =
+        new ProtectedCuboidRegion(regionName, cuboid.getMin(), cuboid.getMax());
+    reservedRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
+    reservedRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
+    regionManager.addRegion(reservedRegion);
+
+    _occupiedPlots.add(Plot.get(reservedRegion));
+    saveRegions();
+  }
+
+  public Cuboid getCityCuboid() {
+    return _cityCuboid;
+  }
+
+  public boolean getGenerateWall() {
+    return generateWall;
+  }
+
+  public Material getWallMaterial() {
+    return wallMaterial;
+  }
+
+  public int getWallheight() {
+    return wallHeight;
+  }
+
+  public ProtectedRegion getRegion(String regionName) {
+    if (regionManager == null) {
+      return null;
+    }
+
+    return regionManager.getRegion(regionName);
+  }
+
+  public void removeRegion(String regionId) {
+    if (regionManager == null) {
+      return;
+    }
+
+    try {
+      regionManager.removeRegion(regionId);
+    } catch (Exception ex) {
+      getLogger()
+          .info(String.format("[ERROR] Metropolis: Unable to remove region {%s}.", regionId));
+      return;
+    }
+  }
+
+  public void saveRegions() {
+    try {
+      regionManager.save();
+    } catch (Exception ex) {
+      getLogger().info(String.format("[SEVERE] Metropolis: Unable to save WorldGuard regions."));
+      return;
+    }
+  }
+
+  public int getNumPlots(UUID playerId) {
+    if (_ownedPlots.containsKey(playerId)) {
+      List<Plot> plots = _ownedPlots.get(playerId);
+      if (plots == null) {
+        return 0;
+      } else {
+        return plots.size();
+      }
+    } else {
+      return 0;
+    }
+  }
+
+  public int getMaxPlots(UUID playerId) {
+    if (_userOverrides.containsKey(playerId)) {
+      return _userOverrides.get(playerId).getMaxPlots();
+    } else {
+      return _maxPlots;
+    }
+  }
+
+  public void assignPlot(OfflinePlayer player) {
+    generateHome(player);
+  }
+
+  private int getPlotMultiplier(UUID playerId) {
+    if (_userOverrides.containsKey(playerId)) {
+      return _userOverrides.get(playerId).getPlotMultiplier();
+    } else {
+      return _plotMultiplier;
+    }
+  }
+
+  public Plot getPlot(String string) {
+    /**
+     * string is the name of the region to get a plot for
+     *
+     * <p>loop through all regions and find one with the specified name return null if there is none
+     */
+    for (Plot plot : _occupiedPlots) {
+      if (plot.getRegionName().equals(string)) {
+        return plot;
+      }
+    }
+
+    return null;
+  }
+
+  public Player getPlayer(String name) {
+    Player player = getServer().getPlayerExact(name);
+    if (player != null) {
+      return player;
+    }
+    return PlayerLookup.findOnline(name, getServer().getOnlinePlayers());
+  }
+
+  public OfflinePlayer getOfflinePlayer(String name) {
+    Player onlinePlayer = getPlayer(name);
+    if (onlinePlayer != null) {
+      return onlinePlayer;
+    }
+    for (OfflinePlayer offlinePlayer : getServer().getOfflinePlayers()) {
+      if (name.equalsIgnoreCase(offlinePlayer.getName())) {
+        return offlinePlayer;
+      }
+    }
+    return null;
+  }
+
+  public String teleportPlayerToPlot(Player player, Plot plot) {
+    Location loc = plot.getViableSpawnLocation(world);
+
+    if (loc != null) {
+      player.teleport(loc);
+    }
+
+    return null;
+  }
+
+  public boolean homeExists(UUID playerId, int homeNumber) {
+    for (Plot plot : _occupiedPlots) {
+      if (plot instanceof PlayerHome home
+          && home.getPlayerId().equals(playerId)
+          && home.getNumber() == homeNumber) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public void setHome(UUID playerId, int newHomeNumber) {
+    _currentHomes.put(playerId, newHomeNumber);
+    saveCurrentHomes();
+  }
+
+  public String getHomeRegionName(UUID playerId, int homeNumber) {
+    PlayerHome existingHome = getOwnedHome(playerId, homeNumber);
+    return existingHome == null
+        ? String.format("h_%d_%s", homeNumber, playerId)
+        : existingHome.getRegionName();
+  }
+
+  public String getCurrentHomeRegionName(UUID playerId) {
+    return getHomeRegionName(playerId, _currentHomes.getOrDefault(playerId, 1));
+  }
+
+  private PlayerHome getOwnedHome(UUID playerId, int homeNumber) {
+    List<Plot> plots = _ownedPlots.get(playerId);
+    if (plots == null) {
+      return null;
+    }
+    for (Plot plot : plots) {
+      if (plot instanceof PlayerHome home && home.getNumber() == homeNumber) {
+        return home;
+      }
+    }
+    return null;
+  }
+
+  private void saveCurrentHomes() {
+    File homesFile = new File(getDataFolder(), "currentHomes.yml");
+    try {
+      CurrentHomesStore.save(homesFile, _currentHomes);
+    } catch (IOException e) {
+      getLogger().log(java.util.logging.Level.SEVERE, "Unable to save currentHomes.yml", e);
+    }
+  }
 }
