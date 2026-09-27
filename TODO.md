@@ -62,12 +62,12 @@ Or better yet just use uhome or create your own, integrated that records the hom
 
 # GIT-003 - Add support for multiple homes
 
-**Status:** Ready
+**Status:** Done
 **Description:**
 
-Support per-player home limits using numbered permission nodes, for example `metropolis.maxhomes.2`. Permission plugins such as LuckPerms can assign these nodes to groups or individual users; when multiple limit nodes are granted, use the highest limit. Keep the configured home limit as the fallback for players without a limit permission.
+Add a top-level `permissionOverrides` map keyed by permission node. Each rule defines `priority`, `plotMultiplier`, and `maxPlots`; any permission manager can grant the boolean nodes to groups or individual players. For online players, the matching rule with the highest priority wins, with the last matching entry in YAML order breaking ties. An explicit `userOverrides` entry takes precedence over permission rules. Without either override, use `plot.multiplier` and `plot.maxPerPlayer`. Offline-player generation uses username overrides or global defaults because permissions are only queried for online players.
 
-On join, automatically allocate one home only when the player does not already have a home. Additional homes must be explicitly requested with `/metropolis-home-acquire`, up to the player's effective limit. When a new home is granted, make it the player's active home.
+On join, automatically allocate one home only when the player has no existing home, and restore a valid existing home as active if the saved selection is missing. Additional homes must be explicitly requested with `/metropolis-home-acquire`, up to the player's effective limit. Acquisition allocates the first unused positive home number and makes the new home active.
 
 The alternative login allocation policies are tracked separately in MET-023 and MET-024; they are not part of the default policy in this task.
 

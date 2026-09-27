@@ -44,7 +44,16 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ### Commands, permissions, and player state
 
-- Exercise `/metropolis-home-acquire` below and at the configured home limit. Confirm a successful acquisition creates one home and an over-limit request creates none.
+- For a new player with no overrides, join and confirm exactly one `h_1_<UUID>` home is created. Rejoin and confirm no additional home is created.
+- Configure two `permissionOverrides` tiers in `plugins/Metropolis/config.yml`, then restart. Grant each permission node to a test user and to a test group through the server's permission manager. Confirm the player's effective `plotMultiplier` and `maxPlots` match the granted rule.
+- Give one player multiple configured permission nodes with different priorities. Confirm the highest-priority rule controls both values; then give two matching rules the same priority and confirm the last matching YAML entry wins.
+- Give a player both a permission tier and a matching `userOverrides` entry. Confirm the username override wins. Remove both overrides from another player and confirm `plot.multiplier` and `plot.maxPerPlayer` are used as defaults.
+- Change or revoke a permission while the player is online, then acquire another home. Confirm the next acquisition uses the currently granted tier without requiring a restart.
+- With plot multipliers of 1 and 2, acquire homes and inspect their WorldGuard bounds. Confirm size follows the tier, a larger footprint does not overlap an existing home, and the multiplier is applied to the X and Z footprint only once.
+- Exercise `/metropolis-home-acquire` below and at each effective home limit. Confirm every successful request creates a distinct next-numbered home, creates none beyond the limit, and does not change other players' homes.
+- After acquiring a second home, verify it becomes active: check the player's selected home in `plugins/Metropolis/currentHomes.yml` and use `/metropolis-home-go` to confirm travel to that home. Switch homes with `/metropolis-home-move` and verify the selection changes as expected.
+- Restart after acquiring multiple homes. Confirm all home regions remain owned by the player, the active home selection persists, and joining does not allocate another first home.
+- Generate a home for an offline player administratively. Confirm permission tiers are not assumed for offline players; the username override or global settings determine plot size and limit.
 - Exercise `/metropolis-home-go` with a safe bed spawn inside the home and with no such bed spawn. Confirm teleportation chooses a valid location inside the home and reports a clear failure if no safe location exists.
 - Exercise `/metropolis-home-move` for a player with multiple homes. Confirm the selected home persists across reconnect and restart; reject nonexistent home numbers.
 - As an administrator, test `/metropolis-home-generate`, `/metropolis-home-evict`, and `/metropolis-home-list` with online and previously seen offline players. Confirm the intended region ownership changes, persistence, and subsequent allocation behavior.
@@ -53,15 +62,17 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 13 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 17 tests covering:
 
 - `CuboidTest`: WorldEdit bound conversion, vector ordering/null handling, touching intersections, and point containment.
 - `CurrentHomesStoreTest`: UUID-based persistence and resolving a legacy player-name key.
 - `PlayerJoinListenerTest`: the welcome bounds message when a home is supplied by a mock.
 - `PlayerLookupTest`: case-insensitive full-name matching and rejection of prefix matching.
 - `PlayerHomeTest`: UUID-based region identity and display-name retention.
+- `HomePermissionOverrideTest`: dotted permission-node parsing, priority and tie resolution, invalid entries, and username/permission/default precedence.
+- `HomeNumberAllocatorTest`: choosing the first unused positive home number.
 - `MetropolisPlotReserveCommandTest`: parsing six coordinates and rejecting malformed coordinates.
-- `MetropolisHomeAcquireTest`: assignment below the home limit and refusal at the limit.
+- `MetropolisHomeAcquireTest`: acquisition below the limit and refusal at the limit.
 
 The two opt-in tests in `src/integrationTest` require a running Paper server and RCON. They check that Metropolis appears in `/plugins` and that a coordinate reservation is persisted by WorldGuard. They do not currently verify restart persistence, join allocation, WorldEdit-selection reservations, permissions, teleports, generated blocks, protection behavior, or the other command workflows above. Run them with the environment variables documented in `README.md`; use a disposable server because the reservation test changes its WorldGuard data.
 

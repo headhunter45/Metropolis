@@ -40,12 +40,11 @@ public class MetropolisHomeAcquire implements CommandExecutor {
 
     Player player = (Player) sender;
 
-    if (_plugin.getNumPlots(player.getUniqueId()) >= _plugin.getMaxPlots(player.getUniqueId())) {
+    if (_plugin.getNumPlots(player.getUniqueId()) >= _plugin.getMaxPlots(player)) {
       sender.sendMessage("You cannot have any more plots");
       return false;
     }
 
-    _plugin.assignPlot(player);
-    return true;
+    return _plugin.acquireHome(player) != null;
   }
 }

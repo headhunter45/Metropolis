@@ -55,7 +55,23 @@ Copy `.env.example` to `.env` and configure the Paper version/build and server p
 
 ## Configuration
 
-`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. The bundled configuration provides the defaults. Metropolis targets Paper 26.2 and 26.3 only; Bukkit and Spigot servers are not supported.
+`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. `plot.multiplier` sets the default plot-size multiplier; `plot.maxPerPlayer` sets the default home limit.
+
+Use `permissionOverrides` to assign plot size and home limits through any permission manager. Each permission node maps to a `priority`, `plotMultiplier`, and `maxPlots`; the matching node with the highest priority wins, and the last matching entry in YAML order wins ties. An explicit username entry in `userOverrides` takes precedence over permission rules. If no override matches, the global `plot.*` defaults apply. For example:
+
+```yaml
+permissionOverrides:
+	metropolis.plots.vip:
+		priority: 10
+		plotMultiplier: 2
+		maxPlots: 2
+	metropolis.plots.elite:
+		priority: 20
+		plotMultiplier: 3
+		maxPlots: 5
+```
+
+Assign these permission nodes to groups or individual users in your permission plugin. Bukkit permissions are boolean, so the configured values determine the numeric limits. The bundled configuration provides the defaults. Metropolis targets Paper 26.2 and 26.3 only; Bukkit and Spigot servers are not supported.
 
 ## Commands
 

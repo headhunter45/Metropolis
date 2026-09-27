@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.util.UUID;
 
 import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
+import com.majinnaibu.bukkitplugins.metropolis.PlayerHome;
 
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
@@ -40,12 +41,13 @@ class MetropolisHomeAcquireTest {
     UUID playerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     when(player.getUniqueId()).thenReturn(playerId);
     when(plugin.getNumPlots(playerId)).thenReturn(0);
-    when(plugin.getMaxPlots(playerId)).thenReturn(1);
+    when(plugin.getMaxPlots(player)).thenReturn(1);
+    when(plugin.acquireHome(player)).thenReturn(mock(PlayerHome.class));
     MetropolisHomeAcquire executor = new MetropolisHomeAcquire(plugin);
 
     assertTrue(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
 
-    verify(plugin).assignPlot(player);
+    verify(plugin).acquireHome(player);
   }
 
   @Test
@@ -55,11 +57,11 @@ class MetropolisHomeAcquireTest {
     UUID playerId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     when(player.getUniqueId()).thenReturn(playerId);
     when(plugin.getNumPlots(playerId)).thenReturn(1);
-    when(plugin.getMaxPlots(playerId)).thenReturn(1);
+    when(plugin.getMaxPlots(player)).thenReturn(1);
     MetropolisHomeAcquire executor = new MetropolisHomeAcquire(plugin);
 
     assertFalse(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
 
-    verify(plugin, never()).assignPlot(player);
+    verify(plugin, never()).acquireHome(player);
   }
 }
