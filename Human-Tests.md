@@ -24,6 +24,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Set `plot.initial: 0` on a disposable server, restart, and join as a fresh player. Confirm no home is created until the player runs `/metropolis-home-acquire`; then verify the command creates the initial home and makes it active.
 - Join with a second new player. Confirm the new home is distinct, does not overlap the first home or spawn, and the City region grows to include it.
 - Start from a disposable world configured with `plot.sizeY` and `plot.maxLevels` from the multi-level example. Confirm the level count is honored, the city does not exceed the world's build height, and upper plots are only allocated above footprints fully supported at every lower level. With a 1×1 spawn and a 2×2 home size, confirm a new home is allocated at base level rather than above the partially supported spawn.
+- Set positive and negative `plot.offsetX`, `plot.offsetY`, and `plot.offsetZ` values on a disposable world. Verify plot regions, road bands, stair flights, and Spawn share the shifted grid origin; allocate multiple plots across negative coordinates and confirm logical-cell spacing stays consistent. Confirm changing offsets does not move existing saved regions; Metropolis-managed homes and reservations should retain their bounds and remain recognized. Treat automatic conversion of other saved regions as unverified.
 - Set `spawn.sizeX`, `spawn.sizeY`, and `spawn.sizeZ` to distinct positive values on a fresh disposable world. Confirm the Spawn region spans the corresponding plot-plus-road logical cells horizontally and the configured plot-height multiple vertically. Check blocks outside those bounds remain unchanged; configure a height exceeding the world's build limit and confirm startup rejects it clearly.
 - Join again as an existing player. Confirm the same home is selected and no duplicate region or plot is created.
 - Reserve an area before allocating another home. Confirm future allocations skip it. Repeat with reservations near the city edge and near existing roads to look for overlaps or gaps.
@@ -76,10 +77,11 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 53 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 57 tests covering:
 
 - `AvenueStairwayLayoutTest`: centered per-segment street and avenue flights, both border directions, independent cadence, top-tread alignment, inverted backing plan, exact-width openings, and invalid-fit rejection.
 - `PlotLevelSupportTest`: rejection of upper plots with missing logical support cells and complete coverage requirements across all lower levels.
+- `PlotGridLayoutTest`: zero-offset compatibility, offsets on X/Y/Z, axis-specific spacing, and negative logical-index recovery.
 - `SpawnLayoutTest`: default one-cell bounds, independent multipliers, and build-height validation.
 - `AvenueStairwayBuilderTest`: configured stair material and facing/half data for avenue and street directions, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
 - `RoadLayoutTest`: independently sized street/avenue bands, correct road-type tagging, non-overlapping corners, and disabled roads at zero width.

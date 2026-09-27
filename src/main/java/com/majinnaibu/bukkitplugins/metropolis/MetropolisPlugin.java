@@ -98,6 +98,9 @@ public class MetropolisPlugin extends JavaPlugin {
   private int plotSizeX = 24;
   private int plotSizeY = 256;
   private int plotSizeZ = 24;
+  private int plotOffsetX;
+  private int plotOffsetY;
+  private int plotOffsetZ;
   private int gridSizeX = 28;
   private int gridSizeY = 256;
   private int maxLevels = 1;
@@ -146,6 +149,7 @@ public class MetropolisPlugin extends JavaPlugin {
   private Cuboid _cityCuboid = null;
   private ProtectedRegion _spawnRegion = null;
   private ProtectedRegion _cityRegion = null;
+  private PlotGridLayout plotGridLayout;
 
   @Override
   public void onDisable() {
@@ -201,6 +205,9 @@ public class MetropolisPlugin extends JavaPlugin {
     plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
     plotSizeY = optionalIntFromConfig(config, "plot.sizeY", 256);
     plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
+    plotOffsetX = safeGetIntFromConfig(config, "plot.offsetX");
+    plotOffsetY = safeGetIntFromConfig(config, "plot.offsetY");
+    plotOffsetZ = safeGetIntFromConfig(config, "plot.offsetZ");
     maxLevels = optionalIntFromConfig(config, "plot.maxLevels", "maxLevels", 1);
     generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
     floorMaterial = safeGetMaterialFromConfig(config, "plot.floor.material");
@@ -329,9 +336,20 @@ public class MetropolisPlugin extends JavaPlugin {
     if (streetWidth < 0 || avenueWidth < 0) {
       throw new IllegalArgumentException("Road widths must not be negative.");
     }
-    gridSizeX = plotSizeX + avenueWidth;
-    gridSizeY = Math.max(plotSizeY + Math.max(streetWidth, avenueWidth), 1);
-    gridSizeZ = plotSizeZ + streetWidth;
+    plotGridLayout =
+        new PlotGridLayout(
+            plotSizeX,
+            plotSizeY,
+            plotSizeZ,
+            streetWidth,
+            avenueWidth,
+            plotOffsetX,
+            plotOffsetY,
+            plotOffsetZ,
+            roadLevel);
+    gridSizeX = plotGridLayout.gridSizeX();
+    gridSizeY = plotGridLayout.gridSizeY();
+    gridSizeZ = plotGridLayout.gridSizeZ();
 
     regionManager =
         WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
@@ -622,7 +640,10 @@ public class MetropolisPlugin extends JavaPlugin {
             plotSizeZ,
             avenueWidth,
             streetWidth,
-            roadLevel);
+            roadLevel,
+            plotOffsetX,
+            plotOffsetY,
+            plotOffsetZ);
     if (!SpawnLayout.withinBuildHeight(spawnCuboid, world.getMinHeight(), world.getMaxHeight())) {
       getLogger()
           .severe(
@@ -1037,11 +1058,7 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   public BlockVector3 getPlotMin(int row, int col, int plotMultiplier, int level) {
-    BlockVector3 gridMin = getGridMin(row, col, plotMultiplier, level);
-
-    BlockVector3 bv =
-        BlockVector3.at(
-            gridMin.x() + avenueWidth / 2, getLevelStartY(level), gridMin.z() + streetWidth / 2);
+    BlockVector3 bv = plotGridLayout.plotMin(row, col, level);
     getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
@@ -1051,13 +1068,7 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   public BlockVector3 getPlotMax(int row, int col, int plotMultiplier, int level) {
-    BlockVector3 gridMax = getGridMax(row, col, plotMultiplier, level);
-
-    BlockVector3 bv =
-        BlockVector3.at(
-            gridMax.x() - (avenueWidth - avenueWidth / 2),
-            getLevelStartY(level) + plotSizeY - 1,
-            gridMax.z() - (streetWidth - streetWidth / 2));
+    BlockVector3 bv = plotGridLayout.plotMax(row, col, plotMultiplier, plotMultiplier, level);
     getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
@@ -1067,7 +1078,7 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   public BlockVector3 getGridMin(int row, int col, int plotMultiplier, int level) {
-    BlockVector3 bv = BlockVector3.at(col * gridSizeX, getLevelStartY(level), row * gridSizeZ);
+    BlockVector3 bv = plotGridLayout.gridMin(row, col, level);
     getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
@@ -1077,31 +1088,29 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   public BlockVector3 getGridMax(int row, int col, int plotMultiplier, int level) {
-    BlockVector3 bv =
-        BlockVector3.at(
-            (col + plotMultiplier) * gridSizeX - 1,
-            getLevelStartY(level) + plotSizeY - 1,
-            (row + plotMultiplier) * gridSizeZ - 1);
+    BlockVector3 bv = plotGridLayout.gridMax(row, col, plotMultiplier, plotMultiplier, level);
     getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
 
   private int getPlotXFromMin(Cuboid cuboid) {
-    return (cuboid.minX - avenueWidth / 2) / gridSizeX;
+    return plotGridLayout.plotXIndexFromMin(cuboid);
   }
 
   private int getPlotZFromMin(Cuboid cuboid) {
-    return (cuboid.minZ - streetWidth / 2) / gridSizeZ;
+    return plotGridLayout.plotZIndexFromMin(cuboid);
   }
 
   private int getLevelPitchY() {
-    return plotSizeY + Math.max(streetWidth, avenueWidth);
+    return plotGridLayout.gridSizeY();
   }
 
   private int getEffectiveMaxLevels() {
-    int availableStreetLevels = getAvailableLevelsAt(roadLevel);
+    int streetBaseY = getLevelStartY(0);
+    int avenueBaseY = streetBaseY + avenueLevel - roadLevel;
+    int availableStreetLevels = getAvailableLevelsAt(streetBaseY);
     int availableAvenueLevels =
-        avenueWidth > 0 ? getAvailableLevelsAt(avenueLevel) : availableStreetLevels;
+        avenueWidth > 0 ? getAvailableLevelsAt(avenueBaseY) : availableStreetLevels;
     int maxWorldLevels = Math.min(availableStreetLevels, availableAvenueLevels);
     return clampMaxLevels(maxLevels, maxWorldLevels);
   }
@@ -1119,7 +1128,7 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   private int getLevelStartY(int level) {
-    return roadLevel + level * getLevelPitchY();
+    return plotGridLayout.levelStartY(level);
   }
 
   private void setHomeOccupied(
@@ -1289,7 +1298,7 @@ public class MetropolisPlugin extends JavaPlugin {
 
   private List<AvenueStairwayLayout.Step> getUpperRoadOpeningsForPlot(
       Cuboid plotCuboid, int roadY, RoadLayout.RoadType roadType) {
-    int baseY = roadType == RoadLayout.RoadType.AVENUE ? avenueLevel : roadLevel;
+    int baseY = (roadType == RoadLayout.RoadType.AVENUE ? avenueLevel : roadLevel) + plotOffsetY;
     if (!areStairsEnabled(roadType) || roadY <= baseY) {
       return List.of();
     }
@@ -1325,7 +1334,7 @@ public class MetropolisPlugin extends JavaPlugin {
           avenueStairsEveryNBlocks,
           avenueWidth,
           avenueStairWidth,
-          avenueLevel + lowerLevel * getLevelPitchY(),
+          avenueLevel + plotOffsetY + lowerLevel * getLevelPitchY(),
           getLevelPitchY(),
           3);
     }
@@ -1338,7 +1347,7 @@ public class MetropolisPlugin extends JavaPlugin {
         streetStairsEveryNBlocks,
         streetWidth,
         streetStairWidth,
-        roadLevel + lowerLevel * getLevelPitchY(),
+        roadLevel + plotOffsetY + lowerLevel * getLevelPitchY(),
         getLevelPitchY(),
         3);
   }
