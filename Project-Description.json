@@ -12,9 +12,7 @@
     "backgroundClassName": "bg-surface"
   },
   "url": "/projects/metropolis",
-  "tags": [
-    "open-source"
-  ],
+  "tags": ["open-source"],
   "source": {
     "type": "github",
     "url": "https://github.com/headhunter45/Metropolis"
