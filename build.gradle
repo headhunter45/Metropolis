@@ -6,6 +6,20 @@ plugins {
 group = 'com.majinnaibu.bukkitplugins'
 description = 'Metropolis'
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.named('updateDaemonJvm') {
+    languageVersion = JavaLanguageVersion.of(25)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 tasks.named('wrapper') {
     gradleVersion = '9.8.0'
     distributionType = Wrapper.DistributionType.BIN
