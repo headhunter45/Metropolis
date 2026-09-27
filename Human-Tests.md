@@ -31,6 +31,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 ### Generated blocks and geometry
 
 - Inspect a newly allocated home and adjoining roads. Check road width, level, material, clearance, plot floor, support blocks, and optional sign against the active config.
+- Generate one plot in a disposable world and confirm each adjoining road is fully paved to the configured width. Generate a plot directly beside it: confirm already-correct shared road blocks are untouched, any missing half-width legacy section is filled, and stair treads/openings remain intact.
 - Enable avenue stairs with a stair width narrower than the avenue. Generate a plot on a level below `plot.maxLevels`; verify stairs are added while the upper road is built and the lower road stays unchanged. Confirm the first tread starts one block above and forward from the road-level landing, connected following treads use inverted stairs underneath, and the top tread reaches the upper road Y. Check that exactly three road blocks before the top tread remain open only across the stair width, with regular road beside the opening. Repeat with a higher-level plot to confirm the lower stair flight remains open.
 - Test generation over varied terrain, including water, caves, uneven ground, and existing structures. Confirm generated floors and roads do not leave unsafe gaps or erase blocks outside their intended area.
 - Enable and disable optional floor, support, sign, spawn, world-spawn, and perimeter-wall settings one at a time on a disposable world. Confirm each setting changes only its intended behavior.
@@ -73,10 +74,12 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 34 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 40 tests covering:
 
 - `AvenueStairwayLayoutTest`: centered flight geometry, one-block offset from the lower road, top-tread alignment with the upper road, inverted backing plan, exact-width upper-road opening, and invalid-fit rejection.
 - `AvenueStairwayBuilderTest`: configured stair material and facing/half data, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
+- `RoadLayoutTest`: full-width surrounding road bands, non-overlapping corners, and disabled roads at zero width.
+- `RoadBlockWriterTest`: no-op writes for existing roads, filling missing road blocks, and preserving stair treads.
 - `CuboidTest`: WorldEdit bound conversion, vector ordering/null handling, touching intersections, and point containment.
 - `CurrentHomesStoreTest`: UUID-based persistence and resolving a legacy player-name key.
 - `PlayerJoinListenerTest`: the welcome bounds message when a home is supplied by a mock.

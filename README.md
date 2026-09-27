@@ -64,6 +64,8 @@ Enable `road.avenues.stairs.generate` to add a centered stair run as part of the
 
 The breaking multi-level schema is documented in the example config at `src/main/resources/examples/multi-level.yml`. It uses split road sections (`road.streets.*` and `road.avenues.*`), a level-aware `plot.maxLevels` field, and the valid stair material `COBBLESTONE_STAIRS`.
 
+Roads are generated at their full configured width when a plot is created. Generating an adjacent plot does not rewrite road blocks that are already correct; it only fills missing blocks, including gaps left by older half-width generation. Existing stair treads and upper-road openings are preserved.
+
 Use `permissionOverrides` to assign plot size and home limits through any permission manager. Each permission node maps to a `priority`, `plotMultiplier`, and `maxPlots`; the matching node with the highest priority wins, and the last matching entry in YAML order wins ties. An explicit username entry in `userOverrides` takes precedence over permission rules. If no override matches, the global `plot.*` defaults apply. Permission rules are checked for online players; offline home generation uses username overrides or global defaults. For example:
 
 ```yaml

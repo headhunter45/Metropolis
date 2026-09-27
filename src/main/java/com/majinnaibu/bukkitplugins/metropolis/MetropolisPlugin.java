@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
@@ -727,7 +729,7 @@ public class MetropolisPlugin extends JavaPlugin {
     }
   }
 
-  private void createRoads(Cuboid plotCuboid, int roadMask) {
+  private void createRoads(Cuboid plotCuboid) {
     if (plotCuboid == null) {
       if (DEBUG) {
         getLogger().warning("plotCuboid is null");
@@ -736,84 +738,11 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     if (roadWidth > 0) {
-      int x = 0;
       int y = plotCuboid.minY;
-      int z = 0;
+      Set<AvenueStairwayLayout.Step> stairOpenings = getUpperRoadOpenings(plotCuboid, y);
 
-      List<AvenueStairwayLayout.Step> stairOpenings = getUpperRoadOpenings(plotCuboid, y);
-      int roadWidth1 = roadWidth / 2;
-      int roadWidth2 = roadWidth - roadWidth1;
-
-      // North West Corner
-      if ((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0) {
-        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
-          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // North Strip
-      if ((roadMask & ROAD_NORTH) != 0) {
-        for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
-          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // North East Corner
-      if ((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0) {
-        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
-          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // East Strip
-      if ((roadMask & ROAD_EAST) != 0) {
-        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
-          for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // South East Corner
-      if ((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0) {
-        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
-          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // South Strip
-      if ((roadMask & ROAD_SOUTH) != 0) {
-        for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
-          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // South West Corner
-      if ((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0) {
-        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
-          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
-      }
-
-      // West Strip
-      if ((roadMask & ROAD_WEST) != 0) {
-        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
-          for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
-            setRoad(x, y, z, stairOpenings);
-          }
-        }
+      for (RoadLayout.BlockPosition roadBlock : RoadLayout.surroundingRoad(plotCuboid, roadWidth)) {
+        setRoad(roadBlock.x(), y, roadBlock.z(), stairOpenings);
       }
 
       int upperLevel = Math.floorDiv(y - roadLevel, getLevelPitchY());
@@ -823,34 +752,13 @@ public class MetropolisPlugin extends JavaPlugin {
     }
   }
 
-  private void createRoads(Cuboid plotCuboid) {
-    createRoads(plotCuboid, ROAD_NORTH | ROAD_SOUTH | ROAD_EAST | ROAD_WEST);
-  }
-
-  private void setRoad(int x, int y, int z, List<AvenueStairwayLayout.Step> stairOpenings) {
+  private void setRoad(int x, int y, int z, Set<AvenueStairwayLayout.Step> stairOpenings) {
     if (stairOpenings.contains(new AvenueStairwayLayout.Step(x, y, z))) {
       return;
     }
 
-    // if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
-
-    Block block = world.getBlockAt(x, y, z);
-    // Set the road block
-    block.setType(roadMaterial);
-
-    // Set the support
-    if (generateRoadSupports && isPhysicsMaterial(block.getType())) {
-      Block blockUnder = world.getBlockAt(x, y - 1, z);
-      if (!isSolidMaterial(blockUnder.getType())) {
-        blockUnder.setType(roadSupportMaterial);
-      }
-    }
-
-    // Clear the space above
-    for (int y1 = 0; y1 < spaceAboveRoad; y1++) {
-      block = world.getBlockAt(x, y + y1 + 1, z);
-      block.setType(Material.AIR);
-    }
+    RoadBlockWriter.build(
+        world, x, y, z, roadMaterial, roadSupportMaterial, generateRoadSupports, spaceAboveRoad);
   }
 
   private boolean isSolidMaterial(Material material) {
@@ -1265,7 +1173,21 @@ public class MetropolisPlugin extends JavaPlugin {
     AvenueStairwayBuilder.build(world, flight, avenueStairMaterial);
   }
 
-  private List<AvenueStairwayLayout.Step> getUpperRoadOpenings(Cuboid plotCuboid, int roadY) {
+  private Set<AvenueStairwayLayout.Step> getUpperRoadOpenings(Cuboid plotCuboid, int roadY) {
+    Set<AvenueStairwayLayout.Step> openings = new HashSet<>();
+    openings.addAll(getUpperRoadOpeningsForPlot(plotCuboid, roadY));
+    if (_occupiedPlots != null) {
+      for (Plot plot : _occupiedPlots) {
+        if (plot instanceof PlayerHome home && home.getCuboid().minY == roadY) {
+          openings.addAll(getUpperRoadOpeningsForPlot(home.getCuboid(), roadY));
+        }
+      }
+    }
+    return openings;
+  }
+
+  private List<AvenueStairwayLayout.Step> getUpperRoadOpeningsForPlot(
+      Cuboid plotCuboid, int roadY) {
     if (!generateAvenueStairs || roadY <= roadLevel) {
       return List.of();
     }
