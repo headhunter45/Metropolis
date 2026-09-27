@@ -17,6 +17,7 @@ along with Metropolis. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 package com.majinnaibu.bukkitplugins.metropolis.commands;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -63,5 +64,15 @@ class MetropolisHomeAcquireTest {
     assertFalse(executor.onCommand(player, mock(Command.class), "acquire", new String[0]));
 
     verify(plugin, never()).acquireHome(player);
+  }
+
+  @Test
+  void supportsDisablingAutomaticInitialHomeAllocation() {
+    assertEquals(1, MetropolisPlugin.normalizeInitialHomeCount(1));
+    assertTrue(MetropolisPlugin.shouldAutoGenerateInitialHome(1));
+
+    int zero = MetropolisPlugin.normalizeInitialHomeCount(0);
+    assertEquals(0, zero);
+    assertFalse(MetropolisPlugin.shouldAutoGenerateInitialHome(zero));
   }
 }

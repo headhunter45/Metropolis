@@ -33,7 +33,7 @@
 | GIT-007 | Planning | Allow buying and selling of homes via an ecnoomy plugin. |
 | GIT-006 |   Ready  | Add levels support. |
 | GIT-005 | Planning | Add the possibility to create multiple plot homes in shapes. |
-| GIT-004 | Planning | Add a command to request home allocation. |
+| GIT-004 | Done     | Add a command to request home allocation. |
 | GIT-003 |   Ready  | Add support for multiple homes. |
 | GIT-002 | Done     | Add a command to teleport to a reservation you are part of. |
 | GIT-001 | Done     | Add a command to move to a different home. |
@@ -68,14 +68,11 @@ On join, automatically allocate one home only when the player has no existing ho
 The alternative login allocation policies are tracked separately in MET-023 and MET-024; they are not part of the default policy in this task.
 
 # GIT-004 - Add a command to request home allocation.
-**Status:** Ready
+**Status:** Done
 **Depends On:** [GIT-003](#git-003---add-support-for-multiple-homes)
 **Description:**
 
-Add a command that users can type to get their first or subsequent homes.
-Add a config option to not generate any homes automatically, but to require this command to generate a user's first home.
-
-This could be used so that homes won't be generated until a user has read the server rules which would include telling them to type the command towards the end.
+`/metropolis-home-acquire` gives players their next available home, including the first home when `plot.initial` is `0`. The command allocates the lowest unused positive home number, makes it active, and refuses requests once the player has reached their effective limit. The default policy remains automatic first-home generation, but servers can disable it by setting `plot.initial: 0` and requiring the command for new players.
 
 # GIT-005 - Add the possibility to create multiple plot homes in shapes.
 **Status:** Planning
