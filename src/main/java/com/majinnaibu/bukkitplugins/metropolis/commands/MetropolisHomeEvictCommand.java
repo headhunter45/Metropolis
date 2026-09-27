@@ -28,7 +28,7 @@ public class MetropolisHomeEvictCommand implements CommandExecutor {
 			playerName = args[0];
 		}
 		
-		OfflinePlayer player = _plugin.getServer().getOfflinePlayer(playerName);
+		OfflinePlayer player = _plugin.getOfflinePlayer(playerName);
 		if(player == null){
 			sender.sendMessage(String.format("The requested player {%s}does not appear to exist.", playerName));
 			return false;

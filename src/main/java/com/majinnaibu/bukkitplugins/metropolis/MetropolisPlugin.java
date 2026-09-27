@@ -1090,11 +1090,29 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	public Player getPlayer(String name) {
-		return getServer().getPlayer(name);
+		Player player = getServer().getPlayerExact(name);
+		if (player != null) {
+			return player;
+		}
+		for (Player onlinePlayer : getServer().getOnlinePlayers()) {
+			if (onlinePlayer.getName().equalsIgnoreCase(name)) {
+				return onlinePlayer;
+			}
+		}
+		return null;
 	}
 	
 	public OfflinePlayer getOfflinePlayer(String name){
-		return getServer().getOfflinePlayer(name);
+		Player onlinePlayer = getPlayer(name);
+		if (onlinePlayer != null) {
+			return onlinePlayer;
+		}
+		for (OfflinePlayer offlinePlayer : getServer().getOfflinePlayers()) {
+			if (name.equalsIgnoreCase(offlinePlayer.getName())) {
+				return offlinePlayer;
+			}
+		}
+		return null;
 	}
 
 	public String teleportPlayerToPlot(Player player, Plot plot) {

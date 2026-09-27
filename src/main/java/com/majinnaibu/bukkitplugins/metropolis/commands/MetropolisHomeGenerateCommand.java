@@ -3,6 +3,7 @@ package com.majinnaibu.bukkitplugins.metropolis.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.OfflinePlayer;
 
 import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
 
@@ -20,7 +21,12 @@ public class MetropolisHomeGenerateCommand implements CommandExecutor {
 			return false;
 		}
 		
-		_plugin.generateHome(args[0]);
+		OfflinePlayer player = _plugin.getOfflinePlayer(args[0]);
+		if (player == null) {
+			sender.sendMessage("Unable to find player " + args[0]);
+			return false;
+		}
+		_plugin.generateHome(player);
 		
 		sender.sendMessage("[Metropolis] Home generated for " + args[0]);
 		

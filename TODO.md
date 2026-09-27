@@ -15,7 +15,7 @@
 | MET-011 |   Done   | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
 | MET-012 |   Done   | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
 | MET-013 |   Done   | Replace Player-keyed storage with UUID-based storage wherever player identity is persisted or tracked. |
-| MET-014 |   Ready  | Review player lookup logic and use exact or otherwise explicit name-matching behavior where appropriate. |
+| MET-014 |   Done   | Review player lookup logic and use exact or otherwise explicit name-matching behavior where appropriate. |
 | MET-015 |   Ready  | Refactor remaining code that uses deprecated or removed Bukkit, Spigot, or Paper APIs so it is compatible with the target Paper API. |
 | MET-016 |   Ready  | Add fast unit tests for plot and home allocation, reservation validation, player lookup and UUID-based ownership, configuration persistence, command validation, and event behavior. Keep domain rules independent of a running Minecraft server and mock external plugin boundaries as needed. |
 | MET-017 |   Ready  | Add a separate Gradle `integrationTest` source set/task for tests requiring an actual Paper server and compatible WorldGuard/WorldEdit plugins. Verify plugin loading, command registration and dispatch, region-backed reservations and home allocation, and persistence across a server restart. Run it only when explicitly requested; keep it out of the normal `test` and `build` tasks. |

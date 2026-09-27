@@ -24,7 +24,7 @@ public class MetropolisHomeGoCommand implements CommandExecutor {
 
 			if(args.length >= 1){
 				if(player.hasPermission("")){
-					player = _plugin.getServer().getPlayer(args[0]);
+					player = _plugin.getPlayer(args[0]);
 					
 					if(player == null){
 						sender.sendMessage(String.format("Unable to find player %s", args[0]));
@@ -37,7 +37,7 @@ public class MetropolisHomeGoCommand implements CommandExecutor {
 			}			
 		}else{
 			if(args.length >= 1){
-				player = _plugin.getServer().getPlayer(args[0]);				
+				player = _plugin.getPlayer(args[0]);
 
 				if(player == null){
 					sender.sendMessage(String.format("Unable to find player %s", args[0]));
