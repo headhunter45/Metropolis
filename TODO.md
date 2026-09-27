@@ -13,7 +13,7 @@
 | MET-009 |   Done   | Review custom scripts and resources for required updates to the Gradle build and modern Paper server workflow. |
 | MET-010 |   Done   | Refactor plugin logging to use JavaPlugin.getLogger(). |
 | MET-011 |   Done   | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
-| MET-012 |   Ready  | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
+| MET-012 |   Done   | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
 | MET-013 |   Ready  | Replace Player-keyed storage with UUID-based storage wherever player identity is persisted or tracked. |
 | MET-014 |   Ready  | Review player lookup logic and use exact or otherwise explicit name-matching behavior where appropriate. |
 | MET-015 |   Ready  | Refactor remaining code that uses deprecated or removed Bukkit, Spigot, or Paper APIs so it is compatible with the target Paper API. |

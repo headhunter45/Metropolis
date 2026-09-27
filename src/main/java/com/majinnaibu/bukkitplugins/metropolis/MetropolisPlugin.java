@@ -20,6 +20,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -38,7 +40,6 @@ import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeMoveComman
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotGoCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotReserveCommand;
 import com.majinnaibu.bukkitplugins.metropolis.eventlisteners.PlayerJoinListener;
-import com.sk89q.util.yaml.YAMLProcessor;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -87,7 +88,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	private Material roadSupportMaterial = Material.STONE;
 	private String worldName = "world";
 	private boolean generateFloor = false;
-	private Material floorMaterial = Material.GRASS;
+	private Material floorMaterial = Material.GRASS_BLOCK;
 	private int spaceAboveFloor = 2;
 	private boolean generateSign = false;
 	private boolean generateSpawn = true;
@@ -164,7 +165,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		spawnFloorMaterial = safeGetMaterialFromConfig(config, "spawn.material");
 		generateWall = safeGetBooleanFromConfig(config, "wall.generate");
 		wallMaterial = safeGetMaterialFromConfig(config, "wall.material");
-		wallHeight = safeGetIntFromConfig(config, "wall.material");
+		wallHeight = safeGetIntFromConfig(config, "wall.height");
 		worldName = safeGetStringFromConfig(config, "worldname");
 		_maxPlots = safeGetIntFromConfig(config, "plot.multiplier");
 		_plotMultiplier = safeGetIntFromConfig(config, "plot.maxPerPlayer");
@@ -297,19 +298,24 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	
 	private void loadCurrentHomes() {
-		YAMLProcessor processor = new YAMLProcessor(new File(getDataFolder(), "currentHomes.yml"), true);
+		File homesFile = new File(getDataFolder(), "currentHomes.yml");
+		if (!homesFile.exists()) {
+			return;
+		}
+		YamlConfiguration homes = new YamlConfiguration();
 		try {
-			processor.load();
-		} catch (IOException e) {
-			getLogger().info(e.toString());
+			homes.load(homesFile);
+		} catch (IOException | InvalidConfigurationException e) {
+			getLogger().log(java.util.logging.Level.SEVERE, "Unable to load currentHomes.yml", e);
 			return;
 		}
 		
-		Set<String> keys = processor.getMap().keySet();
-		
 		_currentHomes.clear();
-		for(String username : keys){
-			_currentHomes.put(username, processor.getInt(username, 0));
+		for(String username : homes.getKeys(false)){
+			int homeNumber = homes.getInt(username, 0);
+			if (homeNumber > 0) {
+				_currentHomes.put(username, homeNumber);
+			}
 		}
 	}
 
@@ -397,14 +403,20 @@ public class MetropolisPlugin extends JavaPlugin {
 	private Material safeGetMaterialFromConfig(Configuration config, String name){
 		Material material = null;
 		if(config.isInt(name)){
-			material = Material.getMaterial(config.getInt(name));
+			material = switch (config.getInt(name)) {
+				case 1 -> Material.STONE;
+				case 2 -> Material.GRASS_BLOCK;
+				case 4 -> Material.COBBLESTONE;
+				case 7 -> Material.BEDROCK;
+				default -> null;
+			};
 		}else if(config.isString(name)){
-			material = Material.getMaterial(config.getString(name));
-			if(material== null){
-				material = Material.matchMaterial(config.getString(name));
-			}
+			material = Material.matchMaterial(config.getString(name));
 		}
-		
+		if (material == null) {
+			getLogger().severe("Invalid material configured at " + name);
+			throwInvalidConfigException();
+		}
 		return material;
 	}
 
@@ -1077,11 +1089,14 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private void saveCurrentHomes() {
-		File outFile = new File(getDataFolder(), "currentHomes.yml");
-				
-		// TODO Auto-generated method stub
-		
-		//YAMLProcessor processor = new YAMLProcessor(new File(getDataFolder(), "currentHomes.yml"), true);
-		//processor.save();
+		File homesFile = new File(getDataFolder(), "currentHomes.yml");
+		YamlConfiguration homes = new YamlConfiguration();
+		_currentHomes.forEach(homes::set);
+		try {
+			getDataFolder().mkdirs();
+			homes.save(homesFile);
+		} catch (IOException e) {
+			getLogger().log(java.util.logging.Level.SEVERE, "Unable to save currentHomes.yml", e);
+		}
 	}
 }
