@@ -1,11 +1,16 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'org.danilopianini.git-sensitive-semantic-versioning' version '7.0.24'
 }
 
 group = 'com.majinnaibu.bukkitplugins'
 description = 'Metropolis'
-version = '0.5-SNAPSHOT'
+
+gitSemVer {
+    minimumVersion.set('0.5.0')
+    versionPrefix.set('')
+}
 
 repositories {
     mavenCentral()
