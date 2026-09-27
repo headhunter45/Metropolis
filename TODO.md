@@ -36,16 +36,14 @@
 | GIT-004 | Planning | Add a command to request home allocation. |
 | GIT-003 |   Ready  | Add support for multiple homes. |
 | GIT-002 | Planning | Add a command to teleport to a reservation you are part of. |
-| GIT-001 | Planning | Add a command to move to a different home. |
+| GIT-001 | Done     | Add a command to move to a different home. |
 
 # GIT-001 - Add a command to move to a different home.
-**Status:** Ready
+**Status:** Done
 **Depends On:** [GIT-003](#git-003---add-support-for-multiple-homes)
-**Descriptioon:** 
+**Description:**
 
-/metropolis-home-move [playerName]
-The target player will be the callee or if specified [playerName].
-This command should set the target player's home to the plot defined by .
+`/metropolis-home-move <homeNumber> [playerName]` selects one of a player's existing homes as active. Without a player name, the command acts on the player who ran it; console and authorized administrators can specify an online or cached offline player. Reject non-positive or malformed numbers, unknown players, nonexistent homes, and extra arguments with clear feedback. Persist the selection by player UUID and confirm the change to the sender and, when online, the target player.
 
 # GIT-002 - Add a command to teleport to a reservation you are part of.
 **Status:** Ready
