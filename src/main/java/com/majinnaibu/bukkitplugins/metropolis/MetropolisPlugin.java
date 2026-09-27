@@ -41,11 +41,13 @@ import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeMoveComman
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotGoCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisPlotReserveCommand;
 import com.majinnaibu.bukkitplugins.metropolis.eventlisteners.PlayerJoinListener;
-import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
-import com.sk89q.worldguard.protection.flags.DefaultFlag;
+import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
@@ -209,7 +211,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		gridSizeY = world.getMaxHeight();
 		gridSizeZ = plotSizeZ + roadWidth;
 
-		regionManager = worldGuard.getRegionManager(world);
+		regionManager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
 		if(regionManager == null){
 			throw new RuntimeException("WorldGuard regions don't seem to be enabled.");
 		}
@@ -218,15 +220,15 @@ public class MetropolisPlugin extends JavaPlugin {
 		if(_cityRegion == null){
 			_cityRegion = new ProtectedCuboidRegion("City", getPlotMin(0, 0, 1), this.getPlotMax(0, 0, 1));
 			_cityRegion.setPriority(0);
-			_cityRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
-			_cityRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
+			_cityRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
 			regionManager.addRegion(_cityRegion);
 		}
 		
@@ -236,15 +238,15 @@ public class MetropolisPlugin extends JavaPlugin {
 		if(_spawnRegion == null){
 			_spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0, 1), getPlotMax(0, 0, 1));
 			_spawnRegion.setPriority(1);
-			_spawnRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
-			_spawnRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
+			_spawnRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
 			regionManager.addRegion(_spawnRegion);
 			
 			_spawnCuboid = new Cuboid(_spawnRegion.getMinimumPoint(), _spawnRegion.getMaximumPoint());
@@ -372,8 +374,8 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	private Cuboid getCuboid(int row, int col) {
 		//This is only used for debug info
-		BlockVector min = getPlotMin(row, col, 1);
-		BlockVector max = getPlotMax(row, col, 1);
+		BlockVector3 min = getPlotMin(row, col, 1);
+		BlockVector3 max = getPlotMax(row, col, 1);
 		return new Cuboid(min, max);
 	}
 
@@ -696,8 +698,7 @@ public class MetropolisPlugin extends JavaPlugin {
 				material != Material.WATER && 
 				material != Material.LAVA && 
 				material != Material.TORCH && 
-				material != Material.REDSTONE_TORCH_OFF && 
-				material != Material.REDSTONE_TORCH_ON;
+				material != Material.REDSTONE_TORCH;
 	}
 
 	private boolean isPhysicsMaterial(Material material) {
@@ -796,8 +797,8 @@ public class MetropolisPlugin extends JavaPlugin {
 		if(cityRegion instanceof ProtectedCuboidRegion){
 			ProtectedCuboidRegion region = (ProtectedCuboidRegion)cityRegion;
 			
-			BlockVector min;
-			BlockVector max;
+			BlockVector3 min;
+			BlockVector3 max;
 			
 			min = getPlotMin(-size/2, -size/2, 1);
 			max = getPlotMax(size/2, size/2, 1);
@@ -821,35 +822,35 @@ public class MetropolisPlugin extends JavaPlugin {
 		return iSize;
 	}
 
-	public BlockVector getPlotMin(int row, int col, int plotMultiplier){
-		BlockVector gridMin = getGridMin(row, col, plotMultiplier);
+	public BlockVector3 getPlotMin(int row, int col, int plotMultiplier){
+		BlockVector3 gridMin = getGridMin(row, col, plotMultiplier);
 		
-		BlockVector bv = new BlockVector(gridMin.getBlockX() + roadWidth/2, gridMin.getBlockY(), gridMin.getBlockZ() + roadWidth/2);
-		getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		BlockVector3 bv = BlockVector3.at(gridMin.x() + roadWidth/2, gridMin.y(), gridMin.z() + roadWidth/2);
+		getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
 		return bv;
 	}
 	
-	public BlockVector getPlotMax(int row, int col, int plotMultiplier){
-		BlockVector gridMax = getGridMax(row, col, plotMultiplier);
+	public BlockVector3 getPlotMax(int row, int col, int plotMultiplier){
+		BlockVector3 gridMax = getGridMax(row, col, plotMultiplier);
 		
-		BlockVector bv = new BlockVector(gridMax.getBlockX() - (roadWidth - roadWidth/2), gridMax.getBlockY(), gridMax.getBlockZ() - (roadWidth-roadWidth/2));
-		getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		BlockVector3 bv = BlockVector3.at(gridMax.x() - (roadWidth - roadWidth/2), gridMax.y(), gridMax.z() - (roadWidth-roadWidth/2));
+		getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
 		return bv;
 	}
 	
-	public BlockVector getGridMin(int row, int col, int plotMultiplier){
+	public BlockVector3 getGridMin(int row, int col, int plotMultiplier){
 		int level = 0;
 		
-		BlockVector bv = new BlockVector(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
-		getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		BlockVector3 bv = BlockVector3.at(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
+		getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
 		return bv;
 	}
 	
-	public BlockVector getGridMax(int row, int col, int plotMultiplier){
+	public BlockVector3 getGridMax(int row, int col, int plotMultiplier){
 		int level = 0;
 		
-		BlockVector bv = new BlockVector((col+plotMultiplier) * gridSizeX*plotMultiplier-1, (level+1/*plotMultiplier*/) * gridSizeY-1, (row+plotMultiplier) * gridSizeZ-1); 
-		getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		BlockVector3 bv = BlockVector3.at((col+plotMultiplier) * gridSizeX*plotMultiplier-1, (level+1/*plotMultiplier*/) * gridSizeY-1, (row+plotMultiplier) * gridSizeZ-1); 
+		getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
 		return bv;
 	}
 
@@ -861,7 +862,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		return (cuboid.minZ - roadWidth/2)/gridSizeZ;
 	}
 
-	private void setHomeOccupied(UUID ownerId, String ownerName, int homeNumber, BlockVector minimumPoint, BlockVector maximumPoint) {
+	private void setHomeOccupied(UUID ownerId, String ownerName, int homeNumber, BlockVector3 minimumPoint, BlockVector3 maximumPoint) {
 		PlayerHome home = new PlayerHome(ownerId, ownerName, homeNumber, minimumPoint, maximumPoint);
 		if(!_occupiedPlots.contains(home)){
 			_occupiedPlots.add(home);
@@ -897,13 +898,13 @@ public class MetropolisPlugin extends JavaPlugin {
 		getLogger().info("Metropolis Generating home in " + homeCuboid.toString());
 
 		ProtectedCuboidRegion newHomeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
-		newHomeRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
-		newHomeRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
-		newHomeRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
-		newHomeRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
-		newHomeRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
-		newHomeRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
-		newHomeRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+		newHomeRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
 
 		DefaultDomain d = newHomeRegion.getOwners();
 		d.addPlayer(playerId);
@@ -925,12 +926,12 @@ public class MetropolisPlugin extends JavaPlugin {
 		}
 		getLogger().info(String.format(
 				"New home region (%d, %d, %d) (%d, %d, %d)",
-				newHomeRegion.getMinimumPoint().getBlockX(),
-				newHomeRegion.getMinimumPoint().getBlockY(),
-				newHomeRegion.getMinimumPoint().getBlockZ(),
-				newHomeRegion.getMaximumPoint().getBlockX(),
-				newHomeRegion.getMaximumPoint().getBlockY(),
-				newHomeRegion.getMaximumPoint().getBlockZ()
+				newHomeRegion.getMinimumPoint().x(),
+				newHomeRegion.getMinimumPoint().y(),
+				newHomeRegion.getMinimumPoint().z(),
+				newHomeRegion.getMaximumPoint().x(),
+				newHomeRegion.getMaximumPoint().y(),
+				newHomeRegion.getMaximumPoint().z()
 				));
 	
 		setHomeOccupied(playerId, playerName, homeNumber, newHomeRegion.getMinimumPoint(), newHomeRegion.getMaximumPoint());
@@ -957,7 +958,7 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	private void generateSign(Cuboid plotCuboid, String playerName) {
 		Block signBlock = world.getBlockAt(plotCuboid.getCenterX(), roadLevel+1, plotCuboid.getCenterZ());
-		signBlock.setType(Material.SIGN_POST);
+		signBlock.setType(Material.OAK_SIGN);
 		Sign sign = (Sign)signBlock.getState();
 		sign.setLine(0, "Home of");
 		
@@ -982,15 +983,15 @@ public class MetropolisPlugin extends JavaPlugin {
 
 	public void reserveCuboid(String regionName, Cuboid cuboid) {
 		ProtectedCuboidRegion reservedRegion = new ProtectedCuboidRegion(regionName, cuboid.getMin(), cuboid.getMax());
-		reservedRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.CREEPER_EXPLOSION, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.LAVA_FLOW, StateFlag.State.DENY);
-		reservedRegion.setFlag(DefaultFlag.SNOW_FALL, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.MOB_SPAWNING, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.CREEPER_EXPLOSION, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.ENDER_BUILD, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.GHAST_FIREBALL, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.TNT, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.LAVA_FLOW, StateFlag.State.DENY);
+		reservedRegion.setFlag(Flags.SNOW_FALL, StateFlag.State.DENY);
 		regionManager.addRegion(reservedRegion);
 		
 		_occupiedPlots.add(Plot.get(reservedRegion));

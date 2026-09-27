@@ -7,7 +7,9 @@ import org.bukkit.entity.Player;
 
 import com.majinnaibu.bukkitplugins.metropolis.Cuboid;
 import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
-import com.sk89q.worldedit.bukkit.selections.Selection;
+import com.sk89q.worldedit.IncompleteRegionException;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.regions.Region;
 
 public class MetropolisPlotReserveCommand implements CommandExecutor {
 	MetropolisPlugin _plugin;
@@ -27,9 +29,15 @@ public class MetropolisPlotReserveCommand implements CommandExecutor {
 		Cuboid cuboid = new Cuboid();
 		
 		if(sender instanceof Player && args.length == 1){
-			Selection selection = _plugin.worldEdit.getSelection((Player) sender);
-			cuboid = new Cuboid(selection);
-		}else if(args.length == 6){
+			try {
+				Region selection = _plugin.worldEdit.getSession((Player) sender)
+						.getSelection(BukkitAdapter.adapt(_plugin.getWorld()));
+				cuboid = new Cuboid(selection);
+			} catch (IncompleteRegionException ex) {
+				sender.sendMessage("Select a WorldEdit region first.");
+				return false;
+			}
+		}else if(args.length == 7){
 			try{
 				minX = Integer.parseInt(args[1]);
 				minY = Integer.parseInt(args[2]);
@@ -41,7 +49,7 @@ public class MetropolisPlotReserveCommand implements CommandExecutor {
 				return false;
 			}
 			cuboid = new Cuboid(minX, minY, minZ, maxX, maxY, maxZ);
-		}else if(args.length == 4){
+		}else if(args.length == 5){
 			try{
 				minX = Integer.parseInt(args[1]);
 				minY = 0;

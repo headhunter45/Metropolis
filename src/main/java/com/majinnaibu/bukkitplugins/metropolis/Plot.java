@@ -1,39 +1,28 @@
 package com.majinnaibu.bukkitplugins.metropolis;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-import com.avaje.ebean.validation.NotNull;
-import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
-@Entity()
-@Table(name="Metropolis_Plot")
 public class Plot implements Comparable<Plot>{
-	@Id
 	private int _id;
 	public int getId(){return _id;}
 	public void setId(int id){_id = id;}
-	
-	@NotNull
 	
 	private Cuboid _cuboid;
 	public Cuboid getCuboid(){return _cuboid;}
 	public void setCuboid(Cuboid cuboid){_cuboid = cuboid;}
 
-	@NotNull
 	private String _regionName;
 	public String getRegionName(){return _regionName;}
 	public void setRegionName(String regionName){_regionName = regionName;}
 	
-	public Plot(String regionName, BlockVector min, BlockVector max){
+	public Plot(String regionName, BlockVector3 min, BlockVector3 max){
 		_cuboid = new Cuboid(min, max);
 		_regionName = regionName;
 	}
@@ -48,17 +37,17 @@ public class Plot implements Comparable<Plot>{
 		_regionName = "";
 	}
 
-	public BlockVector getPlotMin(int roadWidth) {
-		return new BlockVector(_cuboid.minX - roadWidth/2, _cuboid.minY, _cuboid.minZ - roadWidth/2);
+	public BlockVector3 getPlotMin(int roadWidth) {
+		return BlockVector3.at(_cuboid.minX - roadWidth/2, _cuboid.minY, _cuboid.minZ - roadWidth/2);
 	}
 	
 	public int getRow(int roadWidth, int plotSizeZ){
-		BlockVector min = getPlotMin(roadWidth);
-		return min.getBlockZ() / plotSizeZ;
+		BlockVector3 min = getPlotMin(roadWidth);
+		return min.z() / plotSizeZ;
 	}
 	
 	public int getCol(int roadWidth, int plotSizeX){
-		return getPlotMin(roadWidth).getBlockX() / plotSizeX;
+		return getPlotMin(roadWidth).x() / plotSizeX;
 	}
 	
 	@Override

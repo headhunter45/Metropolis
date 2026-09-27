@@ -3,22 +3,15 @@ package com.majinnaibu.bukkitplugins.metropolis;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
-import com.avaje.ebean.validation.NotNull;
-import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
-@Entity()
-@Table(name="Metropolis_PlayerHome")
 public class PlayerHome extends Plot{
 	private UUID playerId;
-	@NotNull
 	private String playerName;
 	public UUID getPlayerId(){return this.playerId;}
 	public String getPlayerName(){return this.playerName;}
@@ -26,7 +19,7 @@ public class PlayerHome extends Plot{
 	
 	private int number;
 		
-	public PlayerHome(UUID ownerId, String ownerName, int homeNumber, BlockVector min, BlockVector max) {
+	public PlayerHome(UUID ownerId, String ownerName, int homeNumber, BlockVector3 min, BlockVector3 max) {
 		super(String.format("h_%d_%s", homeNumber, ownerId), min, max);
 		this.playerId = ownerId;
 		this.playerName = ownerName;

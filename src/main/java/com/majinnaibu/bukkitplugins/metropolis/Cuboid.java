@@ -1,15 +1,11 @@
 package com.majinnaibu.bukkitplugins.metropolis;
 
 
-import javax.persistence.Embeddable;
-
 import org.bukkit.Location;
 
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.regions.Region;
 
-import com.sk89q.worldedit.BlockVector;
-import com.sk89q.worldedit.bukkit.selections.Selection;
-
-@Embeddable
 public class Cuboid implements Comparable<Cuboid> {
 	private int id;
 	
@@ -38,13 +34,13 @@ public class Cuboid implements Comparable<Cuboid> {
 		this.maxZ = maxZ;
 	}
 	
-	public Cuboid(BlockVector min, BlockVector max) {
-		this.minX = min.getBlockX();
-		this.minY = min.getBlockY();
-		this.minZ = min.getBlockZ();
-		this.maxX = max.getBlockX();
-		this.maxY = max.getBlockY();
-		this.maxZ = max.getBlockZ();
+	public Cuboid(BlockVector3 min, BlockVector3 max) {
+		this.minX = min.x();
+		this.minY = min.y();
+		this.minZ = min.z();
+		this.maxX = max.x();
+		this.maxY = max.y();
+		this.maxZ = max.z();
 	}
 
 	public Cuboid() {
@@ -56,46 +52,46 @@ public class Cuboid implements Comparable<Cuboid> {
 		this.maxZ = 0;
 	}
 
-	public Cuboid(Selection selection) {
-		this.minX = selection.getMinimumPoint().getBlockX();
-		this.minY = selection.getMinimumPoint().getBlockY();
-		this.minZ = selection.getMinimumPoint().getBlockZ();
-		this.maxX = selection.getMaximumPoint().getBlockX();
-		this.maxY = selection.getMaximumPoint().getBlockY();
-		this.maxZ = selection.getMaximumPoint().getBlockZ();
+	public Cuboid(Region selection) {
+		this.minX = selection.getMinimumPoint().x();
+		this.minY = selection.getMinimumPoint().y();
+		this.minZ = selection.getMinimumPoint().z();
+		this.maxX = selection.getMaximumPoint().x();
+		this.maxY = selection.getMaximumPoint().y();
+		this.maxZ = selection.getMaximumPoint().z();
 	}
 
-	public BlockVector getMin(){
-		return new BlockVector(minX, minY, minZ);
+	public BlockVector3 getMin(){
+		return BlockVector3.at(minX, minY, minZ);
 	}
 	
-	public BlockVector getMax(){
-		return new BlockVector(maxX, maxY, maxZ);
+	public BlockVector3 getMax(){
+		return BlockVector3.at(maxX, maxY, maxZ);
 	}
 
 	@Override
 	public int compareTo(Cuboid o) {
-		BlockVector min = getMin();
-		BlockVector otherMin = o.getMin();
+		BlockVector3 min = getMin();
+		BlockVector3 otherMin = o.getMin();
 		
-		if(min.getBlockX() < otherMin.getBlockX()){
+		if(min.x() < otherMin.x()){
 			return -1;
-		}else if(min.getBlockX() > otherMin.getBlockX()){
+		}else if(min.x() > otherMin.x()){
 			return 1;
-		}else if(min.getBlockZ() < otherMin.getBlockZ()){
+		}else if(min.z() < otherMin.z()){
 			return -1;
-		}else if(min.getBlockZ() > otherMin.getBlockZ()){
+		}else if(min.z() > otherMin.z()){
 			return 1;
-		}else if(min.getBlockY() < otherMin.getBlockY()){
+		}else if(min.y() < otherMin.y()){
 			return -1;
-		}else if(min.getBlockY() > otherMin.getBlockY()){
+		}else if(min.y() > otherMin.y()){
 			return 1;
 		}else{
 			return 0;
 		}
 	}
 
-	public static int compareBlockVectors(BlockVector v1, BlockVector v2){
+	public static int compareBlockVectors(BlockVector3 v1, BlockVector3 v2){
 		if(v1 == null){
 			if(v2 == null){
 				return 0;
@@ -105,24 +101,24 @@ public class Cuboid implements Comparable<Cuboid> {
 		}else if(v2 == null){
 			return 1;
 		}
-		if(v1.getBlockX() < v2.getBlockX()){
+		if(v1.x() < v2.x()){
 			return -1;
-		}else if(v1.getBlockX() > v2.getBlockX()){
+		}else if(v1.x() > v2.x()){
 			return 1;
-		}else if(v1.getBlockZ() < v2.getBlockZ()){
+		}else if(v1.z() < v2.z()){
 			return -1;
-		}else if(v1.getBlockZ() > v2.getBlockZ()){
+		}else if(v1.z() > v2.z()){
 			return 1;
-		}else if(v1.getBlockY() < v2.getBlockY()){
+		}else if(v1.y() < v2.y()){
 			return -1;
-		}else if(v1.getBlockY() > v2.getBlockY()){
+		}else if(v1.y() > v2.y()){
 			return 1;
 		}else{
 			return 0;
 		}
 	}
 	
-	public static boolean isBlockLessThan(BlockVector v1, BlockVector v2) {
+	public static boolean isBlockLessThan(BlockVector3 v1, BlockVector3 v2) {
 		return compareBlockVectors(v1, v2) < 0;
 	}
 	
