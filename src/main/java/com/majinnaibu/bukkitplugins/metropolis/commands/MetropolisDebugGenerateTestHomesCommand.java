@@ -17,15 +17,22 @@ along with Metropolis. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 package com.majinnaibu.bukkitplugins.metropolis.commands;
 
-import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
+import java.util.logging.Level;
 
+import com.majinnaibu.bukkitplugins.metropolis.MetropolisPlugin;
+import com.majinnaibu.bukkitplugins.metropolis.PlayerHome;
+
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.scheduler.BukkitTask;
 
 public class MetropolisDebugGenerateTestHomesCommand implements CommandExecutor {
+  private static final long TICKS_BETWEEN_HOMES = 2L;
 
-  private MetropolisPlugin _plugin;
+  private final MetropolisPlugin _plugin;
+  private BukkitTask _activeTask;
 
   public MetropolisDebugGenerateTestHomesCommand(MetropolisPlugin plugin) {
     _plugin = plugin;
@@ -33,15 +40,102 @@ public class MetropolisDebugGenerateTestHomesCommand implements CommandExecutor 
 
   @Override
   public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    if (args.length != 1) {
+      sender.sendMessage("Usage: /metropolis-debug-generatetesthomes <count>");
+      return false;
+    }
+
+    int numHomes;
     try {
-      int numHomes = Integer.parseInt(args[0]);
-      for (int i = 1; i <= numHomes; i++) {
-        _plugin.generateHome(String.format("test%d", i));
+      numHomes = Integer.parseInt(args[0]);
+    } catch (NumberFormatException ex) {
+      sender.sendMessage("Usage: /metropolis-debug-generatetesthomes <count>");
+      return false;
+    }
+
+    if (numHomes < 1) {
+      sender.sendMessage("Usage: /metropolis-debug-generatetesthomes <count>");
+      return false;
+    }
+
+    if (_activeTask != null && !_activeTask.isCancelled()) {
+      sender.sendMessage("[Metropolis] Test-home generation is already in progress.");
+      return false;
+    }
+
+    TestHomeBatch batch = new TestHomeBatch(sender, numHomes);
+    _activeTask =
+        _plugin.getServer().getScheduler().runTaskTimer(_plugin, batch, 1L, TICKS_BETWEEN_HOMES);
+    sender.sendMessage(
+        "[Metropolis] Queued "
+            + numHomes
+            + " test homes; generating one every "
+            + TICKS_BETWEEN_HOMES
+            + " ticks.");
+    return true;
+  }
+
+  private final class TestHomeBatch implements Runnable {
+    private final CommandSender sender;
+    private final int requestedHomes;
+    private int generatedHomes;
+    private int nextTestNumber = 1;
+    private boolean finished;
+
+    private TestHomeBatch(CommandSender sender, int requestedHomes) {
+      this.sender = sender;
+      this.requestedHomes = requestedHomes;
+    }
+
+    @Override
+    public void run() {
+      if (finished) {
+        return;
       }
 
-      return true;
-    } catch (NumberFormatException ex) {
-      return false;
+      int testNumber = nextTestNumber++;
+      String testName = "Test" + testNumber;
+      try {
+        OfflinePlayer testPlayer = _plugin.getServer().getOfflinePlayer(testName);
+        if (_plugin.getNumPlots(testPlayer.getUniqueId()) > 0) {
+          return;
+        }
+
+        PlayerHome home = _plugin.generateHome(testPlayer, 1);
+        if (home == null) {
+          sender.sendMessage(
+              "[Metropolis] Could not generate "
+                  + testName
+                  + "; completed "
+                  + generatedHomes
+                  + " of "
+                  + requestedHomes
+                  + " test homes.");
+          finish();
+          return;
+        }
+
+        generatedHomes++;
+        if (generatedHomes == requestedHomes) {
+          sender.sendMessage("[Metropolis] Generated " + generatedHomes + " test homes.");
+          finish();
+        }
+      } catch (RuntimeException exception) {
+        _plugin
+            .getLogger()
+            .log(Level.SEVERE, "Failed to generate test home " + testName, exception);
+        sender.sendMessage(
+            "[Metropolis] Test-home generation failed after " + generatedHomes + " homes.");
+        finish();
+      }
+    }
+
+    private void finish() {
+      finished = true;
+      if (_activeTask != null) {
+        _activeTask.cancel();
+        _activeTask = null;
+      }
     }
   }
 }

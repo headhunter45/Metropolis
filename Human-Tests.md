@@ -85,6 +85,7 @@ Run `./gradlew test` for the server-free JUnit suite. It has 26 tests covering:
 - `MetropolisPlotGoCommandTest`: self and target teleportation, ambiguous memberships, absent membership, and unsafe-destination feedback.
 - `MetropolisPlotReserveCommandTest`: parsing six coordinates and rejecting malformed coordinates.
 - `MetropolisHomeAcquireTest`: acquisition below the limit and refusal at the limit.
+- `MetropolisDebugGenerateTestHomesCommandTest`: asynchronous tick-queued generation, one home per interval, no overlapping batches, and continuing test-player names across repeated runs.
 
 The two opt-in tests in `src/integrationTest` require a running Paper server and RCON. They check that Metropolis appears in `/plugins` and that a coordinate reservation is persisted by WorldGuard. They do not currently verify restart persistence, join allocation, WorldEdit-selection reservations, permissions, teleports, generated blocks, protection behavior, or the other command workflows above. Run them with the environment variables documented in `README.md`; use a disposable server because the reservation test changes its WorldGuard data.
 

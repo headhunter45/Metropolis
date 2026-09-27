@@ -89,7 +89,7 @@ Assign these permission nodes to groups or individual users in your permission p
 | `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` | `metropolis.plot.reserve` | Creates a named reservation from explicit bounds. A player can instead run `/metropolis-plot-reserve <name>` with a WorldEdit selection. |
 | `/metropolis-plot-go [playerName]` | Reservation owner/member; `metropolis.plot.go` to target others or bypass membership | Teleports the sender or an online target to a reservation they own or belong to. If they have several, specify one with `/metropolis-plot-go <reservationName> [playerName]`. |
 | `/metropolis-flag-reset` | `metropolis.flag.reset` | Reapplies Metropolis protection flags to the City and home regions. |
-| `/metropolis-debug-generatetesthomes <count>` | `metropolis.debug` | Generates test homes; intended for development servers. |
+| `/metropolis-debug-generatetesthomes <count>` | `metropolis.debug` | Queues test-home generation on the main thread, creating one home every two ticks; intended for development servers. |
 
 ## License
 
