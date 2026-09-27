@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
@@ -56,6 +58,7 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.type.Stairs;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -87,23 +90,42 @@ public class MetropolisPlugin extends JavaPlugin {
   private HashMap<UUID, UserOverride> _userOverrides;
   private List<HomePermissionOverride> _permissionOverrides;
   private HashMap<UUID, Integer> _currentHomes;
+  private List<Cuboid> _savedWorldGuardBounds = List.of();
 
   private PlayerJoinListener _playerJoinListener = null;
 
   int size = 1;
 
   private int plotSizeX = 24;
-  // private int plotSizeY = 256;
+  private int plotSizeY = 256;
   private int plotSizeZ = 24;
+  private int plotOffsetX;
+  private int plotOffsetY;
+  private int plotOffsetZ;
   private int gridSizeX = 28;
   private int gridSizeY = 256;
+  private int maxLevels = 1;
+  private int streetWidth = 4;
+  private int avenueWidth = 4;
   private int gridSizeZ = 28;
-  private int roadWidth = 4;
   private int roadLevel = 62;
-  private int spaceAboveRoad = 2;
-  private Material roadMaterial = Material.COBBLESTONE;
-  private boolean generateRoadSupports = true;
-  private Material roadSupportMaterial = Material.STONE;
+  private int avenueLevel = 62;
+  private int streetSpaceAbove = 2;
+  private int avenueSpaceAbove = 2;
+  private Material streetMaterial = Material.COBBLESTONE;
+  private Material avenueMaterial = Material.COBBLESTONE;
+  private boolean generateStreetSupports = true;
+  private boolean generateAvenueSupports = true;
+  private Material streetSupportMaterial = Material.STONE;
+  private Material avenueSupportMaterial = Material.STONE;
+  private boolean generateStreetStairs;
+  private Material streetStairMaterial = Material.COBBLESTONE_STAIRS;
+  private int streetStairWidth;
+  private int streetStairsEveryNBlocks;
+  private boolean generateAvenueStairs;
+  private Material avenueStairMaterial = Material.COBBLESTONE_STAIRS;
+  private int avenueStairWidth;
+  private int avenueStairsEveryNBlocks;
   private String worldName = "world";
   private boolean generateFloor = false;
   private Material floorMaterial = Material.GRASS_BLOCK;
@@ -111,6 +133,9 @@ public class MetropolisPlugin extends JavaPlugin {
   private boolean generateSign = false;
   private boolean generateSpawn = true;
   private boolean setWorldSpawn = true;
+  private int spawnSizeX = 1;
+  private int spawnSizeY = 1;
+  private int spawnSizeZ = 1;
   private Material spawnFloorMaterial = Material.COBBLESTONE;
   private boolean generateFloorSupports = false;
   private Material floorSupportMaterial = Material.STONE;
@@ -125,6 +150,7 @@ public class MetropolisPlugin extends JavaPlugin {
   private Cuboid _cityCuboid = null;
   private ProtectedRegion _spawnRegion = null;
   private ProtectedRegion _cityRegion = null;
+  private PlotGridLayout plotGridLayout;
 
   @Override
   public void onDisable() {
@@ -178,21 +204,87 @@ public class MetropolisPlugin extends JavaPlugin {
       getLogger().info("Reading configuration from file.");
     }
     plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
+    plotSizeY = optionalIntFromConfig(config, "plot.sizeY", 256);
     plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
+    plotOffsetX = safeGetIntFromConfig(config, "plot.offsetX");
+    plotOffsetY = safeGetIntFromConfig(config, "plot.offsetY");
+    plotOffsetZ = safeGetIntFromConfig(config, "plot.offsetZ");
+    maxLevels = optionalIntFromConfig(config, "plot.maxLevels", 1);
     generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
     floorMaterial = safeGetMaterialFromConfig(config, "plot.floor.material");
     spaceAboveFloor = safeGetIntFromConfig(config, "plot.floor.clearSpaceAbove");
     generateFloorSupports = safeGetBooleanFromConfig(config, "plot.floor.supports.generate");
     floorSupportMaterial = safeGetMaterialFromConfig(config, "plot.floor.supports.material");
     generateSign = safeGetBooleanFromConfig(config, "plot.sign.generate");
-    roadWidth = safeGetIntFromConfig(config, "road.width");
-    spaceAboveRoad = safeGetIntFromConfig(config, "road.clearSpaceAbove");
-    roadLevel = safeGetIntFromConfig(config, "road.level");
-    roadMaterial = safeGetMaterialFromConfig(config, "road.material");
-    generateRoadSupports = safeGetBooleanFromConfig(config, "road.supports.generate");
-    roadSupportMaterial = safeGetMaterialFromConfig(config, "road.supports.material");
+    streetWidth = safeGetIntFromConfig(config, "road.streets.width");
+    avenueWidth = safeGetIntFromConfig(config, "road.avenues.width");
+    streetSpaceAbove = safeGetIntFromConfig(config, "road.streets.clearSpaceAbove");
+    avenueSpaceAbove = safeGetIntFromConfig(config, "road.avenues.clearSpaceAbove");
+    roadLevel = safeGetIntFromConfig(config, "road.streets.level");
+    avenueLevel = safeGetIntFromConfig(config, "road.avenues.level");
+    streetMaterial = safeGetMaterialFromConfig(config, "road.streets.material");
+    avenueMaterial = safeGetMaterialFromConfig(config, "road.avenues.material");
+    generateStreetSupports = safeGetBooleanFromConfig(config, "road.streets.supports.generate");
+    generateAvenueSupports = safeGetBooleanFromConfig(config, "road.avenues.supports.generate");
+    streetSupportMaterial = safeGetMaterialFromConfig(config, "road.streets.supports.material");
+    avenueSupportMaterial = safeGetMaterialFromConfig(config, "road.avenues.supports.material");
+    generateStreetStairs = safeGetBooleanFromConfig(config, "road.streets.stairs.generate");
+    if (generateStreetStairs) {
+      streetStairMaterial = safeGetMaterialFromConfig(config, "road.streets.stairs.material");
+      streetStairWidth = safeGetIntFromConfig(config, "road.streets.stairs.width");
+      streetStairsEveryNBlocks = safeGetIntFromConfig(config, "road.streets.stairs.everyNBlocks");
+
+      if (streetStairWidth < 1 || streetStairWidth >= streetWidth) {
+        getLogger()
+            .severe(
+                "road.streets.stairs.width must be positive and narrower than road.streets.width;"
+                    + " street stairs are disabled.");
+        generateStreetStairs = false;
+      }
+      if (streetStairsEveryNBlocks < 1) {
+        getLogger()
+            .severe(
+                "road.streets.stairs.everyNBlocks must be positive; street stairs are disabled.");
+        generateStreetStairs = false;
+      }
+      if (!(streetStairMaterial.createBlockData() instanceof Stairs)) {
+        getLogger()
+            .severe(
+                "road.streets.stairs.material must be a stair block; street stairs are disabled.");
+        generateStreetStairs = false;
+      }
+    }
+    generateAvenueStairs = safeGetBooleanFromConfig(config, "road.avenues.stairs.generate");
+    if (generateAvenueStairs) {
+      avenueStairMaterial = safeGetMaterialFromConfig(config, "road.avenues.stairs.material");
+      avenueStairWidth = safeGetIntFromConfig(config, "road.avenues.stairs.width");
+      avenueStairsEveryNBlocks = safeGetIntFromConfig(config, "road.avenues.stairs.everyNBlocks");
+
+      if (avenueStairWidth < 1 || avenueStairWidth >= avenueWidth) {
+        getLogger()
+            .severe(
+                "road.avenues.stairs.width must be positive and narrower than road.avenues.width;"
+                    + " avenue stairs are disabled.");
+        generateAvenueStairs = false;
+      }
+      if (avenueStairsEveryNBlocks < 1) {
+        getLogger()
+            .severe(
+                "road.avenues.stairs.everyNBlocks must be positive; avenue stairs are disabled.");
+        generateAvenueStairs = false;
+      }
+      if (!(avenueStairMaterial.createBlockData() instanceof Stairs)) {
+        getLogger()
+            .severe(
+                "road.avenues.stairs.material must be a stair block; avenue stairs are disabled.");
+        generateAvenueStairs = false;
+      }
+    }
     generateSpawn = safeGetBooleanFromConfig(config, "spawn.generate");
     setWorldSpawn = safeGetBooleanFromConfig(config, "spawn.setAsWorldSpawn");
+    spawnSizeX = optionalIntFromConfig(config, "spawn.sizeX", 1);
+    spawnSizeY = optionalIntFromConfig(config, "spawn.sizeY", 1);
+    spawnSizeZ = optionalIntFromConfig(config, "spawn.sizeZ", 1);
     spawnFloorMaterial = safeGetMaterialFromConfig(config, "spawn.material");
     generateWall = safeGetBooleanFromConfig(config, "wall.generate");
     wallMaterial = safeGetMaterialFromConfig(config, "wall.material");
@@ -242,9 +334,23 @@ public class MetropolisPlugin extends JavaPlugin {
       throw new RuntimeException(String.format("The world %s does not exist", worldName));
     }
 
-    gridSizeX = plotSizeX + roadWidth;
-    gridSizeY = world.getMaxHeight();
-    gridSizeZ = plotSizeZ + roadWidth;
+    if (streetWidth < 0 || avenueWidth < 0) {
+      throw new IllegalArgumentException("Road widths must not be negative.");
+    }
+    plotGridLayout =
+        new PlotGridLayout(
+            plotSizeX,
+            plotSizeY,
+            plotSizeZ,
+            streetWidth,
+            avenueWidth,
+            plotOffsetX,
+            plotOffsetY,
+            plotOffsetZ,
+            roadLevel);
+    gridSizeX = plotGridLayout.gridSizeX();
+    gridSizeY = plotGridLayout.gridSizeY();
+    gridSizeZ = plotGridLayout.gridSizeZ();
 
     regionManager =
         WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
@@ -273,7 +379,8 @@ public class MetropolisPlugin extends JavaPlugin {
 
     _spawnRegion = regionManager.getRegion("Spawn");
     if (_spawnRegion == null) {
-      _spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0, 1), getPlotMax(0, 0, 1));
+      Cuboid spawnCuboid = createSpawnCuboid();
+      _spawnRegion = new ProtectedCuboidRegion("Spawn", spawnCuboid.getMin(), spawnCuboid.getMax());
       _spawnRegion.setPriority(1);
       _spawnRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
       _spawnRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
@@ -308,7 +415,8 @@ public class MetropolisPlugin extends JavaPlugin {
       }
       */
 
-      getLogger().info(String.format("roadWidth = %d", roadWidth));
+      getLogger()
+          .info(String.format("streetWidth = %d, avenueWidth = %d", streetWidth, avenueWidth));
     }
 
     _occupiedPlots = new ArrayList<Plot>();
@@ -415,43 +523,72 @@ public class MetropolisPlugin extends JavaPlugin {
     }
   }
 
-  private boolean safeGetBooleanFromConfig(Configuration config, String name) {
-    if (config.isBoolean(name)) {
-      return config.getBoolean(name);
-    } else {
-      throwInvalidConfigException();
-      return false;
+  private boolean safeGetBooleanFromConfig(Configuration config, String... names) {
+    for (String name : names) {
+      if (config.isBoolean(name)) {
+        return config.getBoolean(name);
+      }
     }
+    throwInvalidConfigException();
+    return false;
   }
 
-  private int safeGetIntFromConfig(Configuration config, String name) {
-    if (config.isInt(name)) {
-      return config.getInt(name);
-    } else {
-      throwInvalidConfigException();
-      return 0;
+  private int safeGetIntFromConfig(Configuration config, String... names) {
+    for (String name : names) {
+      if (config.isInt(name)) {
+        return config.getInt(name);
+      }
     }
+    throwInvalidConfigException();
+    return 0;
   }
 
-  private Material safeGetMaterialFromConfig(Configuration config, String name) {
-    Material material = null;
-    if (config.isInt(name)) {
-      material =
-          switch (config.getInt(name)) {
-            case 1 -> Material.STONE;
-            case 2 -> Material.GRASS_BLOCK;
-            case 4 -> Material.COBBLESTONE;
-            case 7 -> Material.BEDROCK;
-            default -> null;
-          };
-    } else if (config.isString(name)) {
-      material = Material.matchMaterial(config.getString(name));
+  private int optionalIntFromConfig(Configuration config, String[] names, int defaultValue) {
+    for (String name : names) {
+      if (config.isInt(name)) {
+        return config.getInt(name);
+      }
     }
-    if (material == null) {
-      getLogger().severe("Invalid material configured at " + name);
-      throwInvalidConfigException();
+    return defaultValue;
+  }
+
+  private int optionalIntFromConfig(Configuration config, String name, int defaultValue) {
+    return config.isInt(name) ? config.getInt(name) : defaultValue;
+  }
+
+  private int optionalIntFromConfig(
+      Configuration config, String firstName, String secondName, int defaultValue) {
+    if (config.isInt(firstName)) {
+      return config.getInt(firstName);
     }
-    return material;
+    if (config.isInt(secondName)) {
+      return config.getInt(secondName);
+    }
+    return defaultValue;
+  }
+
+  private Material safeGetMaterialFromConfig(Configuration config, String... names) {
+    for (String name : names) {
+      Material material = null;
+      if (config.isInt(name)) {
+        material =
+            switch (config.getInt(name)) {
+              case 1 -> Material.STONE;
+              case 2 -> Material.GRASS_BLOCK;
+              case 4 -> Material.COBBLESTONE;
+              case 7 -> Material.BEDROCK;
+              default -> null;
+            };
+      } else if (config.isString(name)) {
+        material = Material.matchMaterial(config.getString(name));
+      }
+      if (material != null) {
+        return material;
+      }
+    }
+    getLogger().severe("Invalid material configured at " + String.join(" or ", names));
+    throwInvalidConfigException();
+    return Material.STONE;
   }
 
   private void throwInvalidConfigException() {
@@ -466,18 +603,18 @@ public class MetropolisPlugin extends JavaPlugin {
 
     if (generateSpawn) {
       int x = 0;
-      int y = roadLevel;
+      int y = _spawnCuboid.minY;
       int z = 0;
 
       // floor
       for (x = _spawnCuboid.getMinX(); x <= _spawnCuboid.getMaxX(); x++) {
         for (z = _spawnCuboid.getMinZ(); z <= _spawnCuboid.getMaxZ(); z++) {
-          for (y = roadLevel + 1; y < world.getMaxHeight(); y++) {
+          for (y = _spawnCuboid.minY + 1; y <= _spawnCuboid.maxY; y++) {
             Block block = world.getBlockAt(x, y, z);
             block.setType(Material.AIR);
           }
 
-          y = roadLevel;
+          y = _spawnCuboid.minY;
           Block block = world.getBlockAt(x, y, z);
           block.setType(spawnFloorMaterial);
         }
@@ -488,8 +625,38 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     if (setWorldSpawn) {
-      world.setSpawnLocation(_spawnCuboid.getCenterX(), roadLevel + 1, _spawnCuboid.getCenterZ());
+      world.setSpawnLocation(
+          _spawnCuboid.getCenterX(), _spawnCuboid.minY + 1, _spawnCuboid.getCenterZ());
     }
+  }
+
+  private Cuboid createSpawnCuboid() {
+    Cuboid spawnCuboid =
+        SpawnLayout.bounds(
+            spawnSizeX,
+            spawnSizeY,
+            spawnSizeZ,
+            plotSizeX,
+            plotSizeY,
+            plotSizeZ,
+            avenueWidth,
+            streetWidth,
+            roadLevel,
+            plotOffsetX,
+            plotOffsetY,
+            plotOffsetZ);
+    if (!SpawnLayout.withinBuildHeight(spawnCuboid, world.getMinHeight(), world.getMaxHeight())) {
+      getLogger()
+          .severe(
+              String.format(
+                  "Configured spawn bounds (%d to %d) exceed world build height (%d to %d).",
+                  spawnCuboid.minY,
+                  spawnCuboid.maxY,
+                  world.getMinHeight(),
+                  world.getMaxHeight() - 1));
+      throw new IllegalArgumentException("Configured spawn height exceeds world build height.");
+    }
+    return spawnCuboid;
   }
 
   private void fillOccupiedPlots() {
@@ -577,6 +744,16 @@ public class MetropolisPlugin extends JavaPlugin {
     return Math.max(0, count);
   }
 
+  public static int normalizeMaxLevels(int count) {
+    return Math.max(1, count);
+  }
+
+  public static int clampMaxLevels(int requestedLevels, int availableLevels) {
+    int normalizedRequested = normalizeMaxLevels(requestedLevels);
+    int normalizedAvailable = Math.max(0, availableLevels);
+    return Math.min(normalizedRequested, normalizedAvailable);
+  }
+
   public static boolean shouldAutoGenerateInitialHome(int count) {
     return count > 0;
   }
@@ -595,7 +772,7 @@ public class MetropolisPlugin extends JavaPlugin {
 
   private void generateFloor(Cuboid plotCuboid) {
     int x = 0;
-    int y = roadLevel;
+    int y = plotCuboid.minY;
     int z = 0;
 
     for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
@@ -633,120 +810,54 @@ public class MetropolisPlugin extends JavaPlugin {
     }
   }
 
-  private void createRoads(Cuboid plotCuboid, int roadMask) {
-    if (roadWidth > 0) {
-      int x = 0;
-      int y = roadLevel;
-      int z = 0;
-
-      if (plotCuboid == null) {
-        if (DEBUG) {
-          getLogger().warning("plotCuboid is null");
-        }
-        return;
-      }
-
-      int roadWidth1 = roadWidth / 2;
-      int roadWidth2 = roadWidth - roadWidth1;
-
-      // North West Corner
-      if ((roadMask & (ROAD_NORTH | ROAD_WEST)) != 0) {
-        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
-          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // North Strip
-      if ((roadMask & ROAD_NORTH) != 0) {
-        for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
-          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // North East Corner
-      if ((roadMask & (ROAD_NORTH | ROAD_EAST)) != 0) {
-        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
-          for (z = plotCuboid.minZ - roadWidth1; z < plotCuboid.minZ; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // East Strip
-      if ((roadMask & ROAD_EAST) != 0) {
-        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
-          for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // South East Corner
-      if ((roadMask & (ROAD_SOUTH | ROAD_EAST)) != 0) {
-        for (x = plotCuboid.maxX + 1; x <= plotCuboid.maxX + roadWidth2; x++) {
-          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // South Strip
-      if ((roadMask & ROAD_SOUTH) != 0) {
-        for (x = plotCuboid.minX; x <= plotCuboid.maxX; x++) {
-          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // South West Corner
-      if ((roadMask & (ROAD_SOUTH | ROAD_WEST)) != 0) {
-        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
-          for (z = plotCuboid.maxZ + 1; z <= plotCuboid.maxZ + roadWidth2; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-
-      // West Strip
-      if ((roadMask & ROAD_WEST) != 0) {
-        for (x = plotCuboid.minX - roadWidth1; x < plotCuboid.minX; x++) {
-          for (z = plotCuboid.minZ; z <= plotCuboid.maxZ; z++) {
-            setRoad(x, y, z);
-          }
-        }
-      }
-    }
-  }
-
   private void createRoads(Cuboid plotCuboid) {
-    createRoads(plotCuboid, ROAD_NORTH | ROAD_SOUTH | ROAD_EAST | ROAD_WEST);
-  }
+    if (plotCuboid == null) {
+      if (DEBUG) {
+        getLogger().warning("plotCuboid is null");
+      }
+      return;
+    }
 
-  private void setRoad(int x, int y, int z) {
-    // if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
+    if (streetWidth > 0 || avenueWidth > 0) {
+      for (RoadLayout.BlockPosition roadBlock :
+          RoadLayout.surroundingRoad(plotCuboid, streetWidth, avenueWidth)) {
+        int roadY =
+            roadBlock.roadType() == RoadLayout.RoadType.AVENUE
+                ? plotCuboid.minY + avenueLevel - roadLevel
+                : plotCuboid.minY;
+        Set<AvenueStairwayLayout.Step> stairOpenings =
+            getUpperRoadOpenings(plotCuboid, roadY, roadBlock.roadType());
+        setRoad(roadBlock.x(), roadY, roadBlock.z(), roadBlock.roadType(), stairOpenings);
+      }
 
-    Block block = world.getBlockAt(x, y, z);
-    // Set the road block
-    block.setType(roadMaterial);
-
-    // Set the support
-    if (generateRoadSupports && isPhysicsMaterial(block.getType())) {
-      Block blockUnder = world.getBlockAt(x, y - 1, z);
-      if (!isSolidMaterial(blockUnder.getType())) {
-        blockUnder.setType(roadSupportMaterial);
+      int upperLevel = Math.floorDiv(plotCuboid.minY - roadLevel, getLevelPitchY());
+      if (upperLevel > 0 && getLevelStartY(upperLevel) == plotCuboid.minY) {
+        generateRoadStairs(plotCuboid, upperLevel - 1, RoadLayout.RoadType.AVENUE);
+        generateRoadStairs(plotCuboid, upperLevel - 1, RoadLayout.RoadType.STREET);
       }
     }
+  }
 
-    // Clear the space above
-    for (int y1 = 0; y1 < spaceAboveRoad; y1++) {
-      block = world.getBlockAt(x, y + y1 + 1, z);
-      block.setType(Material.AIR);
+  private void setRoad(
+      int x,
+      int y,
+      int z,
+      RoadLayout.RoadType roadType,
+      Set<AvenueStairwayLayout.Step> stairOpenings) {
+    if (stairOpenings.contains(new AvenueStairwayLayout.Step(x, y, z))) {
+      return;
     }
+
+    boolean useAvenueSettings = roadType == RoadLayout.RoadType.AVENUE;
+    RoadBlockWriter.build(
+        world,
+        x,
+        y,
+        z,
+        useAvenueSettings ? avenueMaterial : streetMaterial,
+        useAvenueSettings ? avenueSupportMaterial : streetSupportMaterial,
+        useAvenueSettings ? generateAvenueSupports : generateStreetSupports,
+        useAvenueSettings ? avenueSpaceAbove : streetSpaceAbove);
   }
 
   private boolean isSolidMaterial(Material material) {
@@ -763,7 +874,14 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   public boolean isBlockOccupied(int row, int col) {
-    Cuboid cuboid = new Cuboid(getGridMin(row, col, 1), getGridMax(row, col, 1));
+    return isBlockOccupied(row, col, 0, 1);
+  }
+
+  public boolean isBlockOccupied(int row, int col, int level, int plotMultiplier) {
+    Cuboid cuboid =
+        new Cuboid(
+            getGridMin(row, col, plotMultiplier, level),
+            getGridMax(row, col, plotMultiplier, level));
     for (Plot plot : _occupiedPlots) {
       if (plot.getCuboid().intersects(cuboid)) {
         return true;
@@ -774,13 +892,17 @@ public class MetropolisPlugin extends JavaPlugin {
       return true;
     }
 
-    return false;
+    return WorldGuardRegionOccupancy.overlapsAny(cuboid, _savedWorldGuardBounds);
   }
 
   private boolean areBlocksOccupied(int row, int col, int i) {
+    return areBlocksOccupied(row, col, i, 0);
+  }
+
+  private boolean areBlocksOccupied(int row, int col, int i, int level) {
     for (int ix = col; ix < col + i; ix++) {
       for (int iy = row; iy < row + i; iy++) {
-        if (isBlockOccupied(iy, ix)) {
+        if (isBlockOccupied(iy, ix, level, 1)) {
           return true;
         }
       }
@@ -790,62 +912,87 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   private Cuboid findNextUnownedHomeRegion(int plotMultiplier) {
+    refreshSavedWorldGuardBounds();
+
     int row = 0;
     int col = 0;
     int ring = 0;
     int min = -ring;
     int max = ring - (plotMultiplier - 1);
-    boolean done = false;
+    int levelCount = getEffectiveMaxLevels();
+    if (levelCount == 0) {
+      getLogger().severe("No configured plot level fits within the world's build height.");
+      return null;
+    }
 
-    while (!done) {
+    var worldBorder = world.getWorldBorder();
+    Location borderCenter = worldBorder.getCenter();
+    int maxSearchRing =
+        PlotWorldBorderBounds.maximumSearchRing(
+            worldBorder.getSize(),
+            borderCenter.getX(),
+            borderCenter.getZ(),
+            plotOffsetX,
+            plotOffsetZ,
+            gridSizeX,
+            gridSizeZ,
+            plotMultiplier);
+
+    while (ring <= maxSearchRing) {
       row = min;
       col = min;
 
-      // Top
-      for (col = min; col <= max; col++) {
-        if (!areBlocksOccupied(row, col, plotMultiplier)) {
-          if (DEBUG) {
-            getLogger().info(String.format("row: %d, col: %d", row, col));
-          }
-          return new Cuboid(
-              getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-        }
-      }
-
-      // Right side
-      col = max;
-      for (row = min + 1; row < max; row++) {
-        if (!areBlocksOccupied(row, col, plotMultiplier)) {
-          if (DEBUG) {
-            getLogger().info(String.format("row: %d, col: %d", row, col));
-          }
-          return new Cuboid(
-              getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-        }
-      }
-
-      // Bottom
-      row = max;
-      for (col = max; col >= min; col--) {
-        if (!areBlocksOccupied(row, col, plotMultiplier)) {
-          if (DEBUG) {
-            getLogger().info(String.format("row: %d, col: %d", row, col));
-          }
-          return new Cuboid(
-              getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
-        }
-      }
-
-      // Left
-      col = min;
-      for (row = max; row > min; row--) {
-        if (!areBlocksOccupied(row, col, plotMultiplier)) {
-          if (row != 0 || col != 0) {
+      for (int level = 0; level < levelCount; level++) {
+        // Top
+        for (col = min; col <= max; col++) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
             if (DEBUG) {
-              getLogger().info(String.format("row: %d, col: %d", row, col));
+              getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
             }
             return new Cuboid(
-                getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+                getPlotMin(row, col, plotMultiplier, level),
+                getPlotMax(row, col, plotMultiplier, level));
+          }
+        }
+
+        // Right side
+        col = max;
+        for (row = min + 1; row < max; row++) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
+            if (DEBUG) {
+              getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
+            }
+            return new Cuboid(
+                getPlotMin(row, col, plotMultiplier, level),
+                getPlotMax(row, col, plotMultiplier, level));
+          }
+        }
+
+        // Bottom
+        row = max;
+        for (col = max; col >= min; col--) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
+            if (DEBUG) {
+              getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
+            }
+            return new Cuboid(
+                getPlotMin(row, col, plotMultiplier, level),
+                getPlotMax(row, col, plotMultiplier, level));
+          }
+        }
+
+        // Left
+        col = min;
+        for (row = max; row > min; row--) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
+            if (row != 0 || col != 0) {
+              if (DEBUG) {
+                getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
+              }
+              return new Cuboid(
+                  getPlotMin(row, col, plotMultiplier, level),
+                  getPlotMax(row, col, plotMultiplier, level));
+            }
           }
         }
       }
@@ -855,10 +1002,41 @@ public class MetropolisPlugin extends JavaPlugin {
       max = ring - (plotMultiplier - 1);
     }
 
-    if (DEBUG) {
-      getLogger().info(String.format("row: %d, col: %d", row, col));
+    getLogger().severe("Unable to find an available supported plot before the world border.");
+    return null;
+  }
+
+  private void refreshSavedWorldGuardBounds() {
+    _savedWorldGuardBounds =
+        WorldGuardRegionOccupancy.boundsToAvoid(regionManager.getRegions().values());
+  }
+
+  private boolean isAvailableSupportedPlot(int row, int col, int plotMultiplier, int level) {
+    Location borderCenter = world.getWorldBorder().getCenter();
+    Cuboid candidateGrid =
+        new Cuboid(
+            getGridMin(row, col, plotMultiplier, level),
+            getGridMax(row, col, plotMultiplier, level));
+    return PlotWorldBorderBounds.contains(
+            candidateGrid,
+            world.getWorldBorder().getSize(),
+            borderCenter.getX(),
+            borderCenter.getZ())
+        && !areBlocksOccupied(row, col, plotMultiplier, level)
+        && PlotLevelSupport.hasCompleteSupport(
+            row, col, plotMultiplier, level, this::isGeneratedLogicalBlock);
+  }
+
+  private boolean isGeneratedLogicalBlock(int row, int col, int level) {
+    Cuboid gridCell = new Cuboid(getGridMin(row, col, 1, level), getGridMax(row, col, 1, level));
+    if (_occupiedPlots != null) {
+      for (Plot plot : _occupiedPlots) {
+        if (plot instanceof PlayerHome && plot.getCuboid().intersects(gridCell)) {
+          return true;
+        }
+      }
     }
-    return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
+    return _spawnCuboid != null && _spawnCuboid.intersects(gridCell);
   }
 
   private void resizeCityRegion() {
@@ -867,11 +1045,19 @@ public class MetropolisPlugin extends JavaPlugin {
     if (cityRegion instanceof ProtectedCuboidRegion) {
       ProtectedCuboidRegion region = (ProtectedCuboidRegion) cityRegion;
 
-      BlockVector3 min;
-      BlockVector3 max;
-
-      min = getPlotMin(-size / 2, -size / 2, 1);
-      max = getPlotMax(size / 2, size / 2, 1);
+      Cuboid requestedCityBounds =
+          new Cuboid(getPlotMin(-size / 2, -size / 2, 1), getPlotMax(size / 2, size / 2, 1));
+      List<Cuboid> occupiedBounds = new ArrayList<>();
+      for (Plot plot : _occupiedPlots) {
+        occupiedBounds.add(plot.getCuboid());
+      }
+      if (_spawnCuboid != null) {
+        occupiedBounds.add(_spawnCuboid);
+      }
+      Cuboid cityBounds =
+          CityRegionBounds.expandToContain(_cityCuboid, requestedCityBounds, occupiedBounds);
+      BlockVector3 min = cityBounds.getMin();
+      BlockVector3 max = cityBounds.getMax();
 
       ProtectedCuboidRegion resizedRegion = new ProtectedCuboidRegion(region.getId(), min, max);
       resizedRegion.copyFrom(region);
@@ -902,52 +1088,81 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   public BlockVector3 getPlotMin(int row, int col, int plotMultiplier) {
-    BlockVector3 gridMin = getGridMin(row, col, plotMultiplier);
+    return getPlotMin(row, col, plotMultiplier, 0);
+  }
 
-    BlockVector3 bv =
-        BlockVector3.at(gridMin.x() + roadWidth / 2, gridMin.y(), gridMin.z() + roadWidth / 2);
+  public BlockVector3 getPlotMin(int row, int col, int plotMultiplier, int level) {
+    BlockVector3 bv = plotGridLayout.plotMin(row, col, level);
     getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
 
   public BlockVector3 getPlotMax(int row, int col, int plotMultiplier) {
-    BlockVector3 gridMax = getGridMax(row, col, plotMultiplier);
+    return getPlotMax(row, col, plotMultiplier, 0);
+  }
 
-    BlockVector3 bv =
-        BlockVector3.at(
-            gridMax.x() - (roadWidth - roadWidth / 2),
-            gridMax.y(),
-            gridMax.z() - (roadWidth - roadWidth / 2));
+  public BlockVector3 getPlotMax(int row, int col, int plotMultiplier, int level) {
+    BlockVector3 bv = plotGridLayout.plotMax(row, col, plotMultiplier, plotMultiplier, level);
     getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
 
   public BlockVector3 getGridMin(int row, int col, int plotMultiplier) {
-    int level = 0;
+    return getGridMin(row, col, plotMultiplier, 0);
+  }
 
-    BlockVector3 bv = BlockVector3.at(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
+  public BlockVector3 getGridMin(int row, int col, int plotMultiplier, int level) {
+    BlockVector3 bv = plotGridLayout.gridMin(row, col, level);
     getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
 
   public BlockVector3 getGridMax(int row, int col, int plotMultiplier) {
-    int level = 0;
+    return getGridMax(row, col, plotMultiplier, 0);
+  }
 
-    BlockVector3 bv =
-        BlockVector3.at(
-            (col + plotMultiplier) * gridSizeX - 1,
-            (level + 1 /*plotMultiplier*/) * gridSizeY - 1,
-            (row + plotMultiplier) * gridSizeZ - 1);
+  public BlockVector3 getGridMax(int row, int col, int plotMultiplier, int level) {
+    BlockVector3 bv = plotGridLayout.gridMax(row, col, plotMultiplier, plotMultiplier, level);
     getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.x(), bv.y(), bv.z()));
     return bv;
   }
 
   private int getPlotXFromMin(Cuboid cuboid) {
-    return (cuboid.minX - roadWidth / 2) / gridSizeX;
+    return plotGridLayout.plotXIndexFromMin(cuboid);
   }
 
   private int getPlotZFromMin(Cuboid cuboid) {
-    return (cuboid.minZ - roadWidth / 2) / gridSizeZ;
+    return plotGridLayout.plotZIndexFromMin(cuboid);
+  }
+
+  private int getLevelPitchY() {
+    return plotGridLayout.gridSizeY();
+  }
+
+  private int getEffectiveMaxLevels() {
+    int streetBaseY = getLevelStartY(0);
+    int avenueBaseY = streetBaseY + avenueLevel - roadLevel;
+    int availableStreetLevels = getAvailableLevelsAt(streetBaseY);
+    int availableAvenueLevels =
+        avenueWidth > 0 ? getAvailableLevelsAt(avenueBaseY) : availableStreetLevels;
+    int maxWorldLevels = Math.min(availableStreetLevels, availableAvenueLevels);
+    return clampMaxLevels(maxLevels, maxWorldLevels);
+  }
+
+  private int getAvailableLevelsAt(int baseY) {
+    if (world == null || baseY < world.getMinHeight() || plotSizeY < 1) {
+      return 0;
+    }
+
+    int highestPlotBase = world.getMaxHeight() - plotSizeY;
+    if (baseY > highestPlotBase) {
+      return 0;
+    }
+    return (highestPlotBase - baseY) / getLevelPitchY() + 1;
+  }
+
+  private int getLevelStartY(int level) {
+    return plotGridLayout.levelStartY(level);
   }
 
   private void setHomeOccupied(
@@ -993,6 +1208,9 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     homeCuboid = findNextUnownedHomeRegion(multiplier);
+    if (homeCuboid == null) {
+      return null;
+    }
 
     getLogger().info("Metropolis Generating home in " + homeCuboid.toString());
 
@@ -1041,6 +1259,7 @@ public class MetropolisPlugin extends JavaPlugin {
         homeNumber,
         newHomeRegion.getMinimumPoint(),
         newHomeRegion.getMaximumPoint());
+    resizeCityRegion();
     _currentHomes.put(playerId, homeNumber);
     saveCurrentHomes();
 
@@ -1068,7 +1287,7 @@ public class MetropolisPlugin extends JavaPlugin {
 
   private void generateSign(Cuboid plotCuboid, String playerName) {
     Block signBlock =
-        world.getBlockAt(plotCuboid.getCenterX(), roadLevel + 1, plotCuboid.getCenterZ());
+        world.getBlockAt(plotCuboid.getCenterX(), plotCuboid.minY + 1, plotCuboid.getCenterZ());
     signBlock.setType(Material.OAK_SIGN);
     Sign sign = (Sign) signBlock.getState();
     sign.setLine(0, "Home of");
@@ -1082,6 +1301,90 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     sign.update(true);
+  }
+
+  private void generateRoadStairs(Cuboid plotCuboid, int lowerLevel, RoadLayout.RoadType roadType) {
+    List<AvenueStairwayLayout.Flight> flights =
+        getRoadStairFlights(plotCuboid, lowerLevel, roadType);
+    if (flights.isEmpty()) {
+      return;
+    }
+
+    Material stairMaterial =
+        roadType == RoadLayout.RoadType.AVENUE ? avenueStairMaterial : streetStairMaterial;
+    for (AvenueStairwayLayout.Flight flight : flights) {
+      AvenueStairwayBuilder.build(world, flight, stairMaterial);
+    }
+  }
+
+  private Set<AvenueStairwayLayout.Step> getUpperRoadOpenings(
+      Cuboid plotCuboid, int roadY, RoadLayout.RoadType roadType) {
+    Set<AvenueStairwayLayout.Step> openings = new HashSet<>();
+    openings.addAll(getUpperRoadOpeningsForPlot(plotCuboid, roadY, roadType));
+    if (_occupiedPlots != null) {
+      for (Plot plot : _occupiedPlots) {
+        if (plot instanceof PlayerHome home) {
+          openings.addAll(getUpperRoadOpeningsForPlot(home.getCuboid(), roadY, roadType));
+        }
+      }
+    }
+    return openings;
+  }
+
+  private List<AvenueStairwayLayout.Step> getUpperRoadOpeningsForPlot(
+      Cuboid plotCuboid, int roadY, RoadLayout.RoadType roadType) {
+    int baseY = (roadType == RoadLayout.RoadType.AVENUE ? avenueLevel : roadLevel) + plotOffsetY;
+    if (!areStairsEnabled(roadType) || roadY <= baseY) {
+      return List.of();
+    }
+
+    int upperLevel = Math.floorDiv(roadY - baseY, getLevelPitchY());
+    if (baseY + upperLevel * getLevelPitchY() != roadY || upperLevel < 1) {
+      return List.of();
+    }
+
+    return getRoadStairFlights(plotCuboid, upperLevel - 1, roadType).stream()
+        .flatMap(flight -> flight.roadOpenings().stream())
+        .toList();
+  }
+
+  private boolean areStairsEnabled(RoadLayout.RoadType roadType) {
+    return roadType == RoadLayout.RoadType.AVENUE ? generateAvenueStairs : generateStreetStairs;
+  }
+
+  private List<AvenueStairwayLayout.Flight> getRoadStairFlights(
+      Cuboid plotCuboid, int lowerLevel, RoadLayout.RoadType roadType) {
+    if (!areStairsEnabled(roadType)
+        || lowerLevel < 0
+        || lowerLevel >= getEffectiveMaxLevels() - 1) {
+      return List.of();
+    }
+
+    if (roadType == RoadLayout.RoadType.AVENUE) {
+      return AvenueStairwayLayout.forUpperRoadSegments(
+          plotCuboid,
+          plotSizeZ,
+          gridSizeZ,
+          getPlotZFromMin(plotCuboid),
+          avenueStairsEveryNBlocks,
+          avenueWidth,
+          avenueStairWidth,
+          avenueLevel + plotOffsetY + lowerLevel * getLevelPitchY(),
+          getLevelPitchY(),
+          3);
+    }
+
+    return AvenueStairwayLayout.forUpperStreetSegments(
+        plotCuboid,
+        plotSizeX,
+        gridSizeX,
+        getPlotXFromMin(plotCuboid),
+        streetStairsEveryNBlocks,
+        streetWidth,
+        streetStairWidth,
+        roadLevel + plotOffsetY + lowerLevel * getLevelPitchY(),
+        getLevelPitchY(),
+        3);
   }
 
   public List<Plot> getCityBlocks() {
@@ -1107,6 +1410,7 @@ public class MetropolisPlugin extends JavaPlugin {
     regionManager.addRegion(reservedRegion);
 
     _occupiedPlots.add(Plot.get(reservedRegion));
+    resizeCityRegion();
     saveRegions();
   }
 

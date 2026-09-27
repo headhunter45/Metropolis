@@ -23,13 +23,22 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Join as a new player. Confirm one home is allocated and the welcome message reports its actual bounds. Check the corresponding `h_1_<UUID>` region has the player as owner and its bounds match the configured plot size.
 - Set `plot.initial: 0` on a disposable server, restart, and join as a fresh player. Confirm no home is created until the player runs `/metropolis-home-acquire`; then verify the command creates the initial home and makes it active.
 - Join with a second new player. Confirm the new home is distinct, does not overlap the first home or spawn, and the City region grows to include it.
+- Start from a disposable world configured with `plot.sizeY` and `plot.maxLevels` from the multi-level example. Confirm the level count is honored, the city does not exceed the world's build height, and upper plots are only allocated above footprints fully supported at every lower level. With a 1×1 spawn and a 2×2 home size, confirm a new home is allocated at base level rather than above the partially supported spawn.
+- Generate homes at base and elevated levels, then verify each full home cuboid is inside the WorldGuard `City` region. Add a home/reservation extending the city bounds and confirm City expands without shrinking its existing bounds or flags.
+- Set positive and negative `plot.offsetX`, `plot.offsetY`, and `plot.offsetZ` values on a disposable world. Verify plot regions, road bands, stair flights, and Spawn share the shifted grid origin; allocate multiple plots across negative coordinates and confirm logical-cell spacing stays consistent. Confirm changing offsets does not move existing saved regions; Metropolis-managed homes and reservations should retain their bounds and remain recognized. Treat automatic conversion of other saved regions as unverified.
+- Set `spawn.sizeX`, `spawn.sizeY`, and `spawn.sizeZ` to distinct positive values on a fresh disposable world. Confirm the Spawn region spans the corresponding plot-plus-road logical cells horizontally and the configured plot-height multiple vertically. Check blocks outside those bounds remain unchanged; configure a height exceeding the world's build limit and confirm startup rejects it clearly.
 - Join again as an existing player. Confirm the same home is selected and no duplicate region or plot is created.
 - Reserve an area before allocating another home. Confirm future allocations skip it. Repeat with reservations near the city edge and near existing roads to look for overlaps or gaps.
+- Create an unrelated saved WorldGuard region in the next candidate area, then allocate a home and confirm it is skipped. Repeat with a non-cuboid region and verify the full bounding cuboid is avoided; confirm `City` itself does not prevent allocation.
+- Set a small WorldBorder in a disposable world, occupy or reserve the remaining valid grid cells, and request another home. Confirm search grows beyond 256 rings but never places a plot/road footprint outside the border; when no supported cell remains, check the error log and confirm no region is created.
 - Test a user override that grants a different plot multiplier or home limit. Confirm the generated bounds and allowed number of homes match the override, and that the configured global defaults still apply to other players.
 
 ### Generated blocks and geometry
 
 - Inspect a newly allocated home and adjoining roads. Check road width, level, material, clearance, plot floor, support blocks, and optional sign against the active config.
+- Generate one plot in a disposable world and confirm each adjoining road is fully paved to the configured width. Generate a plot directly beside it: confirm already-correct shared road blocks are untouched, any missing half-width legacy section is filled, and stair treads/openings remain intact.
+- Configure streets and avenues with different widths, materials, clearances, and support settings. Verify streets along X use only the street options and avenues along Z use only avenue options.
+- Enable stairs for both sections with different widths/cadences, each narrower than its road. Generate a plot on a level below `plot.maxLevels`; verify street stairs ascend along positive X at north/south borders and avenue stairs ascend along positive Z at east/west borders. Confirm lower roads remain unchanged, the first treads start one block above and forward from the road-level landing, connected treads use inverted backing, and top treads reach the upper road Y. Check each upper road leaves exactly three blocks open before its top tread only across that stair width. For a 2-plot-wide/long home with cadence 1, confirm two centered runs along each eligible edge. Repeat with higher levels to confirm existing flights remain open.
 - Test generation over varied terrain, including water, caves, uneven ground, and existing structures. Confirm generated floors and roads do not leave unsafe gaps or erase blocks outside their intended area.
 - Enable and disable optional floor, support, sign, spawn, world-spawn, and perimeter-wall settings one at a time on a disposable world. Confirm each setting changes only its intended behavior.
 - Allocate plots in several directions and near the world origin. Check road joins, plot dimensions, City region expansion, and boundary coordinates for symmetry and off-by-one errors.
@@ -71,8 +80,18 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 26 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 62 tests covering:
 
+- `AvenueStairwayLayoutTest`: centered per-segment street and avenue flights, both border directions, independent cadence, top-tread alignment, inverted backing plan, exact-width openings, and invalid-fit rejection.
+- `PlotLevelSupportTest`: rejection of upper plots with missing logical support cells and complete coverage requirements across all lower levels.
+- `CityRegionBoundsTest`: City bounds expand to include elevated plots and Spawn without shrinking existing protection bounds.
+- `PlotGridLayoutTest`: zero-offset compatibility, offsets on X/Y/Z, axis-specific spacing, and negative logical-index recovery.
+- `WorldGuardRegionOccupancyTest`: arbitrary saved-region bounds are excluded while City/global regions are treated as non-occupying envelopes.
+- `PlotWorldBorderBoundsTest`: search bounds follow WorldBorder size/center and require the full candidate footprint inside it.
+- `SpawnLayoutTest`: default one-cell bounds, independent multipliers, and build-height validation.
+- `AvenueStairwayBuilderTest`: configured stair material and facing/half data for avenue and street directions, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
+- `RoadLayoutTest`: independently sized street/avenue bands, correct road-type tagging, non-overlapping corners, and disabled roads at zero width.
+- `RoadBlockWriterTest`: no-op writes for existing roads, filling missing road blocks, and preserving stair treads.
 - `CuboidTest`: WorldEdit bound conversion, vector ordering/null handling, touching intersections, and point containment.
 - `CurrentHomesStoreTest`: UUID-based persistence and resolving a legacy player-name key.
 - `PlayerJoinListenerTest`: the welcome bounds message when a home is supplied by a mock.
@@ -85,6 +104,7 @@ Run `./gradlew test` for the server-free JUnit suite. It has 26 tests covering:
 - `MetropolisPlotGoCommandTest`: self and target teleportation, ambiguous memberships, absent membership, and unsafe-destination feedback.
 - `MetropolisPlotReserveCommandTest`: parsing six coordinates and rejecting malformed coordinates.
 - `MetropolisHomeAcquireTest`: acquisition below the limit and refusal at the limit.
+- `MetropolisDebugGenerateTestHomesCommandTest`: asynchronous tick-queued generation, one home per interval, no overlapping batches, and continuing test-player names across repeated runs.
 
 The two opt-in tests in `src/integrationTest` require a running Paper server and RCON. They check that Metropolis appears in `/plugins` and that a coordinate reservation is persisted by WorldGuard. They do not currently verify restart persistence, join allocation, WorldEdit-selection reservations, permissions, teleports, generated blocks, protection behavior, or the other command workflows above. Run them with the environment variables documented in `README.md`; use a disposable server because the reservation test changes its WorldGuard data.
 

@@ -1,0 +1,66 @@
+plot:
+  sizeX: 32
+  sizeY: 10
+  sizeZ: 32
+  offsetX: 0
+  offsetY: 0
+  offsetZ: 0
+  multiplier: 1
+  maxLevels: 10
+  maxPerPlayer: 1
+  initial: 1
+  floor:
+    generate: true
+    clearSpaceAbove: 0
+    material: GRASS_BLOCK
+    supports:
+      generate: true
+      material: STONE
+  sign:
+    generate: true
+road:
+  avenues:
+    width: 4
+    clearSpaceAbove: 9
+    level: 62
+    material: COBBLESTONE
+    supports:
+      generate: true
+      material: STONE
+    stairs:
+      generate: true
+      material: COBBLESTONE_STAIRS
+      everyNBlocks: 4
+      width: 2
+  streets:
+    width: 4
+    clearSpaceAbove: 9
+    level: 62
+    material: COBBLESTONE
+    supports:
+      generate: true
+      material: STONE
+    stairs:
+      generate: false
+      material: COBBLESTONE_STAIRS
+      everyNBlocks: 4
+      width: 2
+spawn:
+  generate: true
+  setAsWorldSpawn: true
+  sizeX: 1
+  sizeY: 1
+  sizeZ: 1
+  material: GRASS_BLOCK
+wall:
+  generate: true
+  material: BEDROCK
+  height: 10
+worldname: world
+userOverrides:
+- username: majinnaibu
+  plotMultiplier: 2
+  maxPlots: 2
+- username: hoggrim
+  plotMultiplier: 2
+  maxPlots: 2

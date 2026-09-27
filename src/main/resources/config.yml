@@ -18,16 +18,38 @@ plot:
   sign:
     generate: true
 road:
-  width: 4
-  clearSpaceAbove: 66
-  level: 62
-  material: COBBLESTONE
-  supports:
-    generate: true
-    material: STONE
+  avenues:
+    width: 4
+    clearSpaceAbove: 66
+    level: 62
+    material: COBBLESTONE
+    supports:
+      generate: true
+      material: STONE
+    stairs:
+      generate: false
+      material: COBBLESTONE_STAIRS
+      everyNBlocks: 4
+      width: 2
+  streets:
+    width: 4
+    clearSpaceAbove: 66
+    level: 62
+    material: COBBLESTONE
+    supports:
+      generate: true
+      material: STONE
+    stairs:
+      generate: false
+      material: COBBLESTONE_STAIRS
+      everyNBlocks: 4
+      width: 2
 spawn:
   generate: true
   setAsWorldSpawn: true
+  sizeX: 1
+  sizeY: 1
+  sizeZ: 1
   material: GRASS_BLOCK
 wall:
   generate: true

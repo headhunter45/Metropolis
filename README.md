@@ -5,6 +5,7 @@ Metropolis expands a protected Minecraft city as players join. Each player can r
 ## Features
 
 - Assigns a protected home plot when a player joins by default and supports acquiring additional homes up to the configured player limit; set `plot.initial` to `0` to require `/metropolis-home-acquire` for the first home.
+- Adds stacked plot levels with `plot.maxLevels`, while `plot.sizeY` continues to define the full height of each individual plot.
 - Supports per-player plot sizes and home limits through `userOverrides` or configurable permission tiers; acquired homes can be selected as the active home.
 - Expands the City region as plots are occupied, with optional spawn generation, world-spawn placement, floors, support blocks, signs, and perimeter walls.
 - Generates roads around plots with configurable width, level, material, clearance, and supports.
@@ -57,7 +58,25 @@ Copy `.env.example` to `.env` and configure the Paper version/build and server p
 
 ## Configuration
 
-`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. `plot.multiplier` sets the default plot-size multiplier; `plot.maxPerPlayer` sets the default home limit; `plot.initial` sets how many homes are auto-generated on join, and `0` requires `/metropolis-home-acquire` for the player's first home.
+`plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. The per-level stack is configured with `plot.sizeY` and `plot.maxLevels`: `sizeY` is the full height of one plot level, and `maxLevels` is the number of stacked levels that can be allocated without exceeding the world build height. `plot.multiplier` sets the default plot-size multiplier; `plot.maxPerPlayer` sets the default home limit; `plot.initial` sets how many homes are auto-generated on join, and `0` requires `/metropolis-home-acquire` for the player's first home.
+
+`plot.offsetX`, `plot.offsetY`, and `plot.offsetZ` shift the logical plot grid in blocks. Positive or negative offsets apply consistently to plot/road placement, vertical levels, spawn alignment, and logical-cell indexing. Changing offsets does not move existing saved WorldGuard regions or automatically convert an existing world.
+
+Before allocating, Metropolis treats every saved WorldGuard region except the enclosing `City` and special `__global__` region as occupied. It uses each region's bounding cuboid; for non-cuboid regions this can conservatively leave extra gaps to ensure new plot regions do not overlap them.
+
+Plot allocation continues outward up to the configured WorldBorder. The complete logical plot-and-road footprint must fit inside the border; if no supported, unoccupied location remains, Metropolis logs an error and creates no region.
+
+Set `spawn.sizeX`, `spawn.sizeY`, and `spawn.sizeZ` to positive logical-grid multipliers. X and Z include the matching plot dimension plus road spacing; Y sets the spawn volume's height upward from `road.level` in multiples of `plot.sizeY`. All default to `1`. A newly created Spawn region must fit within the world's build height, and generation clears only within that region's configured vertical bounds. Existing saved Spawn regions retain their saved bounds.
+
+The `road.streets.*` and `road.avenues.*` sections independently configure width, level, material, clearance, supports, and stairs. Streets run along X; avenues run along Z. Each section's stair settings (`generate`, `material`, `width`, and `everyNBlocks`) use that section's road width and cadence. Street stair runs ascend along positive X at the north/south borders; avenue runs ascend along positive Z at the east/west borders. Runs are centered within each eligible logical plot-sized segment. The lower road remains the normal-material landing; stairs begin one block above and forward from it. Connected following treads use upside-down stairs facing back down the run as backing, and the final tread reaches the upper road Y. The three blocks before each top tread remain open only across the stair width.
+
+Upper-level plots require complete generated support below: every logical plot cell in their footprint must be occupied by a generated home or spawn at every lower level. If a footprint has gaps below, allocation skips that upper candidate and keeps searching for a supported lower-level location.
+
+The WorldGuard `City` region expands in all three dimensions to contain its previous bounds, the requested city footprint, Spawn, and generated homes/reservations. New upper-level plots therefore remain inside City protection; adding a home or reservation also triggers a resize.
+
+The breaking multi-level schema is documented in the example config at `src/main/resources/examples/multi-level.yml`. It uses split road sections (`road.streets.*` and `road.avenues.*`), a level-aware `plot.maxLevels` field, and the valid stair material `COBBLESTONE_STAIRS`.
+
+Roads are generated at their full configured width when a plot is created. Generating an adjacent plot does not rewrite road blocks that are already correct; it only fills missing blocks, including gaps left by older half-width generation. Existing stair treads and upper-road openings are preserved.
 
 Use `permissionOverrides` to assign plot size and home limits through any permission manager. Each permission node maps to a `priority`, `plotMultiplier`, and `maxPlots`; the matching node with the highest priority wins, and the last matching entry in YAML order wins ties. An explicit username entry in `userOverrides` takes precedence over permission rules. If no override matches, the global `plot.*` defaults apply. Permission rules are checked for online players; offline home generation uses username overrides or global defaults. For example:
 
@@ -89,7 +108,7 @@ Assign these permission nodes to groups or individual users in your permission p
 | `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` | `metropolis.plot.reserve` | Creates a named reservation from explicit bounds. A player can instead run `/metropolis-plot-reserve <name>` with a WorldEdit selection. |
 | `/metropolis-plot-go [playerName]` | Reservation owner/member; `metropolis.plot.go` to target others or bypass membership | Teleports the sender or an online target to a reservation they own or belong to. If they have several, specify one with `/metropolis-plot-go <reservationName> [playerName]`. |
 | `/metropolis-flag-reset` | `metropolis.flag.reset` | Reapplies Metropolis protection flags to the City and home regions. |
-| `/metropolis-debug-generatetesthomes <count>` | `metropolis.debug` | Generates test homes; intended for development servers. |
+| `/metropolis-debug-generatetesthomes <count>` | `metropolis.debug` | Queues test-home generation on the main thread, creating one home every two ticks; intended for development servers. |
 
 ## License
 
