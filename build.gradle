@@ -6,6 +6,19 @@ plugins {
 group = 'com.majinnaibu.bukkitplugins'
 description = 'Metropolis'
 
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://maven.enginehub.org/repo/' }
+    mavenLocal()
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:26.2.build.129-stable'
+    compileOnly 'com.sk89q.worldedit:worldedit-bukkit:7.4.5'
+    compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.19'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
