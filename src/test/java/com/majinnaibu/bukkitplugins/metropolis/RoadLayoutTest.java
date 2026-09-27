@@ -30,19 +30,30 @@ class RoadLayoutTest {
 
   @Test
   void buildsFullRoadWidthAndNonOverlappingCornersAtOnce() {
-    List<RoadLayout.BlockPosition> road = RoadLayout.surroundingRoad(PLOT, 4);
+    List<RoadLayout.BlockPosition> road = RoadLayout.surroundingRoad(PLOT, 4, 4);
     HashSet<RoadLayout.BlockPosition> uniqueBlocks = new HashSet<>(road);
 
     assertEquals(576, road.size());
     assertEquals(road.size(), uniqueBlocks.size());
-    assertTrue(road.contains(new RoadLayout.BlockPosition(34, 2)));
-    assertTrue(road.contains(new RoadLayout.BlockPosition(37, 33)));
-    assertTrue(road.contains(new RoadLayout.BlockPosition(2, 34)));
-    assertTrue(road.contains(new RoadLayout.BlockPosition(33, 37)));
+    assertTrue(road.contains(new RoadLayout.BlockPosition(34, 2, RoadLayout.RoadType.AVENUE)));
+    assertTrue(road.contains(new RoadLayout.BlockPosition(2, 34, RoadLayout.RoadType.STREET)));
+    assertTrue(
+        road.contains(new RoadLayout.BlockPosition(34, 34, RoadLayout.RoadType.INTERSECTION)));
   }
 
   @Test
   void returnsNoRoadForZeroWidth() {
-    assertTrue(RoadLayout.surroundingRoad(PLOT, 0).isEmpty());
+    assertTrue(RoadLayout.surroundingRoad(PLOT, 0, 0).isEmpty());
+  }
+
+  @Test
+  void usesIndependentWidthsForStreetAndAvenueBands() {
+    List<RoadLayout.BlockPosition> road = RoadLayout.surroundingRoad(PLOT, 2, 4);
+
+    assertEquals(416, road.size());
+    assertTrue(road.contains(new RoadLayout.BlockPosition(2, 0, RoadLayout.RoadType.STREET)));
+    assertTrue(road.contains(new RoadLayout.BlockPosition(-2, 2, RoadLayout.RoadType.AVENUE)));
+    assertTrue(
+        road.contains(new RoadLayout.BlockPosition(-2, 0, RoadLayout.RoadType.INTERSECTION)));
   }
 }

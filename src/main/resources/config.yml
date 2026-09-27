@@ -28,6 +28,9 @@ road:
       material: STONE
     stairs:
       generate: false
+      material: COBBLESTONE_STAIRS
+      everyNBlocks: 4
+      width: 2
   streets:
     width: 4
     clearSpaceAbove: 66
@@ -36,6 +39,11 @@ road:
     supports:
       generate: true
       material: STONE
+    stairs:
+      generate: false
+      material: COBBLESTONE_STAIRS
+      everyNBlocks: 4
+      width: 2
 spawn:
   generate: true
   setAsWorldSpawn: true

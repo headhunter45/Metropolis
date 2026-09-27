@@ -26,30 +26,37 @@ import org.junit.jupiter.api.Test;
 class SpawnLayoutTest {
   @Test
   void defaultMultipliersPreserveTheOnePlotSpawnBounds() {
-    Cuboid spawn = SpawnLayout.bounds(1, 1, 1, 32, 10, 32, 4, 62);
+    Cuboid spawn = SpawnLayout.bounds(1, 1, 1, 32, 10, 32, 4, 4, 62);
 
     assertEqualsBounds(spawn, 2, 62, 2, 33, 71, 33);
   }
 
   @Test
   void appliesEachMultiplierToItsOwnAlignedGridDimension() {
-    Cuboid spawn = SpawnLayout.bounds(2, 3, 4, 32, 10, 32, 4, 62);
+    Cuboid spawn = SpawnLayout.bounds(2, 3, 4, 32, 10, 32, 4, 4, 62);
 
     assertEqualsBounds(spawn, 2, 62, 2, 69, 91, 141);
   }
 
   @Test
   void validatesTheEntireSpawnHeightAgainstWorldBounds() {
-    Cuboid spawn = SpawnLayout.bounds(1, 3, 1, 32, 10, 32, 4, 62);
+    Cuboid spawn = SpawnLayout.bounds(1, 3, 1, 32, 10, 32, 4, 4, 62);
 
     assertTrue(SpawnLayout.withinBuildHeight(spawn, -64, 320));
     assertFalse(SpawnLayout.withinBuildHeight(spawn, -64, 91));
   }
 
   @Test
+  void alignsSpawnAxesToTheirIndependentRoadWidths() {
+    Cuboid spawn = SpawnLayout.bounds(2, 1, 3, 32, 10, 32, 6, 2, 62);
+
+    assertEqualsBounds(spawn, 3, 62, 1, 72, 71, 100);
+  }
+
+  @Test
   void rejectsNonPositiveSpawnMultipliers() {
     assertThrows(
-        IllegalArgumentException.class, () -> SpawnLayout.bounds(0, 1, 1, 32, 10, 32, 4, 62));
+        IllegalArgumentException.class, () -> SpawnLayout.bounds(0, 1, 1, 32, 10, 32, 4, 4, 62));
   }
 
   private static void assertEqualsBounds(

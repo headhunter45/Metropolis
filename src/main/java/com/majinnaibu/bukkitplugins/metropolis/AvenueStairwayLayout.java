@@ -61,15 +61,64 @@ public final class AvenueStairwayLayout {
               plot.maxX,
               plot.maxY,
               Math.min(segmentStart + plotSizeZ - 1, plot.maxZ));
-      for (Side side : Side.values()) {
+      for (Side side : List.of(Side.EAST, Side.WEST)) {
         List<Step> stairs = stairBlocks(segment, avenueWidth, stairWidth, lowerY, rise, side);
         if (stairs.isEmpty()) {
           continue;
         }
         List<Step> backings = invertedBackings(stairs, lowerY);
         List<Step> openings =
-            upperRoadOpening(stairs, avenueWidth, stairWidth, lowerY, rise, openingLength);
-        flights.add(new Flight(stairs, backings, openings));
+            upperRoadOpening(stairs, avenueWidth, stairWidth, lowerY, rise, openingLength, side);
+        flights.add(new Flight(side, stairs, backings, openings));
+      }
+    }
+    return List.copyOf(flights);
+  }
+
+  public static List<Flight> forUpperStreetSegments(
+      Cuboid plot,
+      int plotSizeX,
+      int gridSizeX,
+      int firstBlockIndex,
+      int everyNBlocks,
+      int streetWidth,
+      int stairWidth,
+      int lowerY,
+      int rise,
+      int openingLength) {
+    if (plotSizeX < 1 || gridSizeX < plotSizeX || everyNBlocks < 1) {
+      return List.of();
+    }
+
+    List<Flight> flights = new ArrayList<>();
+    int segmentIndex = 0;
+    for (int segmentStart = plot.minX;
+        segmentStart <= plot.maxX;
+        segmentStart += gridSizeX, segmentIndex++) {
+      if (Math.floorMod(firstBlockIndex + segmentIndex + 1, everyNBlocks) != 0) {
+        continue;
+      }
+
+      Cuboid segment =
+          new Cuboid(
+              segmentStart,
+              plot.minY,
+              plot.minZ,
+              Math.min(segmentStart + plotSizeX - 1, plot.maxX),
+              plot.maxY,
+              plot.maxZ);
+      for (Side side : List.of(Side.NORTH, Side.SOUTH)) {
+        List<Step> stairs = stairBlocks(segment, streetWidth, stairWidth, lowerY, rise, side);
+        if (stairs.isEmpty()) {
+          continue;
+        }
+        flights.add(
+            new Flight(
+                side,
+                stairs,
+                invertedBackings(stairs, lowerY),
+                upperRoadOpening(
+                    stairs, streetWidth, stairWidth, lowerY, rise, openingLength, side)));
       }
     }
     return List.copyOf(flights);
@@ -78,22 +127,31 @@ public final class AvenueStairwayLayout {
   public static List<Step> upperRoadOpening(
       Cuboid plot, int roadWidth, int stairWidth, int lowerY, int rise, int openingLength) {
     List<Step> stairs = centeredEastAvenue(plot, roadWidth, stairWidth, lowerY, rise);
-    return upperRoadOpening(stairs, roadWidth, stairWidth, lowerY, rise, openingLength);
+    return upperRoadOpening(stairs, roadWidth, stairWidth, lowerY, rise, openingLength, Side.EAST);
   }
 
   private static List<Step> upperRoadOpening(
-      List<Step> stairs, int roadWidth, int stairWidth, int lowerY, int rise, int openingLength) {
+      List<Step> stairs,
+      int roadWidth,
+      int stairWidth,
+      int lowerY,
+      int rise,
+      int openingLength,
+      Side side) {
     if (stairs.isEmpty() || openingLength < 1) {
       return List.of();
     }
 
     Step topStair = stairs.get(stairs.size() - 1);
-    int firstX = stairs.getFirst().x();
+    Step firstStair = stairs.getFirst();
     int upperRoadY = lowerY + rise;
     List<Step> opening = new ArrayList<>(stairWidth * openingLength);
     for (int widthIndex = 0; widthIndex < stairWidth; widthIndex++) {
       for (int lengthIndex = openingLength; lengthIndex > 0; lengthIndex--) {
-        opening.add(new Step(firstX + widthIndex, upperRoadY, topStair.z() - lengthIndex));
+        opening.add(
+            side.runsAlongX()
+                ? new Step(topStair.x() - lengthIndex, upperRoadY, firstStair.z() + widthIndex)
+                : new Step(firstStair.x() + widthIndex, upperRoadY, topStair.z() - lengthIndex));
       }
     }
     return List.copyOf(opening);
@@ -103,13 +161,14 @@ public final class AvenueStairwayLayout {
       Cuboid plot, int roadWidth, int stairWidth, int lowerY, int rise, int openingLength) {
     List<Step> stairs = centeredEastAvenue(plot, roadWidth, stairWidth, lowerY, rise);
     if (stairs.isEmpty()) {
-      return new Flight(List.of(), List.of(), List.of());
+      return new Flight(Side.EAST, List.of(), List.of(), List.of());
     }
 
     return new Flight(
+        Side.EAST,
         stairs,
         invertedBackings(stairs, lowerY),
-        upperRoadOpening(stairs, roadWidth, stairWidth, lowerY, rise, openingLength));
+        upperRoadOpening(stairs, roadWidth, stairWidth, lowerY, rise, openingLength, Side.EAST));
   }
 
   private static List<Step> invertedBackings(List<Step> stairs, int lowerY) {
@@ -124,7 +183,7 @@ public final class AvenueStairwayLayout {
 
   private static List<Step> stairBlocks(
       Cuboid plot, int roadWidth, int stairWidth, int lowerY, int rise, Side side) {
-    int plotLength = plot.maxZ - plot.minZ + 1;
+    int plotLength = side.runsAlongX() ? plot.maxX - plot.minX + 1 : plot.maxZ - plot.minZ + 1;
     if (roadWidth < 1
         || stairWidth < 1
         || stairWidth >= roadWidth
@@ -133,15 +192,21 @@ public final class AvenueStairwayLayout {
       return List.of();
     }
 
-    int firstX =
-        side == Side.EAST
-            ? plot.maxX + 1 + (roadWidth - stairWidth) / 2
-            : plot.minX - roadWidth + (roadWidth - stairWidth) / 2;
-    int firstZ = plot.minZ + (plotLength - rise) / 2 + 1;
+    int firstRun = (side.runsAlongX() ? plot.minX : plot.minZ) + (plotLength - rise) / 2 + 1;
+    int firstCross =
+        switch (side) {
+          case EAST -> plot.maxX + 1 + (roadWidth - stairWidth) / 2;
+          case WEST -> plot.minX - roadWidth + (roadWidth - stairWidth) / 2;
+          case NORTH -> plot.minZ - roadWidth + (roadWidth - stairWidth) / 2;
+          case SOUTH -> plot.maxZ + 1 + (roadWidth - stairWidth) / 2;
+        };
     List<Step> steps = new ArrayList<>(stairWidth * rise);
     for (int riseIndex = 0; riseIndex < rise; riseIndex++) {
       for (int widthIndex = 0; widthIndex < stairWidth; widthIndex++) {
-        steps.add(new Step(firstX + widthIndex, lowerY + riseIndex + 1, firstZ + riseIndex));
+        steps.add(
+            side.runsAlongX()
+                ? new Step(firstRun + riseIndex, lowerY + riseIndex + 1, firstCross + widthIndex)
+                : new Step(firstCross + widthIndex, lowerY + riseIndex + 1, firstRun + riseIndex));
       }
     }
     return List.copyOf(steps);
@@ -149,13 +214,22 @@ public final class AvenueStairwayLayout {
 
   public enum Side {
     EAST,
-    WEST
+    WEST,
+    NORTH,
+    SOUTH;
+
+    public boolean runsAlongX() {
+      return this == NORTH || this == SOUTH;
+    }
   }
 
   public record Step(int x, int y, int z) {}
 
   public record Flight(
-      List<Step> stairBlocks, List<Step> invertedBackingBlocks, List<Step> roadOpenings) {
+      Side side,
+      List<Step> stairBlocks,
+      List<Step> invertedBackingBlocks,
+      List<Step> roadOpenings) {
     public Flight {
       stairBlocks = List.copyOf(stairBlocks);
       invertedBackingBlocks = List.copyOf(invertedBackingBlocks);

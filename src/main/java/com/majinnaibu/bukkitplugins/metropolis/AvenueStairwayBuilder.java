@@ -32,12 +32,14 @@ public final class AvenueStairwayBuilder {
   private AvenueStairwayBuilder() {}
 
   public static void build(World world, Flight flight, Material stairMaterial) {
+    BlockFace ascendingFacing = flight.side().runsAlongX() ? BlockFace.EAST : BlockFace.SOUTH;
+    BlockFace descendingFacing = ascendingFacing.getOppositeFace();
     for (Step step : flight.stairBlocks()) {
       Block stairBlock = world.getBlockAt(step.x(), step.y(), step.z());
       stairBlock.setType(stairMaterial, false);
       BlockData blockData = stairBlock.getBlockData();
       if (blockData instanceof Stairs stairs) {
-        stairs.setFacing(BlockFace.SOUTH);
+        stairs.setFacing(ascendingFacing);
         stairs.setHalf(Bisected.Half.BOTTOM);
         stairs.setShape(Stairs.Shape.STRAIGHT);
         stairBlock.setBlockData(stairs, false);
@@ -49,7 +51,7 @@ public final class AvenueStairwayBuilder {
       supportBlock.setType(stairMaterial, false);
       BlockData supportData = supportBlock.getBlockData();
       if (supportData instanceof Stairs stairs) {
-        stairs.setFacing(BlockFace.NORTH);
+        stairs.setFacing(descendingFacing);
         stairs.setHalf(Bisected.Half.TOP);
         stairs.setShape(Stairs.Shape.STRAIGHT);
         supportBlock.setBlockData(stairs, false);

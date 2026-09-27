@@ -105,6 +105,25 @@ class AvenueStairwayLayoutTest {
   }
 
   @Test
+  void createsStreetFlightsAlongXOnBothNorthAndSouthBorders() {
+    Cuboid twoByTwoPlot = new Cuboid(2, 62, 2, 69, 71, 69);
+
+    List<AvenueStairwayLayout.Flight> flights =
+        AvenueStairwayLayout.forUpperStreetSegments(twoByTwoPlot, 32, 36, 0, 1, 4, 2, 62, 14, 3);
+
+    assertEquals(4, flights.size());
+    assertEquals(AvenueStairwayLayout.Side.NORTH, flights.getFirst().side());
+    assertEquals(
+        new AvenueStairwayLayout.Step(12, 63, -1), flights.getFirst().stairBlocks().getFirst());
+    assertEquals(AvenueStairwayLayout.Side.SOUTH, flights.get(1).side());
+    assertEquals(
+        new AvenueStairwayLayout.Step(12, 63, 71), flights.get(1).stairBlocks().getFirst());
+    assertEquals(
+        new AvenueStairwayLayout.Step(48, 63, -1), flights.get(2).stairBlocks().getFirst());
+    assertTrue(flights.stream().allMatch(flight -> flight.stairBlocks().getLast().y() == 76));
+  }
+
+  @Test
   void rejectsAStairRunThatCannotFitWithinThePlotLength() {
     Cuboid plot = new Cuboid(2, 62, 2, 33, 71, 13);
 

@@ -82,6 +82,6 @@ class MetropolisHomeAcquireTest {
     assertEquals(4, MetropolisPlugin.normalizeMaxLevels(4));
     assertEquals(3, MetropolisPlugin.clampMaxLevels(10, 3));
     assertEquals(1, MetropolisPlugin.clampMaxLevels(2, 1));
-    assertEquals(1, MetropolisPlugin.clampMaxLevels(0, 0));
+    assertEquals(0, MetropolisPlugin.clampMaxLevels(0, 0));
   }
 }

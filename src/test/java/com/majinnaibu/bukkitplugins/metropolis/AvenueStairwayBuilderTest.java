@@ -41,6 +41,39 @@ import org.junit.jupiter.api.Test;
 
 class AvenueStairwayBuilderTest {
   @Test
+  void buildsStreetStairsFacingEastWithWestFacingInvertedBacking() {
+    Cuboid plot = new Cuboid(2, 62, 2, 33, 71, 33);
+    Flight flight =
+        AvenueStairwayLayout.forUpperStreetSegments(plot, 32, 36, 0, 1, 4, 2, 62, 14, 3).getFirst();
+    World world = mock(World.class);
+    Map<Step, Block> blocks = new HashMap<>();
+    Map<Step, Stairs> blockData = new HashMap<>();
+    when(world.getBlockAt(anyInt(), anyInt(), anyInt()))
+        .thenAnswer(
+            invocation -> {
+              Step position =
+                  new Step(
+                      invocation.getArgument(0),
+                      invocation.getArgument(1),
+                      invocation.getArgument(2));
+              return blocks.computeIfAbsent(
+                  position,
+                  ignored -> {
+                    Block block = mock(Block.class);
+                    Stairs stairs = mock(Stairs.class);
+                    when(block.getBlockData()).thenReturn(stairs);
+                    blockData.put(position, stairs);
+                    return block;
+                  });
+            });
+
+    AvenueStairwayBuilder.build(world, flight, Material.COBBLESTONE_STAIRS);
+
+    verify(blockData.get(flight.stairBlocks().getFirst())).setFacing(BlockFace.EAST);
+    verify(blockData.get(flight.invertedBackingBlocks().getFirst())).setFacing(BlockFace.WEST);
+  }
+
+  @Test
   void buildsAscendingAndInvertedStairsAndClearsOnlyThePlannedOpening() {
     Cuboid plot = new Cuboid(2, 62, 2, 33, 71, 33);
     Flight flight = AvenueStairwayLayout.forUpperRoad(plot, 4, 2, 62, 14, 3);

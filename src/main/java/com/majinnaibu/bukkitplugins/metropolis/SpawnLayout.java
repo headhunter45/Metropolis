@@ -27,22 +27,25 @@ public final class SpawnLayout {
       int plotSizeX,
       int plotSizeY,
       int plotSizeZ,
-      int roadWidth,
+      int avenueWidth,
+      int streetWidth,
       int roadLevel) {
-    if (sizeX < 1 || sizeY < 1 || sizeZ < 1 || roadWidth < 0) {
+    if (sizeX < 1 || sizeY < 1 || sizeZ < 1 || avenueWidth < 0 || streetWidth < 0) {
       throw new IllegalArgumentException(
-          "Spawn multipliers must be positive and road width nonnegative");
+          "Spawn multipliers must be positive and road widths nonnegative");
     }
 
-    int gridSizeX = Math.addExact(plotSizeX, roadWidth);
-    int gridSizeZ = Math.addExact(plotSizeZ, roadWidth);
-    int inset = roadWidth / 2;
-    int maxInset = roadWidth - inset;
-    int maxX = Math.subtractExact(Math.multiplyExact(sizeX, gridSizeX) - 1, maxInset);
+    int gridSizeX = Math.addExact(plotSizeX, avenueWidth);
+    int gridSizeZ = Math.addExact(plotSizeZ, streetWidth);
+    int minX = avenueWidth / 2;
+    int minZ = streetWidth / 2;
+    int maxInsetX = avenueWidth - minX;
+    int maxInsetZ = streetWidth - minZ;
+    int maxX = Math.subtractExact(Math.multiplyExact(sizeX, gridSizeX) - 1, maxInsetX);
     int maxY = Math.addExact(roadLevel, Math.multiplyExact(sizeY, plotSizeY) - 1);
-    int maxZ = Math.subtractExact(Math.multiplyExact(sizeZ, gridSizeZ) - 1, maxInset);
+    int maxZ = Math.subtractExact(Math.multiplyExact(sizeZ, gridSizeZ) - 1, maxInsetZ);
 
-    return new Cuboid(inset, roadLevel, inset, maxX, maxY, maxZ);
+    return new Cuboid(minX, roadLevel, minZ, maxX, maxY, maxZ);
   }
 
   public static boolean withinBuildHeight(Cuboid cuboid, int minHeight, int maxHeight) {
