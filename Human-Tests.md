@@ -24,6 +24,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Set `plot.initial: 0` on a disposable server, restart, and join as a fresh player. Confirm no home is created until the player runs `/metropolis-home-acquire`; then verify the command creates the initial home and makes it active.
 - Join with a second new player. Confirm the new home is distinct, does not overlap the first home or spawn, and the City region grows to include it.
 - Start from a disposable world configured with `plot.sizeY` and `plot.maxLevels` from the multi-level example. Confirm the level count is honored, the city does not exceed the world's build height, and upper plots are only allocated above footprints fully supported at every lower level. With a 1×1 spawn and a 2×2 home size, confirm a new home is allocated at base level rather than above the partially supported spawn.
+- Set `spawn.sizeX`, `spawn.sizeY`, and `spawn.sizeZ` to distinct positive values on a fresh disposable world. Confirm the Spawn region spans the corresponding plot-plus-road logical cells horizontally and the configured plot-height multiple vertically. Check blocks outside those bounds remain unchanged; configure a height exceeding the world's build limit and confirm startup rejects it clearly.
 - Join again as an existing player. Confirm the same home is selected and no duplicate region or plot is created.
 - Reserve an area before allocating another home. Confirm future allocations skip it. Repeat with reservations near the city edge and near existing roads to look for overlaps or gaps.
 - Test a user override that grants a different plot multiplier or home limit. Confirm the generated bounds and allowed number of homes match the override, and that the configured global defaults still apply to other players.
@@ -74,10 +75,11 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 45 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 49 tests covering:
 
 - `AvenueStairwayLayoutTest`: centered per-segment flights on both avenue sides, per-segment cadence, top-tread alignment, inverted backing plan, exact-width upper-road openings, and invalid-fit rejection.
 - `PlotLevelSupportTest`: rejection of upper plots with missing logical support cells and complete coverage requirements across all lower levels.
+- `SpawnLayoutTest`: default one-cell bounds, independent multipliers, and build-height validation.
 - `AvenueStairwayBuilderTest`: configured stair material and facing/half data, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
 - `RoadLayoutTest`: full-width surrounding road bands, non-overlapping corners, and disabled roads at zero width.
 - `RoadBlockWriterTest`: no-op writes for existing roads, filling missing road blocks, and preserving stair treads.

@@ -120,6 +120,9 @@ public class MetropolisPlugin extends JavaPlugin {
   private boolean generateSign = false;
   private boolean generateSpawn = true;
   private boolean setWorldSpawn = true;
+  private int spawnSizeX = 1;
+  private int spawnSizeY = 1;
+  private int spawnSizeZ = 1;
   private Material spawnFloorMaterial = Material.COBBLESTONE;
   private boolean generateFloorSupports = false;
   private Material floorSupportMaterial = Material.STONE;
@@ -250,6 +253,9 @@ public class MetropolisPlugin extends JavaPlugin {
     }
     generateSpawn = safeGetBooleanFromConfig(config, "spawn.generate");
     setWorldSpawn = safeGetBooleanFromConfig(config, "spawn.setAsWorldSpawn");
+    spawnSizeX = optionalIntFromConfig(config, "spawn.sizeX", 1);
+    spawnSizeY = optionalIntFromConfig(config, "spawn.sizeY", 1);
+    spawnSizeZ = optionalIntFromConfig(config, "spawn.sizeZ", 1);
     spawnFloorMaterial = safeGetMaterialFromConfig(config, "spawn.material");
     generateWall = safeGetBooleanFromConfig(config, "wall.generate");
     wallMaterial = safeGetMaterialFromConfig(config, "wall.material");
@@ -330,7 +336,8 @@ public class MetropolisPlugin extends JavaPlugin {
 
     _spawnRegion = regionManager.getRegion("Spawn");
     if (_spawnRegion == null) {
-      _spawnRegion = new ProtectedCuboidRegion("Spawn", getPlotMin(0, 0, 1), getPlotMax(0, 0, 1));
+      Cuboid spawnCuboid = createSpawnCuboid();
+      _spawnRegion = new ProtectedCuboidRegion("Spawn", spawnCuboid.getMin(), spawnCuboid.getMax());
       _spawnRegion.setPriority(1);
       _spawnRegion.setFlag(Flags.PVP, StateFlag.State.DENY);
       _spawnRegion.setFlag(Flags.MOB_DAMAGE, StateFlag.State.DENY);
@@ -552,18 +559,18 @@ public class MetropolisPlugin extends JavaPlugin {
 
     if (generateSpawn) {
       int x = 0;
-      int y = roadLevel;
+      int y = _spawnCuboid.minY;
       int z = 0;
 
       // floor
       for (x = _spawnCuboid.getMinX(); x <= _spawnCuboid.getMaxX(); x++) {
         for (z = _spawnCuboid.getMinZ(); z <= _spawnCuboid.getMaxZ(); z++) {
-          for (y = roadLevel + 1; y < world.getMaxHeight(); y++) {
+          for (y = _spawnCuboid.minY + 1; y <= _spawnCuboid.maxY; y++) {
             Block block = world.getBlockAt(x, y, z);
             block.setType(Material.AIR);
           }
 
-          y = roadLevel;
+          y = _spawnCuboid.minY;
           Block block = world.getBlockAt(x, y, z);
           block.setType(spawnFloorMaterial);
         }
@@ -574,8 +581,34 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     if (setWorldSpawn) {
-      world.setSpawnLocation(_spawnCuboid.getCenterX(), roadLevel + 1, _spawnCuboid.getCenterZ());
+      world.setSpawnLocation(
+          _spawnCuboid.getCenterX(), _spawnCuboid.minY + 1, _spawnCuboid.getCenterZ());
     }
+  }
+
+  private Cuboid createSpawnCuboid() {
+    Cuboid spawnCuboid =
+        SpawnLayout.bounds(
+            spawnSizeX,
+            spawnSizeY,
+            spawnSizeZ,
+            plotSizeX,
+            plotSizeY,
+            plotSizeZ,
+            roadWidth,
+            roadLevel);
+    if (!SpawnLayout.withinBuildHeight(spawnCuboid, world.getMinHeight(), world.getMaxHeight())) {
+      getLogger()
+          .severe(
+              String.format(
+                  "Configured spawn bounds (%d to %d) exceed world build height (%d to %d).",
+                  spawnCuboid.minY,
+                  spawnCuboid.maxY,
+                  world.getMinHeight(),
+                  world.getMaxHeight() - 1));
+      throw new IllegalArgumentException("Configured spawn height exceeds world build height.");
+    }
+    return spawnCuboid;
   }
 
   private void fillOccupiedPlots() {

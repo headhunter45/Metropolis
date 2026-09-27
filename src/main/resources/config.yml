@@ -39,6 +39,9 @@ road:
 spawn:
   generate: true
   setAsWorldSpawn: true
+  sizeX: 1
+  sizeY: 1
+  sizeZ: 1
   material: GRASS_BLOCK
 wall:
   generate: true
