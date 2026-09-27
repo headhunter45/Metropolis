@@ -1,47 +1,67 @@
-Metropolis generates a home for each user connecting to your world with roads between them. As new users connect the city expands.
+# Metropolis
 
-WorldGuard regions are used for each home and for the city as a whole.
+Metropolis expands a protected Minecraft city as players join. Each player can receive a home plot connected by generated roads; WorldGuard protects the city, homes, and reserved plots.
 
-One region called "City" is created to protect the spawn and roads. As the assigned blocks expand this region is automatically updated.
+## Requirements
 
-Each user gets assigned a home region named "h_username" where username is replaced with their username. This region is surrounded by a road and located next to an existing region.
+- Paper 26.2, with Java 25 or newer
+- WorldGuard 7.0.19
+- WorldEdit 7.4.5
 
-After creation these regions can be modified as normal via WorldGuard commands.
+WorldGuard and WorldEdit are required plugin dependencies. Install them alongside Metropolis in the server's `plugins` directory.
 
-INSTALL:
-To install just drop the jar into your plugins folder.  All necessarry data will be created on first launch.
+## Build and Test
 
-CONFIG:
-Edit the config.yml file.  You can set the height to clear above roads, the road width, the plot size (incluing half the road width on either side), the road material, and the level at which the road is generated.
+Build the plugin and run the server-free unit tests:
 
-Changelog:
-v0.5
-	Added example docs
-	Added Commands to plugin.yml to move and evict homes
-	Added floor and road supports to config file and generation
-v0.4.6
-	Added optional generation of a sign identifying owner in plots on creation
-	Added a Cuboid constructor that takes a worldedit selection
-	Added a debug mode that enables extra logging.  MetropolisPlugin.DEBUG should be true for snapshots and false for release builds.
-	Added an occupied Plots list to MetropolisPlugin to keep track of both player homes and reserved plots.
-	Added the Plot class as a parent of PlayerHome and moved relevant code to it. 
-	Added a command to reserve plots that aren't tied to a player.  This can be used to setup a larger protected area around spawn
-v0.4.5
-v0.4.4
-	Added a welcome message telling players where their home is.
-	Switched from PlayerLoginEvent to PlayerJoinEvent
-v0.4.3
-	Removed call to saveconfig on plugin unload.
-v0.4.2
-	Made city region refresh on server restart.
-v0.4.1
-v0.4
-v0.3
-	Added command to generate a home for a user that is not currently logged in.
-v0.2.1
-	Made config file save on load and disable.
-v0.2
-	Added configuration options.
+```sh
+./gradlew clean build
+```
 
-v0.1
-	Initial Release
+The plugin jar is written to `build/libs/`. The Gradle wrapper uses Gradle 9.8, and Git-sensitive semantic versioning derives the artifact and `plugin.yml` versions from repository tags and commits.
+
+Run the opt-in live-server tests against a running Paper server with WorldGuard, WorldEdit, and RCON enabled:
+
+```sh
+METROPOLIS_RCON_HOST=127.0.0.1 \
+METROPOLIS_RCON_PORT=25575 \
+METROPOLIS_RCON_PASSWORD=... \
+METROPOLIS_SERVER_DIR=/path/to/server \
+./gradlew integrationTest
+```
+
+`integrationTest` is separate from the normal `test` and `build` tasks. Keep RCON bound to a trusted interface and do not commit its password.
+
+## Server Scripts
+
+Copy `.env.example` to `.env` and configure the Paper version/build and server paths. The scripts read `.env` as key/value data.
+
+- `tools/build-plugin.sh` builds and tests the plugin.
+- `tools/deploy-plugin.sh` copies the Gradle-built jar to the configured server.
+- `tools/start-server.sh` downloads the configured Paper build if needed and starts it.
+- `tools/backup-server.sh` and `tools/restore-server.sh` back up or restore the configured server.
+- `tools/publish-local.sh` publishes the artifact to the local Maven repository.
+- `tools/publish-modrinth.sh` uploads a built jar after checking its version.
+
+## Configuration
+
+The default configuration is in `src/main/resources/config.yml` and is copied to `plugins/Metropolis/config.yml` on first startup. Materials use Bukkit names; the previous numeric IDs for stone, grass, cobblestone, and bedrock are still accepted when loading a configuration.
+
+Player home ownership and selected-home data use UUIDs. Existing name-keyed `currentHomes.yml` entries and name-based WorldGuard home regions are recognized during migration.
+
+## Commands
+
+- `/metropolis` displays the plugin version.
+- `/metropolis-home-acquire` acquires an available home plot.
+- `/metropolis-home-generate <player>` generates a home for a known online or cached offline player.
+- `/metropolis-home-list` lists Metropolis plots.
+- `/metropolis-home-go [player]` teleports to a home.
+- `/metropolis-home-move <home-number> [player]` changes a player's selected home.
+- `/metropolis-home-evict <player>` removes a player's home ownership.
+- `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` reserves coordinates; a player may instead provide a WorldEdit selection.
+- `/metropolis-plot-go <plot-name> [player]` teleports to a plot.
+- `/metropolis-flag-reset` reapplies Metropolis protection flags.
+
+## License
+
+GNU General Public License v3.

@@ -22,7 +22,7 @@
 | MET-018 |   Done   | Build the plugin with Gradle and use the provided server scripts to smoke-test it on modern Paper with its required plugins installed. |
 | MET-019 |   Done   | Address bugs and incompatibilities found by unit tests, integration tests, or modern Paper server testing. |
 | MET-020 |   Done   | Adopt the git-sensitive semantic versioning Gradle plugin used by MobScores and ScoreKeeper, using the existing 0.5-SNAPSHOT version as the migration baseline; verify version/tag behavior and enable the Gradle configuration cache when compatible. |
-| MET-021 |   Ready  | Update README.md, CONTRIBUTING.md, other documentation, and project scripts with the Gradle build, test, versioning, and modern Paper server workflow. |
+| MET-021 |   Done   | Update README.md, CONTRIBUTING.md, other documentation, and project scripts with the Gradle build, test, versioning, and modern Paper server workflow. |
 | MET-022 | Planning | (Optional) Add new features, quality-of-life improvements, or CI configuration after the modernization and documentation tasks are complete. |
 | GIT-009 | Planning | i have three reserve plots and one just got overwritten when a new player joined. |
 | GIT-008 |   Ready  | Implement multiple plot sizes by granting multiple plots around each other. 
