@@ -40,9 +40,8 @@ commands:
    permission: metropolis.plot.reserve
    usage: /metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>
   metropolis-plot-go:
-   description: This command teleports the user or another player to a plot.
-   permission: metropolis.plot.go
-   usage: /metropolis-plot-go <plotName> [playerName]
+   description: Teleports the sender or an authorized target to a reservation.
+   usage: /metropolis-plot-go [playerName] or /metropolis-plot-go <reservationName> [playerName]
   metropolis-debug-generatetesthomes:
    description: This command is ignored on non-debug builds.
    permission: metropolis.debug

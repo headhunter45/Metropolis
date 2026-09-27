@@ -9,6 +9,7 @@ Metropolis expands a protected Minecraft city as players join. Each player can r
 - Expands the City region as plots are occupied, with optional spawn generation, world-spawn placement, floors, support blocks, signs, and perimeter walls.
 - Generates roads around plots with configurable width, level, material, clearance, and supports.
 - Creates named protected reservations from coordinates or a WorldEdit selection so reserved plots are not assigned as homes.
+- Lets WorldGuard reservation owners and members teleport to their reservations, with explicit selection when they belong to several.
 - Persists selected homes by player UUID and recognizes legacy name-based home data during migration.
 - Supports online/offline player administration for home generation, movement, and eviction.
 
@@ -86,7 +87,7 @@ Assign these permission nodes to groups or individual users in your permission p
 | `/metropolis-home-move <homeNumber> [playerName]` | `metropolis.home.move` | Selects one of a player's existing homes as active. The player argument defaults to the sender; console and authorized admins can target online or cached offline players. The selection persists across restarts. |
 | `/metropolis-home-evict <playerName>` | `metropolis.home.evict` | Removes the player's ownership from their selected home region. |
 | `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` | `metropolis.plot.reserve` | Creates a named reservation from explicit bounds. A player can instead run `/metropolis-plot-reserve <name>` with a WorldEdit selection. |
-| `/metropolis-plot-go <plotName> [playerName]` | `metropolis.plot.go` | Teleports the sender or target player to a named occupied or reserved plot. |
+| `/metropolis-plot-go [playerName]` | Reservation owner/member; `metropolis.plot.go` to target others or bypass membership | Teleports the sender or an online target to a reservation they own or belong to. If they have several, specify one with `/metropolis-plot-go <reservationName> [playerName]`. |
 | `/metropolis-flag-reset` | `metropolis.flag.reset` | Reapplies Metropolis protection flags to the City and home regions. |
 | `/metropolis-debug-generatetesthomes <count>` | `metropolis.debug` | Generates test homes; intended for development servers. |
 

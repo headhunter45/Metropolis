@@ -1237,11 +1237,17 @@ public class MetropolisPlugin extends JavaPlugin {
   public String teleportPlayerToPlot(Player player, Plot plot) {
     Location loc = plot.getViableSpawnLocation(world);
 
-    if (loc != null) {
-      player.teleport(loc);
+    if (loc == null) {
+      return "No safe teleport location exists in plot " + plot.getRegionName() + ".";
     }
+    return player.teleport(loc) ? null : "Unable to teleport to plot " + plot.getRegionName() + ".";
+  }
 
-    return null;
+  public List<Plot> getReservationsForPlayer(UUID playerId) {
+    if (regionManager == null) {
+      return List.of();
+    }
+    return PlotReservationLookup.forPlayer(regionManager.getRegions().values(), playerId);
   }
 
   public boolean homeExists(UUID playerId, int homeNumber) {
