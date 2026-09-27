@@ -52,6 +52,9 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - With plot multipliers of 1 and 2, acquire homes and inspect their WorldGuard bounds. Confirm size follows the tier, a larger footprint does not overlap an existing home, and the multiplier is applied to the X and Z footprint only once.
 - Exercise `/metropolis-home-acquire` below and at each effective home limit. Confirm every successful request creates a distinct next-numbered home, creates none beyond the limit, and does not change other players' homes.
 - After acquiring a second home, verify it becomes active: check the player's selected home in `plugins/Metropolis/currentHomes.yml` and use `/metropolis-home-go` to confirm travel to that home. Switch homes with `/metropolis-home-move` and verify the selection changes as expected.
+- Run `/metropolis-home-move <homeNumber>` as a player with multiple homes. Verify the command confirms the selected home, updates `currentHomes.yml`, and `/metropolis-home-go` now travels to it.
+- Run `/metropolis-home-move <homeNumber> <playerName>` as an authorized administrator, then repeat from console. Check an online target is notified and a cached offline target uses the selected home on their next join.
+- Try zero, negative, non-numeric, nonexistent home numbers, unknown player names, and extra arguments. Confirm each request is rejected with useful feedback and does not change the stored active home.
 - Restart after acquiring multiple homes. Confirm all home regions remain owned by the player, the active home selection persists, and joining does not allocate another first home.
 - Generate a home for an offline player administratively. Confirm permission tiers are not assumed for offline players; the username override or global settings determine plot size and limit.
 - Exercise `/metropolis-home-go` with a safe bed spawn inside the home and with no such bed spawn. Confirm teleportation chooses a valid location inside the home and reports a clear failure if no safe location exists.
@@ -62,7 +65,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 17 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 20 tests covering:
 
 - `CuboidTest`: WorldEdit bound conversion, vector ordering/null handling, touching intersections, and point containment.
 - `CurrentHomesStoreTest`: UUID-based persistence and resolving a legacy player-name key.
@@ -71,6 +74,7 @@ Run `./gradlew test` for the server-free JUnit suite. It has 17 tests covering:
 - `PlayerHomeTest`: UUID-based region identity and display-name retention.
 - `HomePermissionOverrideTest`: dotted permission-node parsing, priority and tie resolution, invalid entries, and username/permission/default precedence.
 - `HomeNumberAllocatorTest`: choosing the first unused positive home number.
+- `MetropolisHomeMoveCommandTest`: selecting a sender's home, selecting an offline target's home, and rejecting invalid requests.
 - `MetropolisPlotReserveCommandTest`: parsing six coordinates and rejecting malformed coordinates.
 - `MetropolisHomeAcquireTest`: acquisition below the limit and refusal at the limit.
 

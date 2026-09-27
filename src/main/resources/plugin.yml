@@ -22,7 +22,6 @@ commands:
    permission: metropolis.home.evict
    usage: /metropolis-home-evict <playerName>
   metropolis-home-move:
-   description: This command swaps a player's current home with a reserved plot.
    permission: metropolis.home.move
    usage: /metropolis-home-move <newHomeNumber> [player]
   metropolis-home-go:

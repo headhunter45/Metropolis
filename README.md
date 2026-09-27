@@ -5,6 +5,7 @@ Metropolis expands a protected Minecraft city as players join. Each player can r
 ## Features
 
 - Assigns a protected home plot when a player joins and supports acquiring additional homes up to the configured player limit.
+- Supports per-player plot sizes and home limits through `userOverrides` or configurable permission tiers; acquired homes can be selected as the active home.
 - Expands the City region as plots are occupied, with optional spawn generation, world-spawn placement, floors, support blocks, signs, and perimeter walls.
 - Generates roads around plots with configurable width, level, material, clearance, and supports.
 - Creates named protected reservations from coordinates or a WorldEdit selection so reserved plots are not assigned as homes.
@@ -57,7 +58,7 @@ Copy `.env.example` to `.env` and configure the Paper version/build and server p
 
 `plugins/Metropolis/config.yml` controls plot dimensions and limits, floor and support generation, signs, road width/level/material/clearance, spawn behavior, wall generation, world name, and per-player overrides. `plot.multiplier` sets the default plot-size multiplier; `plot.maxPerPlayer` sets the default home limit.
 
-Use `permissionOverrides` to assign plot size and home limits through any permission manager. Each permission node maps to a `priority`, `plotMultiplier`, and `maxPlots`; the matching node with the highest priority wins, and the last matching entry in YAML order wins ties. An explicit username entry in `userOverrides` takes precedence over permission rules. If no override matches, the global `plot.*` defaults apply. For example:
+Use `permissionOverrides` to assign plot size and home limits through any permission manager. Each permission node maps to a `priority`, `plotMultiplier`, and `maxPlots`; the matching node with the highest priority wins, and the last matching entry in YAML order wins ties. An explicit username entry in `userOverrides` takes precedence over permission rules. If no override matches, the global `plot.*` defaults apply. Permission rules are checked for online players; offline home generation uses username overrides or global defaults. For example:
 
 ```yaml
 permissionOverrides:
@@ -82,7 +83,7 @@ Assign these permission nodes to groups or individual users in your permission p
 | `/metropolis-home-generate <playerName>` | `metropolis.home.generate` | Generates a home for an online or cached offline player. |
 | `/metropolis-home-list` | `metropolis.home.list` | Lists the occupied and reserved Metropolis plots with their bounds. |
 | `/metropolis-home-go [playerName]` | `metropolis.home.go` | Teleports the sender, or a permitted target player, to their home. |
-| `/metropolis-home-move <homeNumber> [playerName]` | `metropolis.home.move` | Selects one of a player's existing home regions. The player argument defaults to the sender. |
+| `/metropolis-home-move <homeNumber> [playerName]` | `metropolis.home.move` | Selects one of a player's existing homes as active. The player argument defaults to the sender; console and authorized admins can target online or cached offline players. The selection persists across restarts. |
 | `/metropolis-home-evict <playerName>` | `metropolis.home.evict` | Removes the player's ownership from their selected home region. |
 | `/metropolis-plot-reserve <name> <minX> <minY> <minZ> <maxX> <maxY> <maxZ>` | `metropolis.plot.reserve` | Creates a named reservation from explicit bounds. A player can instead run `/metropolis-plot-reserve <name>` with a WorldEdit selection. |
 | `/metropolis-plot-go <plotName> [playerName]` | `metropolis.plot.go` | Teleports the sender or target player to a named occupied or reserved plot. |
