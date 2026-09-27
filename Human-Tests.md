@@ -28,6 +28,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Set `spawn.sizeX`, `spawn.sizeY`, and `spawn.sizeZ` to distinct positive values on a fresh disposable world. Confirm the Spawn region spans the corresponding plot-plus-road logical cells horizontally and the configured plot-height multiple vertically. Check blocks outside those bounds remain unchanged; configure a height exceeding the world's build limit and confirm startup rejects it clearly.
 - Join again as an existing player. Confirm the same home is selected and no duplicate region or plot is created.
 - Reserve an area before allocating another home. Confirm future allocations skip it. Repeat with reservations near the city edge and near existing roads to look for overlaps or gaps.
+- Create an unrelated saved WorldGuard region in the next candidate area, then allocate a home and confirm it is skipped. Repeat with a non-cuboid region and verify the full bounding cuboid is avoided; confirm `City` itself does not prevent allocation.
 - Test a user override that grants a different plot multiplier or home limit. Confirm the generated bounds and allowed number of homes match the override, and that the configured global defaults still apply to other players.
 
 ### Generated blocks and geometry
@@ -77,11 +78,12 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 57 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 58 tests covering:
 
 - `AvenueStairwayLayoutTest`: centered per-segment street and avenue flights, both border directions, independent cadence, top-tread alignment, inverted backing plan, exact-width openings, and invalid-fit rejection.
 - `PlotLevelSupportTest`: rejection of upper plots with missing logical support cells and complete coverage requirements across all lower levels.
 - `PlotGridLayoutTest`: zero-offset compatibility, offsets on X/Y/Z, axis-specific spacing, and negative logical-index recovery.
+- `WorldGuardRegionOccupancyTest`: arbitrary saved-region bounds are excluded while City/global regions are treated as non-occupying envelopes.
 - `SpawnLayoutTest`: default one-cell bounds, independent multipliers, and build-height validation.
 - `AvenueStairwayBuilderTest`: configured stair material and facing/half data for avenue and street directions, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
 - `RoadLayoutTest`: independently sized street/avenue bands, correct road-type tagging, non-overlapping corners, and disabled roads at zero width.

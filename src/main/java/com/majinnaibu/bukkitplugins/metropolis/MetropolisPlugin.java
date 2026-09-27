@@ -90,6 +90,7 @@ public class MetropolisPlugin extends JavaPlugin {
   private HashMap<UUID, UserOverride> _userOverrides;
   private List<HomePermissionOverride> _permissionOverrides;
   private HashMap<UUID, Integer> _currentHomes;
+  private List<Cuboid> _savedWorldGuardBounds = List.of();
 
   private PlayerJoinListener _playerJoinListener = null;
 
@@ -891,7 +892,7 @@ public class MetropolisPlugin extends JavaPlugin {
       return true;
     }
 
-    return false;
+    return WorldGuardRegionOccupancy.overlapsAny(cuboid, _savedWorldGuardBounds);
   }
 
   private boolean areBlocksOccupied(int row, int col, int i) {
@@ -911,6 +912,8 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   private Cuboid findNextUnownedHomeRegion(int plotMultiplier) {
+    refreshSavedWorldGuardBounds();
+
     int row = 0;
     int col = 0;
     int ring = 0;
@@ -993,6 +996,11 @@ public class MetropolisPlugin extends JavaPlugin {
     getLogger()
         .severe("Unable to find an available supported plot within the allocation search area.");
     return null;
+  }
+
+  private void refreshSavedWorldGuardBounds() {
+    _savedWorldGuardBounds =
+        WorldGuardRegionOccupancy.boundsToAvoid(regionManager.getRegions().values());
   }
 
   private boolean isAvailableSupportedPlot(int row, int col, int plotMultiplier, int level) {
