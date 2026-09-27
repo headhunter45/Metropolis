@@ -64,11 +64,15 @@ Copy `.env.example` to `.env` and configure the Paper version/build and server p
 
 Before allocating, Metropolis treats every saved WorldGuard region except the enclosing `City` and special `__global__` region as occupied. It uses each region's bounding cuboid; for non-cuboid regions this can conservatively leave extra gaps to ensure new plot regions do not overlap them.
 
+Plot allocation continues outward up to the configured WorldBorder. The complete logical plot-and-road footprint must fit inside the border; if no supported, unoccupied location remains, Metropolis logs an error and creates no region.
+
 Set `spawn.sizeX`, `spawn.sizeY`, and `spawn.sizeZ` to positive logical-grid multipliers. X and Z include the matching plot dimension plus road spacing; Y sets the spawn volume's height upward from `road.level` in multiples of `plot.sizeY`. All default to `1`. A newly created Spawn region must fit within the world's build height, and generation clears only within that region's configured vertical bounds. Existing saved Spawn regions retain their saved bounds.
 
 The `road.streets.*` and `road.avenues.*` sections independently configure width, level, material, clearance, supports, and stairs. Streets run along X; avenues run along Z. Each section's stair settings (`generate`, `material`, `width`, and `everyNBlocks`) use that section's road width and cadence. Street stair runs ascend along positive X at the north/south borders; avenue runs ascend along positive Z at the east/west borders. Runs are centered within each eligible logical plot-sized segment. The lower road remains the normal-material landing; stairs begin one block above and forward from it. Connected following treads use upside-down stairs facing back down the run as backing, and the final tread reaches the upper road Y. The three blocks before each top tread remain open only across the stair width.
 
 Upper-level plots require complete generated support below: every logical plot cell in their footprint must be occupied by a generated home or spawn at every lower level. If a footprint has gaps below, allocation skips that upper candidate and keeps searching for a supported lower-level location.
+
+The WorldGuard `City` region expands in all three dimensions to contain its previous bounds, the requested city footprint, Spawn, and generated homes/reservations. New upper-level plots therefore remain inside City protection; adding a home or reservation also triggers a resize.
 
 The breaking multi-level schema is documented in the example config at `src/main/resources/examples/multi-level.yml`. It uses split road sections (`road.streets.*` and `road.avenues.*`), a level-aware `plot.maxLevels` field, and the valid stair material `COBBLESTONE_STAIRS`.
 

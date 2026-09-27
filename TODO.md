@@ -31,7 +31,7 @@
 | GIT-009 | Planning | i have three reserve plots and one just got overwritten when a new player joined. |
 | GIT-008 |   Ready  | Implement multiple plot sizes by granting multiple plots around each other. 
 | GIT-007 | Planning | Allow buying and selling of homes via an ecnoomy plugin. |
-| GIT-006 |   Ready  | Add levels support. |
+| GIT-006 |   Done   | Add levels support. |
 | GIT-005 | Planning | Add the possibility to create multiple plot homes in shapes. |
 | GIT-004 | Done     | Add a command to request home allocation. |
 | GIT-003 |   Ready  | Add support for multiple homes. |
@@ -86,7 +86,7 @@ Add the possibility to create multiple plot homes in contiguous shapes.
 * Sphere closest to a point.
 
 # GIT-006 - Add levels support.
-**Status:** Ready
+**Status:** Done
 **Description:**
 
 Add multiple vertical levels to the city. Use the existing `road.level` as the base Y: the bottom of a ground-level plot is at that Y, and `plot.sizeY` defines the full plot height. For example, a five-block-high plot includes its floor at road level, three usable blocks, and a roof block; all five blocks belong to the plot region. Use the same plot-dimension-plus-road-spacing grid pitch vertically as horizontally; when road width is zero, adjacent plot volumes may touch. Do not allocate a plot if its full extent would exceed the world's buildable area. If the search cannot find any valid plot, log an allocation error and do not create the plot or region. The current config example is not intended for a multilevel world; request an updated `config.yml` before implementation. Existing `plot.offsetX`, `plot.offsetY`, and `plot.offsetZ` nudge the grid; `plot.multiplier`, `userOverrides[username].plotMultiplier`, and future `permissionOverrides[permission_name].plotMultiplier` affect plot size.

@@ -209,7 +209,7 @@ public class MetropolisPlugin extends JavaPlugin {
     plotOffsetX = safeGetIntFromConfig(config, "plot.offsetX");
     plotOffsetY = safeGetIntFromConfig(config, "plot.offsetY");
     plotOffsetZ = safeGetIntFromConfig(config, "plot.offsetZ");
-    maxLevels = optionalIntFromConfig(config, "plot.maxLevels", "maxLevels", 1);
+    maxLevels = optionalIntFromConfig(config, "plot.maxLevels", 1);
     generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
     floorMaterial = safeGetMaterialFromConfig(config, "plot.floor.material");
     spaceAboveFloor = safeGetIntFromConfig(config, "plot.floor.clearSpaceAbove");
@@ -919,14 +919,26 @@ public class MetropolisPlugin extends JavaPlugin {
     int ring = 0;
     int min = -ring;
     int max = ring - (plotMultiplier - 1);
-    boolean done = false;
     int levelCount = getEffectiveMaxLevels();
     if (levelCount == 0) {
       getLogger().severe("No configured plot level fits within the world's build height.");
       return null;
     }
 
-    while (!done) {
+    var worldBorder = world.getWorldBorder();
+    Location borderCenter = worldBorder.getCenter();
+    int maxSearchRing =
+        PlotWorldBorderBounds.maximumSearchRing(
+            worldBorder.getSize(),
+            borderCenter.getX(),
+            borderCenter.getZ(),
+            plotOffsetX,
+            plotOffsetZ,
+            gridSizeX,
+            gridSizeZ,
+            plotMultiplier);
+
+    while (ring <= maxSearchRing) {
       row = min;
       col = min;
 
@@ -988,13 +1000,9 @@ public class MetropolisPlugin extends JavaPlugin {
       ring++;
       min = -ring;
       max = ring - (plotMultiplier - 1);
-      if (ring > 256) {
-        done = true;
-      }
     }
 
-    getLogger()
-        .severe("Unable to find an available supported plot within the allocation search area.");
+    getLogger().severe("Unable to find an available supported plot before the world border.");
     return null;
   }
 
@@ -1004,7 +1012,17 @@ public class MetropolisPlugin extends JavaPlugin {
   }
 
   private boolean isAvailableSupportedPlot(int row, int col, int plotMultiplier, int level) {
-    return !areBlocksOccupied(row, col, plotMultiplier, level)
+    Location borderCenter = world.getWorldBorder().getCenter();
+    Cuboid candidateGrid =
+        new Cuboid(
+            getGridMin(row, col, plotMultiplier, level),
+            getGridMax(row, col, plotMultiplier, level));
+    return PlotWorldBorderBounds.contains(
+            candidateGrid,
+            world.getWorldBorder().getSize(),
+            borderCenter.getX(),
+            borderCenter.getZ())
+        && !areBlocksOccupied(row, col, plotMultiplier, level)
         && PlotLevelSupport.hasCompleteSupport(
             row, col, plotMultiplier, level, this::isGeneratedLogicalBlock);
   }
@@ -1027,11 +1045,19 @@ public class MetropolisPlugin extends JavaPlugin {
     if (cityRegion instanceof ProtectedCuboidRegion) {
       ProtectedCuboidRegion region = (ProtectedCuboidRegion) cityRegion;
 
-      BlockVector3 min;
-      BlockVector3 max;
-
-      min = getPlotMin(-size / 2, -size / 2, 1);
-      max = getPlotMax(size / 2, size / 2, 1);
+      Cuboid requestedCityBounds =
+          new Cuboid(getPlotMin(-size / 2, -size / 2, 1), getPlotMax(size / 2, size / 2, 1));
+      List<Cuboid> occupiedBounds = new ArrayList<>();
+      for (Plot plot : _occupiedPlots) {
+        occupiedBounds.add(plot.getCuboid());
+      }
+      if (_spawnCuboid != null) {
+        occupiedBounds.add(_spawnCuboid);
+      }
+      Cuboid cityBounds =
+          CityRegionBounds.expandToContain(_cityCuboid, requestedCityBounds, occupiedBounds);
+      BlockVector3 min = cityBounds.getMin();
+      BlockVector3 max = cityBounds.getMax();
 
       ProtectedCuboidRegion resizedRegion = new ProtectedCuboidRegion(region.getId(), min, max);
       resizedRegion.copyFrom(region);
@@ -1233,6 +1259,7 @@ public class MetropolisPlugin extends JavaPlugin {
         homeNumber,
         newHomeRegion.getMinimumPoint(),
         newHomeRegion.getMaximumPoint());
+    resizeCityRegion();
     _currentHomes.put(playerId, homeNumber);
     saveCurrentHomes();
 
@@ -1383,6 +1410,7 @@ public class MetropolisPlugin extends JavaPlugin {
     regionManager.addRegion(reservedRegion);
 
     _occupiedPlots.add(Plot.get(reservedRegion));
+    resizeCityRegion();
     saveRegions();
   }
 
