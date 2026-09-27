@@ -75,4 +75,13 @@ class MetropolisHomeAcquireTest {
     assertEquals(0, zero);
     assertFalse(MetropolisPlugin.shouldAutoGenerateInitialHome(zero));
   }
+
+  @Test
+  void keepsLevelCountsWithinTheConfiguredAndWorldBounds() {
+    assertEquals(1, MetropolisPlugin.normalizeMaxLevels(0));
+    assertEquals(4, MetropolisPlugin.normalizeMaxLevels(4));
+    assertEquals(3, MetropolisPlugin.clampMaxLevels(10, 3));
+    assertEquals(1, MetropolisPlugin.clampMaxLevels(2, 1));
+    assertEquals(1, MetropolisPlugin.clampMaxLevels(0, 0));
+  }
 }

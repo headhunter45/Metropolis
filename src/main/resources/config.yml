@@ -18,13 +18,22 @@ plot:
   sign:
     generate: true
 road:
-  width: 4
-  clearSpaceAbove: 66
-  level: 62
-  material: COBBLESTONE
-  supports:
-    generate: true
-    material: STONE
+  avenues:
+    width: 4
+    clearSpaceAbove: 66
+    level: 62
+    material: COBBLESTONE
+    supports:
+      generate: true
+      material: STONE
+  streets:
+    width: 4
+    clearSpaceAbove: 66
+    level: 62
+    material: COBBLESTONE
+    supports:
+      generate: true
+      material: STONE
 spawn:
   generate: true
   setAsWorldSpawn: true
