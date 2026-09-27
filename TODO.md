@@ -24,6 +24,10 @@
 | MET-020 |   Done   | Adopt the git-sensitive semantic versioning Gradle plugin used by MobScores and ScoreKeeper, using the existing 0.5-SNAPSHOT version as the migration baseline; verify version/tag behavior and enable the Gradle configuration cache when compatible. |
 | MET-021 |   Done   | Update README.md, CONTRIBUTING.md, other documentation, and project scripts with the Gradle build, test, versioning, and modern Paper server workflow. |
 | MET-022 | Planning | (Optional) Add new features, quality-of-life improvements, or CI configuration after the modernization and documentation tasks are complete. |
+| MET-023 | Planning | Add an optional home-allocation policy that grants all remaining homes up to a player's limit when they join. |
+| MET-024 | Planning | Add an optional home-allocation policy that grants at most one additional home per login until the player's limit is reached. |
+| MET-025 | Planning | Add a configuration option to choose the plot-allocation traversal algorithm: concentric rectangles/cuboids or concentric rings that prefer a free location near the center. |
+| MET-026 | Planning | Research a world-conversion option for existing Metropolis worlds, including how to safely adapt existing regions and generated roads/plots. |
 | GIT-009 | Planning | i have three reserve plots and one just got overwritten when a new player joined. |
 | GIT-008 |   Ready  | Implement multiple plot sizes by granting multiple plots around each other. 
 | GIT-007 | Planning | Allow buying and selling of homes via an ecnoomy plugin. |
@@ -36,6 +40,7 @@
 
 # GIT-001 - Add a command to move to a different home.
 **Status:** Ready
+**Depends On:** [GIT-003](#git-003---add-support-for-multiple-homes)
 **Descriptioon:** 
 
 /metropolis-home-move [playerName]
@@ -44,6 +49,7 @@ This command should set the target player's home to the plot defined by .
 
 # GIT-002 - Add a command to teleport to a reservation you are part of.
 **Status:** Ready
+**Depends On:** [GIT-003](#git-003---add-support-for-multiple-homes)
 **Description:**
 
 /metropolis-plot-go [playerName]
@@ -55,21 +61,19 @@ The reservation to teleport to is
 Or better yet just use uhome or create your own, integrated that records the home location at the height set in the configuration file, but on the road next to the plot. Using existing plugins to insert into SQL say uhome, would allow privatization and minimal work on your end.
 
 # GIT-003 - Add support for multiple homes
- 
+
 **Status:** Ready
 **Description:**
 
-The max number of homes per player should be defined by a permission such as
-metropolis.maxhomes: 2
+Support per-player home limits using numbered permission nodes, for example `metropolis.maxhomes.2`. Permission plugins such as LuckPerms can assign these nodes to groups or individual users; when multiple limit nodes are granted, use the highest limit. Keep the configured home limit as the fallback for players without a limit permission.
 
-A config option should be added to determine when the homes are added with at least the following options
+On join, automatically allocate one home only when the player does not already have a home. Additional homes must be explicitly requested with `/metropolis-home-acquire`, up to the player's effective limit. When a new home is granted, make it the player's active home.
 
-Allocate all homes that aren't allocated on login
-Allocate at most 1 home per login
-Only allocate the first home on login, and require a command to allocate additional homes.
+The alternative login allocation policies are tracked separately in MET-023 and MET-024; they are not part of the default policy in this task.
 
 # GIT-004 - Add a command to request home allocation.
 **Status:** Ready
+**Depends On:** [GIT-003](#git-003---add-support-for-multiple-homes)
 **Description:**
 
 Add a command that users can type to get their first or subsequent homes.
@@ -88,10 +92,21 @@ Add the possibility to create multiple plot homes in shapes
 **Status:** Ready
 **Description:**
 
-Allow generating multilevel cities with stairs or interchanges to go between levels (streets are level but avenues are ramps.
+Add multiple vertical levels to the city. Use the existing `road.level` as the base Y: the bottom of a ground-level plot is at that Y, and `plot.sizeY` defines the full plot height. For example, a five-block-high plot includes its floor at road level, three usable blocks, and a roof block; all five blocks belong to the plot region. Use the same plot-dimension-plus-road-spacing grid pitch vertically as horizontally; when road width is zero, adjacent plot volumes may touch. Do not allocate a plot if its full extent would exceed the world's buildable area. If the search cannot find any valid plot, log an allocation error and do not create the plot or region. The current config example is not intended for a multilevel world; request an updated `config.yml` before implementation. Existing `plot.offsetX`, `plot.offsetY`, and `plot.offsetZ` nudge the grid; `plot.multiplier`, `userOverrides[username].plotMultiplier`, and future `permissionOverrides[permission_name].plotMultiplier` affect plot size.
+
+Add a maximum-level config value. If unset, default to 1; administrators can increase it to enable more levels. Allocate plots in X, Z, Y axis order: scan X from negative to positive, then increment Z, and only after scanning the X/Z area increment Y to the next level (Y outermost, Z middle, X innermost). For equal-distance candidates, use the same negative-to-positive X ordering. The selectable X/Z traversal shapes are tracked separately in MET-025.
+
+Streets run along X and avenues run along Z. Streets remain level; avenues connect levels with stairs placed beside plots at a configurable cadence. Add `stairs.*`, `road.streets.*`, and `road.avenues.*` configuration. The street and avenue sections should each contain the current `road.*` settings plus `generateStairs`. Configure stair material, width, and `everyNBlocks`; this cadence is measured in plot-sized avenue blocks, so 3 means stairs beside every third plot along an avenue. Allow stairs to be configured independently for each direction, including different widths. Validate each enabled direction against its corresponding road width; if its stairs are not thinner than that road, log an error but continue plugin startup.
+
+Keep spawn on its current level. Add independent X, Y, and Z spawn-size multipliers, each expressed as a multiple of the corresponding plot dimension and road spacing so roads line up with differently sized plots. The Y multiplier controls spawn's vertical height upward from `road.level`.
+
+When allocating plots in an existing world, treat saved WorldGuard regions as occupied: never overwrite a region or create a new region that overlaps an existing one, even if avoiding overlaps leaves irregular gaps between plots and roads. Document this behavior so users know to expect it. Research a possible world-conversion option separately under MET-026; conversion requires further investigation.
+
+This intentionally breaks the existing config schema: do not add a legacy `road.*` fallback or automatic migration. Document the config changes in release notes and make the breaking change in the 0.6.x release line.
 
 # GIT-007 - Allow buying and selling of homes via an ecnoomy plugin.
-**Status:** Ready
+**Status:** Blocked
+**Blockers:** Figure out how to integrate with economy plugins.
 **Description:**
 
 Allow buying and selling of homes via an ecnoomy plugin. Include decent real estate support including wtb and wts listings as well as an auction facility.
