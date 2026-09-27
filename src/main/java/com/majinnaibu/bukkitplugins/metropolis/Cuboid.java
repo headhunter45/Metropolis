@@ -1,6 +1,5 @@
 package com.majinnaibu.bukkitplugins.metropolis;
 
-import java.util.logging.Logger;
 
 import javax.persistence.Embeddable;
 
@@ -97,21 +96,15 @@ public class Cuboid implements Comparable<Cuboid> {
 	}
 
 	public static int compareBlockVectors(BlockVector v1, BlockVector v2){
-		Logger log = Logger.getLogger("Minecraft");
-		
 		if(v1 == null){
 			if(v2 == null){
-				log.info("in Cuboid.compareBlockVectors v1 and v2 are null");
 				return 0;
 			}else{
-				log.info("in Cubiod.compareBlockVectors v1 is null");
 				return -1;
 			}
 		}else if(v2 == null){
-			log.info("in Cubiod.compareBlockVectors v2 is null");
 			return 1;
 		}
-		log.info(String.format("v1.x: %d, v1.y: %d, v1.z: %d, v2.x: %d, v2.y: %d, v2.z: %d", v1.getBlockX(), v1.getBlockY(), v1.getBlockZ(), v2.getBlockX(), v2.getBlockY(), v2.getBlockZ()));
 		if(v1.getBlockX() < v2.getBlockX()){
 			return -1;
 		}else if(v1.getBlockX() > v2.getBlockX()){

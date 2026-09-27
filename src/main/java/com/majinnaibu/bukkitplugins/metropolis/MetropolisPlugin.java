@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -52,7 +51,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class MetropolisPlugin extends JavaPlugin {
 	public static final boolean DEBUG = false;
-	public static final Logger log=Logger.getLogger("Minecraft");
 	private static final int version = 1;
 	
 	public static final int ROAD_NORTH=1;
@@ -111,7 +109,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
-		log.info(String.format("%s disabled", pdf.getFullName()));
+		getLogger().info(String.format("%s disabled", pdf.getFullName()));
 	}
 
 	@Override
@@ -123,21 +121,21 @@ public class MetropolisPlugin extends JavaPlugin {
 		_currentHomes = new HashMap<String, Integer>();
 		loadCurrentHomes();
 		
-		if(DEBUG){log.info("Checking config");}
+		if(DEBUG){getLogger().info("Checking config");}
 		Configuration config = getConfig();
 		if(!config.contains("version")){
 			//new
-			if(DEBUG){log.info("No config exists.  Assuming new installation.");}
+			if(DEBUG){getLogger().info("No config exists.  Assuming new installation.");}
 		}else{
 			int configVersion = safeGetIntFromConfig(config, "version");
 			if(configVersion < version){
-				if(DEBUG){log.info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
+				if(DEBUG){getLogger().info(String.format("Updating config from version v%s to v%s.", configVersion, version));}
 				if(configVersion != version){
 					//upgrade config
 					config.set("version", version);
 				}
 				saveConfig();
-				if(DEBUG){log.info("Config updated");}
+				if(DEBUG){getLogger().info("Config updated");}
 			}
 		}
 		
@@ -146,7 +144,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		config.options().copyDefaults(true);
 		
-		if(DEBUG){log.info("Reading configuration from file.");}
+		if(DEBUG){getLogger().info("Reading configuration from file.");}
 		plotSizeX = safeGetIntFromConfig(config, "plot.sizeX");
 		plotSizeZ = safeGetIntFromConfig(config, "plot.sizeZ");
 		generateFloor = safeGetBooleanFromConfig(config, "plot.floor.generate");
@@ -174,9 +172,9 @@ public class MetropolisPlugin extends JavaPlugin {
 		buildUserOverrides();
 		
 		saveConfig();
-		if(DEBUG){log.info("Done reading config.");}
+		if(DEBUG){getLogger().info("Done reading config.");}
 		
-		log.info(String.format("Metropolis: world name is %s", worldName));
+		getLogger().info(String.format("Metropolis: world name is %s", worldName));
 		
 		Server server = getServer();
 		if(server == null){
@@ -258,18 +256,18 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		if(DEBUG){
 			/*
-			log.info("Metropolis: first 25 plots");
+			getLogger().info("Metropolis: first 25 plots");
 			
 			int n = 5;
 			
 			for (int ix=-n; ix<=n; ix++){
 				for (int iz=-n; iz<=n; iz++){
-					log.info(getCuboid(iz, ix).toString());				
+					getLogger().info(getCuboid(iz, ix).toString());				
 				}
 			}
 			*/
 			
-			log.info(String.format("roadWidth = %d", roadWidth));
+			getLogger().info(String.format("roadWidth = %d", roadWidth));
 		}
 		
 		_occupiedPlots = new ArrayList<Plot>();
@@ -280,7 +278,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			_playerJoinListener = new PlayerJoinListener(this);
 		}
 
-		log.info(String.format("%s enabled", pdf.getFullName()));
+		getLogger().info(String.format("%s enabled", pdf.getFullName()));
 		
 		RegisterCommandHandler("metropolis", new MetropolisCommand(this));
 		
@@ -304,7 +302,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		try {
 			processor.load();
 		} catch (IOException e) {
-			log.info(e.toString());
+			getLogger().info(e.toString());
 			return;
 		}
 		
@@ -412,12 +410,12 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private void throwInvalidConfigException() {
-		log.info("Metropolis: ERROR config file is invalid.  Please correct Metropolis/config.yml and restart the server.");
+		getLogger().info("Metropolis: ERROR config file is invalid.  Please correct Metropolis/config.yml and restart the server.");
 		throw new RuntimeException("Config file is invalid.");
 	}
 
 	private void setupSpawn() {
-		log.info("Metropolis: Spawn Cuboid is " + _spawnCuboid.toString());
+		getLogger().info("Metropolis: Spawn Cuboid is " + _spawnCuboid.toString());
 		
 		if(generateSpawn){
 			int x= 0;
@@ -495,7 +493,7 @@ public class MetropolisPlugin extends JavaPlugin {
 
 		if(homeRegion == null){
 			if(DEBUG){
-				log.info(String.format("Creating home for player %s", player.getName()));
+				getLogger().info(String.format("Creating home for player %s", player.getName()));
 			}
 			home = generateHome(player.getName());
 		}else{
@@ -529,7 +527,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 
 	private void setFloor(int x, int y, int z) {
-		//if(DEBUG){log.info(String.format("setting road at (%d, %d, %d)", x, y, z));}
+		//if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
 		
 		Block block = world.getBlockAt(x, y, z);
 		
@@ -553,7 +551,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			
 			if(plotCuboid == null){
 				if(DEBUG){
-					log.warning("plotCuboid is null");
+					getLogger().warning("plotCuboid is null");
 				}
 				return;
 			}
@@ -640,7 +638,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	}
 	
 	private void setRoad(int x, int y, int z) {
-		//if(DEBUG){log.info(String.format("setting road at (%d, %d, %d)", x, y, z));}
+		//if(DEBUG){getLogger().info(String.format("setting road at (%d, %d, %d)", x, y, z));}
 		
 		Block block = world.getBlockAt(x, y, z);
 		//Set the road block
@@ -718,7 +716,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			//Top
 			for(col = min; col <= max; col++){
 				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(DEBUG){log.info(String.format("row: %d, col: %d", row, col));}
+					if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
 					return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
 				}
 			}
@@ -727,7 +725,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			col = max;
 			for(row=min + 1; row < max; row++){
 				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(DEBUG){log.info(String.format("row: %d, col: %d", row, col));}
+					if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
 					return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
 				}
 			}
@@ -736,7 +734,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			row = max;
 			for(col = max; col >= min; col--){
 				if(!areBlocksOccupied(row, col, plotMultiplier)){
-					if(DEBUG){log.info(String.format("row: %d, col: %d", row, col));}
+					if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
 					return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
 				}
 			}
@@ -746,7 +744,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			for(row = max; row > min; row--){
 				if(!areBlocksOccupied(row, col, plotMultiplier)){
 					if(row != 0 || col != 0){
-						if(DEBUG){log.info(String.format("row: %d, col: %d", row, col));}
+						if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
 						return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
 					}
 				}
@@ -757,7 +755,7 @@ public class MetropolisPlugin extends JavaPlugin {
 			max = ring - (plotMultiplier-1); 
 		}
 		
-		if(DEBUG){log.info(String.format("row: %d, col: %d", row, col));}
+		if(DEBUG){getLogger().info(String.format("row: %d, col: %d", row, col));}
 		return new Cuboid(getPlotMin(row, col, plotMultiplier), getPlotMax(row, col, plotMultiplier));
 	}
 	
@@ -784,11 +782,11 @@ public class MetropolisPlugin extends JavaPlugin {
 		for(Plot home: _occupiedPlots){
 			int plotCol=Math.abs(getPlotXFromMin(home.getCuboid()));
 			int plotRow=Math.abs(getPlotZFromMin(home.getCuboid()));
-			if(DEBUG){log.info(String.format("col: %d, row: %d, iSize: %d", plotCol, plotRow, iSize));}
+			if(DEBUG){getLogger().info(String.format("col: %d, row: %d, iSize: %d", plotCol, plotRow, iSize));}
 			iSize = Math.max(Math.max(plotRow*2+1, plotCol*2+1), iSize);
 		}
 
-		if(DEBUG){log.info(String.format("City size is %d", iSize));}
+		if(DEBUG){getLogger().info(String.format("City size is %d", iSize));}
 		return iSize;
 	}
 
@@ -796,7 +794,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		BlockVector gridMin = getGridMin(row, col, plotMultiplier);
 		
 		BlockVector bv = new BlockVector(gridMin.getBlockX() + roadWidth/2, gridMin.getBlockY(), gridMin.getBlockZ() + roadWidth/2);
-		log.info(String.format("getPlotMin (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		getLogger().info(String.format("getPlotMin (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
 		return bv;
 	}
 	
@@ -804,7 +802,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		BlockVector gridMax = getGridMax(row, col, plotMultiplier);
 		
 		BlockVector bv = new BlockVector(gridMax.getBlockX() - (roadWidth - roadWidth/2), gridMax.getBlockY(), gridMax.getBlockZ() - (roadWidth-roadWidth/2));
-		log.info(String.format("getPlotMax (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		getLogger().info(String.format("getPlotMax (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
 		return bv;
 	}
 	
@@ -812,7 +810,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		int level = 0;
 		
 		BlockVector bv = new BlockVector(col * gridSizeX, level * gridSizeY, row * gridSizeZ);
-		log.info(String.format("getGridMin (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		getLogger().info(String.format("getGridMin (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
 		return bv;
 	}
 	
@@ -820,7 +818,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		int level = 0;
 		
 		BlockVector bv = new BlockVector((col+plotMultiplier) * gridSizeX*plotMultiplier-1, (level+1/*plotMultiplier*/) * gridSizeY-1, (row+plotMultiplier) * gridSizeZ-1); 
-		log.info(String.format("getGridMax (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
+		getLogger().info(String.format("getGridMax (%d, %d, %d)", bv.getBlockX(), bv.getBlockY(), bv.getBlockZ()));
 		return bv;
 	}
 
@@ -843,7 +841,7 @@ public class MetropolisPlugin extends JavaPlugin {
 	public PlayerHome generateHome(String playerName) {
 		int multiplier = getPlotMultiplier(playerName);
 		
-		if(DEBUG){log.info(String.format("Generating home for %s", playerName));}
+		if(DEBUG){getLogger().info(String.format("Generating home for %s", playerName));}
 		Cuboid homeCuboid = null;
 		ProtectedRegion phomeRegion = null;
 		String regionName = "h_1_" + playerName;
@@ -854,7 +852,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		
 		homeCuboid = findNextUnownedHomeRegion(multiplier);
 
-		log.info("Metropolis Generating home in " + homeCuboid.toString());
+		getLogger().info("Metropolis Generating home in " + homeCuboid.toString());
 
 		ProtectedCuboidRegion newHomeRegion = new ProtectedCuboidRegion(regionName, homeCuboid.getMin(), homeCuboid.getMax());
 		newHomeRegion.setFlag(DefaultFlag.PVP, StateFlag.State.DENY);
@@ -873,17 +871,17 @@ public class MetropolisPlugin extends JavaPlugin {
 		try {
 			regionManager.save();
 		} catch (Exception e) {
-			log.info("Metropolis: ERROR Problem saving region");
+			getLogger().info("Metropolis: ERROR Problem saving region");
 			e.printStackTrace();
 		}
 
 		try {
 			regionManager.save();
 		} catch (Exception e) {
-			log.info("Metropolis: ERROR Problem saving region");
+			getLogger().info("Metropolis: ERROR Problem saving region");
 			e.printStackTrace();
 		}
-		log.info(String.format(
+		getLogger().info(String.format(
 				"New home region (%d, %d, %d) (%d, %d, %d)",
 				newHomeRegion.getMinimumPoint().getBlockX(),
 				newHomeRegion.getMinimumPoint().getBlockY(),
@@ -901,12 +899,12 @@ public class MetropolisPlugin extends JavaPlugin {
 			generateFloor(homeCuboid);
 		}
 		
-		if(DEBUG){log.info(String.format("generateSign: %s", String.valueOf(generateSign)));}
+		if(DEBUG){getLogger().info(String.format("generateSign: %s", String.valueOf(generateSign)));}
 		if(generateSign){
 			generateSign(homeCuboid, playerName);
 		}
 		
-		if(DEBUG){log.info(String.format("Done generating home for %s", playerName));}
+		if(DEBUG){getLogger().info(String.format("Done generating home for %s", playerName));}
 		
 		return new PlayerHome(newHomeRegion);
 	}
@@ -983,7 +981,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		try{
 			regionManager.removeRegion(regionId);
 		}catch(Exception ex){
-			log.info(String.format("[ERROR] Metropolis: Unable to remove region {%s}.", regionId));
+			getLogger().info(String.format("[ERROR] Metropolis: Unable to remove region {%s}.", regionId));
 			return;
 		}
 	}
@@ -992,7 +990,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		try {
 			regionManager.save();
 		} catch (Exception ex) {
-			log.info(String.format("[SEVERE] Metropolis: Unable to save WorldGuard regions."));
+			getLogger().info(String.format("[SEVERE] Metropolis: Unable to save WorldGuard regions."));
 			return;
 		}
 	}

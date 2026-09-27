@@ -26,12 +26,12 @@ public class PlayerJoinListener implements Listener {
 		}
 		
 		PlayerHome home = _plugin.getPlayerHome(player);
-		if(home==null){MetropolisPlugin.log.info("home is null");}
-		else if(home.getCuboid() == null){MetropolisPlugin.log.info("home.getCuboid() is null");}
-		else if(home.getCuboid().getVolume() == 0){MetropolisPlugin.log.info("home.getCuboid().getVolume() is 0");}
+		if(home==null){_plugin.getLogger().info("home is null");}
+		else if(home.getCuboid() == null){_plugin.getLogger().info("home.getCuboid() is null");}
+		else if(home.getCuboid().getVolume() == 0){_plugin.getLogger().info("home.getCuboid().getVolume() is 0");}
 		
 		if(home == null || home.getCuboid() == null || home.getCuboid().getVolume() == 0){
-			MetropolisPlugin.log.info(String.format("Metropolis: Unable to get or create home for player %s", player.getName()));
+			_plugin.getLogger().info(String.format("Metropolis: Unable to get or create home for player %s", player.getName()));
 		}else{
 			Cuboid cuboid = home.getCuboid();
 			player.sendMessage(String.format("Metropolis: Welcome %s your home is between (%d, %d, %d) and (%d, %d, %d)", player.getName(), cuboid.getMinX(), cuboid.getMinY(), cuboid.getMinZ(), cuboid.getMaxX(), cuboid.getMaxY(), cuboid.getMaxZ()));
