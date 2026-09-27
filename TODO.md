@@ -76,10 +76,14 @@ The alternative login allocation policies are tracked separately in MET-023 and 
 
 # GIT-005 - Add the possibility to create multiple plot homes in shapes.
 **Status:** Planning
+**Depends On:** [GIT-006](#git-006---add-levels-support), [MET-025](#met-025---add-a-configuration-option-to-choose-the-plot-allocation-traversal-algorithm-concentric-rectanglescuboids-or-concentric-rings-that-prefer-a-free-location-near-the-center)
 **Description:**
 
-Add the possibility to create multiple plot homes in shapes
+Add the possibility to create multiple plot homes in contiguous shapes.
 
+* Line all plots in a line x, y, or z.
+* Rectangle with width (x), height(y), and length (z).
+* Sphere closest to a point.
 
 # GIT-006 - Add levels support.
 **Status:** Ready
@@ -125,3 +129,7 @@ x a b b x
 x x s x x
 x x x x x
 x x x x x
+
+# MET-025 - Add a configuration option to choose the plot-allocation traversal algorithm: concentric rectangles/cuboids or concentric rings that prefer a free location near the center.
+**Status:** Planning
+**Depends On:** [MET-023], [MET-024]
