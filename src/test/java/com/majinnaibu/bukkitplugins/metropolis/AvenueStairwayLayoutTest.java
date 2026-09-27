@@ -72,6 +72,39 @@ class AvenueStairwayLayoutTest {
   }
 
   @Test
+  void createsOneCenteredStairFlightPerLogicalPlotOnBothAvenueBorders() {
+    Cuboid twoByTwoPlot = new Cuboid(2, 62, 2, 69, 71, 69);
+
+    List<AvenueStairwayLayout.Flight> flights =
+        AvenueStairwayLayout.forUpperRoadSegments(twoByTwoPlot, 32, 36, 0, 1, 4, 2, 62, 14, 3);
+
+    assertEquals(4, flights.size());
+    assertEquals(
+        new AvenueStairwayLayout.Step(71, 63, 12), flights.get(0).stairBlocks().getFirst());
+    assertEquals(
+        new AvenueStairwayLayout.Step(-1, 63, 12), flights.get(1).stairBlocks().getFirst());
+    assertEquals(
+        new AvenueStairwayLayout.Step(71, 63, 48), flights.get(2).stairBlocks().getFirst());
+    assertEquals(
+        new AvenueStairwayLayout.Step(-1, 63, 48), flights.get(3).stairBlocks().getFirst());
+    assertTrue(flights.stream().allMatch(flight -> flight.stairBlocks().getLast().y() == 76));
+  }
+
+  @Test
+  void appliesStairCadenceToEachLogicalPlotSegment() {
+    Cuboid twoByTwoPlot = new Cuboid(2, 62, 2, 69, 71, 69);
+
+    List<AvenueStairwayLayout.Flight> flights =
+        AvenueStairwayLayout.forUpperRoadSegments(twoByTwoPlot, 32, 36, 0, 2, 4, 2, 62, 14, 3);
+
+    assertEquals(2, flights.size());
+    assertEquals(
+        new AvenueStairwayLayout.Step(71, 63, 48), flights.getFirst().stairBlocks().getFirst());
+    assertEquals(
+        new AvenueStairwayLayout.Step(-1, 63, 48), flights.getLast().stairBlocks().getFirst());
+  }
+
+  @Test
   void rejectsAStairRunThatCannotFitWithinThePlotLength() {
     Cuboid plot = new Cuboid(2, 62, 2, 33, 71, 13);
 

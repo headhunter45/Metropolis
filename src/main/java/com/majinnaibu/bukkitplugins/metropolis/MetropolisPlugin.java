@@ -828,7 +828,7 @@ public class MetropolisPlugin extends JavaPlugin {
       for (int level = 0; level < levelCount; level++) {
         // Top
         for (col = min; col <= max; col++) {
-          if (!areBlocksOccupied(row, col, plotMultiplier, level)) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
             if (DEBUG) {
               getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
             }
@@ -841,7 +841,7 @@ public class MetropolisPlugin extends JavaPlugin {
         // Right side
         col = max;
         for (row = min + 1; row < max; row++) {
-          if (!areBlocksOccupied(row, col, plotMultiplier, level)) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
             if (DEBUG) {
               getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
             }
@@ -854,7 +854,7 @@ public class MetropolisPlugin extends JavaPlugin {
         // Bottom
         row = max;
         for (col = max; col >= min; col--) {
-          if (!areBlocksOccupied(row, col, plotMultiplier, level)) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
             if (DEBUG) {
               getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
             }
@@ -867,7 +867,7 @@ public class MetropolisPlugin extends JavaPlugin {
         // Left
         col = min;
         for (row = max; row > min; row--) {
-          if (!areBlocksOccupied(row, col, plotMultiplier, level)) {
+          if (isAvailableSupportedPlot(row, col, plotMultiplier, level)) {
             if (row != 0 || col != 0) {
               if (DEBUG) {
                 getLogger().info(String.format("row: %d, col: %d, level: %d", row, col, level));
@@ -893,6 +893,24 @@ public class MetropolisPlugin extends JavaPlugin {
     }
     return new Cuboid(
         getPlotMin(row, col, plotMultiplier, 0), getPlotMax(row, col, plotMultiplier, 0));
+  }
+
+  private boolean isAvailableSupportedPlot(int row, int col, int plotMultiplier, int level) {
+    return !areBlocksOccupied(row, col, plotMultiplier, level)
+        && PlotLevelSupport.hasCompleteSupport(
+            row, col, plotMultiplier, level, this::isGeneratedLogicalBlock);
+  }
+
+  private boolean isGeneratedLogicalBlock(int row, int col, int level) {
+    Cuboid gridCell = new Cuboid(getGridMin(row, col, 1, level), getGridMax(row, col, 1, level));
+    if (_occupiedPlots != null) {
+      for (Plot plot : _occupiedPlots) {
+        if (plot instanceof PlayerHome && plot.getCuboid().intersects(gridCell)) {
+          return true;
+        }
+      }
+    }
+    return _spawnCuboid != null && _spawnCuboid.intersects(gridCell);
   }
 
   private void resizeCityRegion() {
@@ -1149,16 +1167,9 @@ public class MetropolisPlugin extends JavaPlugin {
       return;
     }
 
-    int avenueBlockIndex = getPlotZFromMin(plotCuboid);
-    if (Math.floorMod(avenueBlockIndex + 1, avenueStairsEveryNBlocks) != 0) {
-      return;
-    }
-
     int lowerY = getLevelStartY(lowerLevel);
-    AvenueStairwayLayout.Flight flight =
-        AvenueStairwayLayout.forUpperRoad(
-            plotCuboid, avenueWidth, avenueStairWidth, lowerY, getLevelPitchY(), 3);
-    if (flight.stairBlocks().isEmpty()) {
+    List<AvenueStairwayLayout.Flight> flights = getAvenueStairFlights(plotCuboid, lowerLevel);
+    if (flights.isEmpty()) {
       getLogger()
           .warning(
               "Avenue stair run does not fit beside plot at "
@@ -1170,7 +1181,9 @@ public class MetropolisPlugin extends JavaPlugin {
       return;
     }
 
-    AvenueStairwayBuilder.build(world, flight, avenueStairMaterial);
+    for (AvenueStairwayLayout.Flight flight : flights) {
+      AvenueStairwayBuilder.build(world, flight, avenueStairMaterial);
+    }
   }
 
   private Set<AvenueStairwayLayout.Step> getUpperRoadOpenings(Cuboid plotCuboid, int roadY) {
@@ -1198,19 +1211,32 @@ public class MetropolisPlugin extends JavaPlugin {
     }
 
     int lowerLevel = upperLevel - 1;
-    int avenueBlockIndex = getPlotZFromMin(plotCuboid);
-    if (lowerLevel < 0 || Math.floorMod(avenueBlockIndex + 1, avenueStairsEveryNBlocks) != 0) {
+    if (lowerLevel < 0) {
       return List.of();
     }
 
-    return AvenueStairwayLayout.forUpperRoad(
-            plotCuboid,
-            avenueWidth,
-            avenueStairWidth,
-            getLevelStartY(lowerLevel),
-            getLevelPitchY(),
-            3)
-        .roadOpenings();
+    return getAvenueStairFlights(plotCuboid, lowerLevel).stream()
+        .flatMap(flight -> flight.roadOpenings().stream())
+        .toList();
+  }
+
+  private List<AvenueStairwayLayout.Flight> getAvenueStairFlights(
+      Cuboid plotCuboid, int lowerLevel) {
+    if (!generateAvenueStairs || lowerLevel < 0 || lowerLevel >= getEffectiveMaxLevels() - 1) {
+      return List.of();
+    }
+
+    return AvenueStairwayLayout.forUpperRoadSegments(
+        plotCuboid,
+        plotSizeZ,
+        gridSizeZ,
+        getPlotZFromMin(plotCuboid),
+        avenueStairsEveryNBlocks,
+        avenueWidth,
+        avenueStairWidth,
+        getLevelStartY(lowerLevel),
+        getLevelPitchY(),
+        3);
   }
 
   public List<Plot> getCityBlocks() {

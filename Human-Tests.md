@@ -23,7 +23,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Join as a new player. Confirm one home is allocated and the welcome message reports its actual bounds. Check the corresponding `h_1_<UUID>` region has the player as owner and its bounds match the configured plot size.
 - Set `plot.initial: 0` on a disposable server, restart, and join as a fresh player. Confirm no home is created until the player runs `/metropolis-home-acquire`; then verify the command creates the initial home and makes it active.
 - Join with a second new player. Confirm the new home is distinct, does not overlap the first home or spawn, and the City region grows to include it.
-- Start from a disposable world configured with `plot.sizeY` and `plot.maxLevels` from the multi-level example. Confirm the level count is honored, the city does not exceed the world's build height, and stacked plots use the same X/Z allocation pattern at each level.
+- Start from a disposable world configured with `plot.sizeY` and `plot.maxLevels` from the multi-level example. Confirm the level count is honored, the city does not exceed the world's build height, and upper plots are only allocated above footprints fully supported at every lower level. With a 1×1 spawn and a 2×2 home size, confirm a new home is allocated at base level rather than above the partially supported spawn.
 - Join again as an existing player. Confirm the same home is selected and no duplicate region or plot is created.
 - Reserve an area before allocating another home. Confirm future allocations skip it. Repeat with reservations near the city edge and near existing roads to look for overlaps or gaps.
 - Test a user override that grants a different plot multiplier or home limit. Confirm the generated bounds and allowed number of homes match the override, and that the configured global defaults still apply to other players.
@@ -32,7 +32,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 - Inspect a newly allocated home and adjoining roads. Check road width, level, material, clearance, plot floor, support blocks, and optional sign against the active config.
 - Generate one plot in a disposable world and confirm each adjoining road is fully paved to the configured width. Generate a plot directly beside it: confirm already-correct shared road blocks are untouched, any missing half-width legacy section is filled, and stair treads/openings remain intact.
-- Enable avenue stairs with a stair width narrower than the avenue. Generate a plot on a level below `plot.maxLevels`; verify stairs are added while the upper road is built and the lower road stays unchanged. Confirm the first tread starts one block above and forward from the road-level landing, connected following treads use inverted stairs underneath, and the top tread reaches the upper road Y. Check that exactly three road blocks before the top tread remain open only across the stair width, with regular road beside the opening. Repeat with a higher-level plot to confirm the lower stair flight remains open.
+- Enable avenue stairs with a stair width narrower than the avenue. Generate a plot on a level below `plot.maxLevels`; verify stairs are added while the upper road is built on both bordering avenues and the lower road stays unchanged. Confirm the first tread starts one block above and forward from the road-level landing, connected following treads use inverted stairs underneath, and the top tread reaches the upper road Y. Check that exactly three road blocks before each top tread remain open only across the stair width, with regular road beside each opening. For a 2-plot-long home with `everyNBlocks: 1`, confirm there are two centered runs on each bordering avenue. Repeat with a higher-level plot to confirm lower stair flights remain open.
 - Test generation over varied terrain, including water, caves, uneven ground, and existing structures. Confirm generated floors and roads do not leave unsafe gaps or erase blocks outside their intended area.
 - Enable and disable optional floor, support, sign, spawn, world-spawn, and perimeter-wall settings one at a time on a disposable world. Confirm each setting changes only its intended behavior.
 - Allocate plots in several directions and near the world origin. Check road joins, plot dimensions, City region expansion, and boundary coordinates for symmetry and off-by-one errors.
@@ -74,9 +74,10 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 
 ## Existing Automated Coverage
 
-Run `./gradlew test` for the server-free JUnit suite. It has 40 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It has 45 tests covering:
 
-- `AvenueStairwayLayoutTest`: centered flight geometry, one-block offset from the lower road, top-tread alignment with the upper road, inverted backing plan, exact-width upper-road opening, and invalid-fit rejection.
+- `AvenueStairwayLayoutTest`: centered per-segment flights on both avenue sides, per-segment cadence, top-tread alignment, inverted backing plan, exact-width upper-road openings, and invalid-fit rejection.
+- `PlotLevelSupportTest`: rejection of upper plots with missing logical support cells and complete coverage requirements across all lower levels.
 - `AvenueStairwayBuilderTest`: configured stair material and facing/half data, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
 - `RoadLayoutTest`: full-width surrounding road bands, non-overlapping corners, and disabled roads at zero width.
 - `RoadBlockWriterTest`: no-op writes for existing roads, filling missing road blocks, and preserving stair treads.
