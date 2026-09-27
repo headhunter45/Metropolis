@@ -5,7 +5,7 @@
 | MET-001 |   Done   | Initialize Gradle in the project root, add the Gradle wrapper, and create the project build file. |
 | MET-002 |   Done   | Set Gradle project metadata and configure a Java toolchain compatible with the target modern Paper version. |
 | MET-003 |   Done   | Configure repositories and compatible PaperMC, WorldEdit, WorldGuard, and other required or optional dependencies; add build plugins such as Shadow only if needed. |
-| MET-004 |   Ready  | Move or verify plugin.yml under src/main/resources, configure Gradle resource processing, and update its Paper api-version, dependencies, commands, permissions, and required fields. |
+| MET-004 |   Done   | Move or verify plugin.yml under src/main/resources, configure Gradle resource processing, and update its Paper api-version, dependencies, commands, permissions, and required fields. |
 | MET-005 |   Ready  | Add JUnit 5 test infrastructure and keep the default Gradle `test` task server-free. Use an in-memory Paper harness such as MockBukkit for Bukkit/Paper behavior and mocks or test doubles for WorldEdit, WorldGuard, and narrow API boundaries where appropriate. |
 | MET-006 |   Ready  | Build the initial Gradle project and run its tests; resolve build setup issues before removing the existing Maven build. |
 | MET-007 |   Ready  | Update .gitignore for Gradle and remove obsolete Maven and Eclipse project files after the Gradle build succeeds. |

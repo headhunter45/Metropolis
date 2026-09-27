@@ -5,6 +5,7 @@ plugins {
 
 group = 'com.majinnaibu.bukkitplugins'
 description = 'Metropolis'
+version = '0.5-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -31,6 +32,15 @@ tasks.named('updateDaemonJvm') {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+def pluginVersion = project.version.toString()
+
+tasks.named('processResources') {
+    inputs.property('version', pluginVersion)
+    filesMatching('plugin.yml') {
+        expand(version: pluginVersion)
+    }
 }
 
 tasks.named('wrapper') {

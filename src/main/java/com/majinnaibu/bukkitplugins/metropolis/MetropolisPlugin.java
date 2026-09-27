@@ -31,6 +31,7 @@ import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisDebugGenerateTestHomesCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisFlagResetCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeEvictCommand;
+import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeAcquire;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGenerateCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeGoCommand;
 import com.majinnaibu.bukkitplugins.metropolis.commands.MetropolisHomeListCommand;
@@ -288,6 +289,7 @@ public class MetropolisPlugin extends JavaPlugin {
 		RegisterCommandHandler("metropolis-flag-reset", new MetropolisFlagResetCommand(this));
 		
 		RegisterCommandHandler("metropolis-home-evict", new MetropolisHomeEvictCommand(this));
+		RegisterCommandHandler("metropolis-home-acquire", new MetropolisHomeAcquire(this));
 		RegisterCommandHandler("metropolis-home-generate", new MetropolisHomeGenerateCommand(this));
 		RegisterCommandHandler("metropolis-home-go", new MetropolisHomeGoCommand(this));
 		RegisterCommandHandler("metropolis-home-list", new MetropolisHomeListCommand(this));
