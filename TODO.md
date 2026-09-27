@@ -2,33 +2,28 @@
 
 |   ID    |  Status  | Title |
 |:-------:|:--------:|:------|
-| MET-000 |   Ready  | Add Gradle plugins as needed (e.g., Shadow) |
-| MET-000 |   Ready  | Add repositories and dependencies |
-| MET-000 |   Ready  | Address any bugs or incompatibilities found during testing on a modern server.
-| MET-000 |   Ready  | Analyze all Java source files for deprecated or removed Bukkit API usage, including logger, event registration, listener classes, configuration API, and entity/player mapping. |
-| MET-000 |   Ready  | Build the plugin with Gradle (./gradlew build) and test on a modern Paper server using the provided bash scripts.
-| MET-000 |   Ready  | Configure Java version |
-| MET-000 |   Ready  | Ensure all commands are properly defined in plugin.yml |
-| MET-000 |   Ready  | Ensure plugin.yml is present in src/main/resources and update for PaperMC compatibility (api-version, commands, required fields). |
-| MET-000 |   Ready  | Ensure resource handling for plugin.yml |
-| MET-000 |   Ready  | Identify and document any hardcoded Bukkit references or legacy patterns (e.g., Player as HashMap key, old event registration, CraftBukkit class names). |
-| MET-000 |   Ready  | Initialize Gradle in the project root and create a build.gradle file with project metadata, PaperMC API dependency, JUnit, Java toolchain, repository, resource handling, and plugins as needed. |
-| MET-000 |   Ready  | Refactor all event listeners to use the modern event system (Listener interface, @EventHandler, registerEvents).
-| MET-000 |   Ready  | Refactor all logger usage to use getLogger() from JavaPlugin. |
-| MET-000 |   Ready  | Remove Maven-specific files (pom.xml, .mvn/ directory, Maven wrapper scripts) and Eclipse-specific files (.classpath, .project, .settings/) if present. |
-| MET-000 |   Ready  | Remove or modernize any old/deprecated event registration (use @EventHandler and registerEvents) |
-| MET-000 |   Ready  | Remove or refactor any code using deprecated or removed Bukkit/Spigot/Paper APIs that are not available in the modern Paper API.
-| MET-000 |   Ready  | Replace all usage of org.bukkit.util.config.Configuration with the modern Bukkit configuration API (getConfig(), saveConfig(), reloadConfig(), etc.).
-| MET-000 |   Ready  | Review and list any custom scripts or resources (e.g., bash scripts in tools/bash/) that may need migration or updates.|
-| MET-000 |   Ready  | Review and update player lookup logic to use getPlayerExact or handle case sensitivity |
-| MET-000 |   Ready  | Set project metadata in build.gradle |
-| MET-000 |   Ready  | Switch all player score storage to use UUID instead of Player as the key |
-| MET-000 |   Ready  | Test the Gradle build |
-| MET-000 |   Ready  | Update .gitignore to add Gradle-specific ignores and remove Maven/Eclipse-specific ignores. |
-| MET-000 |   Ready  | Update README.md and CONTRIBUTING.md with new build, usage, and development instructions. _(Depends on: bugfixes)_
-| MET-000 |   Ready  | Update documentation and scripts |
-| MET-000 |   Ready  | Update logger usage to use getLogger() from JavaPlugin |
-| MET-000 |   Ready  | (Optional) Add new features, quality-of-life improvements, automated tests, or CI configuration. _(Depends on: docs update)_
+| MET-001 |   Done   | Initialize Gradle in the project root, add the Gradle wrapper, and create the project build file. |
+| MET-002 |   Ready  | Set Gradle project metadata and configure a Java toolchain compatible with the target modern Paper version. |
+| MET-003 |   Ready  | Configure repositories and compatible PaperMC, WorldEdit, WorldGuard, and other required or optional dependencies; add build plugins such as Shadow only if needed. |
+| MET-004 |   Ready  | Move or verify plugin.yml under src/main/resources, configure Gradle resource processing, and update its Paper api-version, dependencies, commands, permissions, and required fields. |
+| MET-005 |   Ready  | Add JUnit 5 test infrastructure and keep the default Gradle `test` task server-free. Use an in-memory Paper harness such as MockBukkit for Bukkit/Paper behavior and mocks or test doubles for WorldEdit, WorldGuard, and narrow API boundaries where appropriate. |
+| MET-006 |   Ready  | Build the initial Gradle project and run its tests; resolve build setup issues before removing the existing Maven build. |
+| MET-007 |   Ready  | Update .gitignore for Gradle and remove obsolete Maven and Eclipse project files after the Gradle build succeeds. |
+| MET-008 |   Ready  | Analyze Java sources for deprecated or removed Bukkit/Paper APIs and legacy patterns, including logging, event registration, configuration, player lookup, and player-keyed storage. |
+| MET-009 |   Ready  | Review custom scripts and resources for required updates to the Gradle build and modern Paper server workflow. |
+| MET-010 |   Ready  | Refactor plugin logging to use JavaPlugin.getLogger(). |
+| MET-011 |   Ready  | Refactor event listeners and registration to use Listener, @EventHandler, and the modern plugin manager API. |
+| MET-012 |   Ready  | Replace deprecated configuration APIs with the modern Bukkit/Paper configuration API, including load, save, and reload behavior. |
+| MET-013 |   Ready  | Replace Player-keyed storage with UUID-based storage wherever player identity is persisted or tracked. |
+| MET-014 |   Ready  | Review player lookup logic and use exact or otherwise explicit name-matching behavior where appropriate. |
+| MET-015 |   Ready  | Refactor remaining code that uses deprecated or removed Bukkit, Spigot, or Paper APIs so it is compatible with the target Paper API. |
+| MET-016 |   Ready  | Add fast unit tests for plot and home allocation, reservation validation, player lookup and UUID-based ownership, configuration persistence, command validation, and event behavior. Keep domain rules independent of a running Minecraft server and mock external plugin boundaries as needed. |
+| MET-017 |   Ready  | Add a separate Gradle `integrationTest` source set/task for tests requiring an actual Paper server and compatible WorldGuard/WorldEdit plugins. Verify plugin loading, command registration and dispatch, region-backed reservations and home allocation, and persistence across a server restart. Run it only when explicitly requested; keep it out of the normal `test` and `build` tasks. |
+| MET-018 |   Ready  | Build the plugin with Gradle and use the provided server scripts to smoke-test it on modern Paper with its required plugins installed. |
+| MET-019 |   Ready  | Address bugs and incompatibilities found by unit tests, integration tests, or modern Paper server testing. |
+| MET-020 |   Ready  | Adopt the git-sensitive semantic versioning Gradle plugin used by MobScores and ScoreKeeper, using the existing 0.5-SNAPSHOT version as the migration baseline; verify version/tag behavior and enable the Gradle configuration cache when compatible. |
+| MET-021 |   Ready  | Update README.md, CONTRIBUTING.md, other documentation, and project scripts with the Gradle build, test, versioning, and modern Paper server workflow. |
+| MET-022 | Planning | (Optional) Add new features, quality-of-life improvements, or CI configuration after the modernization and documentation tasks are complete. |
 | GIT-009 | Planning | i have three reserve plots and one just got overwritten when a new player joined. |
 | GIT-008 |   Ready  | Implement multiple plot sizes by granting multiple plots around each other. 
 | GIT-007 |   Ready  | Allow buying and selling of homes via an ecnoomy plugin. |

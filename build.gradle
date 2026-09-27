@@ -1,0 +1,16 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com.majinnaibu.bukkitplugins'
+description = 'Metropolis'
+
+tasks.named('wrapper') {
+    gradleVersion = '9.8.0'
+    distributionType = Wrapper.DistributionType.BIN
+    distributionBase = Wrapper.PathBase.PROJECT
+    distributionPath = '.gradle/wrapper/dists'
+    archiveBase = Wrapper.PathBase.PROJECT
+    archivePath = '.gradle/wrapper/dists'
+}
