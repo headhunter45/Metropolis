@@ -27,6 +27,18 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
 }
 
+sourceSets {
+    integrationTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
@@ -52,6 +64,15 @@ tasks.named('processResources') {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs opt-in tests against a running Paper server with RCON enabled.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter tasks.named('test')
 }
 
 tasks.named('wrapper') {
