@@ -1,5 +1,7 @@
 # Metropolis
 
+[![Java CI with Gradle](https://github.com/headhunter45/Metropolis/actions/workflows/gradle.yml/badge.svg)](https://github.com/headhunter45/Metropolis/actions/workflows/gradle.yml)
+
 Metropolis expands a protected Minecraft city as players join. Each player can receive a home plot connected by generated roads; WorldGuard protects the city, homes, and reserved plots.
 
 ## Features
