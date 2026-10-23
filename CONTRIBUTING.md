@@ -32,8 +32,8 @@ rules.
 - `src/test/` contains isolated JUnit/Mockito tests. `src/integrationTest/`
 	contains the opt-in tests that require a running server and RCON.
 - `build.gradle` defines dependencies, Java/Gradle versions, formatting, and
-	test tasks. `.github/workflows/gradle.yml` runs tests and builds on pushes
-	and pull requests to `develop`.
+	test tasks. `.github/workflows/gradle.yml` runs tests and builds on changes
+	to `main` and `develop`, and any `v*` tags.
 
 ## Prerequisites and Checks
 
