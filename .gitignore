@@ -6,4 +6,5 @@ bin/
 /backups/
 /server/
 .env
+.settings/
 

@@ -1,5 +1,8 @@
 # Metropolis
 
+The project targets Paper 26.2 and 26.3; Gradle and CI compile against Paper
+API 26.2, and CI does not run a live server compatibility check.
+
 Metropolis turns player onboarding into city planning. As players arrive, the Paper plugin finds the next available plot, builds the surrounding roads and infrastructure, and extends a WorldGuard-protected city that feels designed rather than randomly generated.
 
 The project combines procedural spatial logic, persistent UUID-based ownership, configurable construction rules, WorldEdit-assisted reservations, and a command suite for acquiring and selecting multiple homes. Home limits and plot sizes can be assigned per user or through permission-manager groups using configurable permission tiers. Reservation owners and members can teleport to their reserved plots, with explicit selection when they belong to multiple reservations. Active-home selections persist across reconnects and server restarts. It is also a modernization case study: a legacy plugin brought forward to Paper 26.2 and 26.3 with Gradle, focused unit tests, and opt-in live-server integration tests. Bukkit and Spigot servers are outside the support target.

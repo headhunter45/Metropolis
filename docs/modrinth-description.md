@@ -11,6 +11,8 @@ Metropolis grows a protected Minecraft city as players join. It assigns home plo
 WorldGuard and WorldEdit are required dependencies. Install all three plugins in the server's `plugins` directory.
 
 Metropolis targets Paper only; Bukkit and Spigot servers are not supported.
+The project targets Paper 26.2 and 26.3, while its build/CI compile against the
+Paper 26.2 API and do not run a live server compatibility check.
 
 ## Features
 

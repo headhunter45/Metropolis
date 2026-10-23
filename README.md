@@ -18,7 +18,9 @@ Metropolis expands a protected Minecraft city as players join. Each player can r
 
 ## Requirements
 
-- Paper 26.2 or 26.3, with Java 25 or newer
+- Paper 26.2 or 26.3, with Java 25 or newer. The build and CI compile against
+	Paper API 26.2; CI does not launch a server to verify runtime behavior on
+	either version.
 - WorldGuard 7.0.19
 - WorldEdit 7.4.5
 
@@ -114,4 +116,9 @@ Assign these permission nodes to groups or individual users in your permission p
 
 ## License
 
-GNU General Public License v3.
+GNU Affero General Public License v3 or later.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the single developer onboarding
+path, source map, checks, and operational safety notes.

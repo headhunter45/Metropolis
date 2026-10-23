@@ -1,4 +1,9 @@
-# Modernize Metropolis Plugin: Implementation Tasks
+# Historical Modernization Backlog
+
+This file preserves the earlier task list for context. Its status labels and
+acceptance text are historical and are not the current implementation report.
+Use the maintained [modernization plan](modernization-plan.md) for current
+implementation status, pending work, and completion criteria.
 
 |   ID    |  Status  | Title |
 |:-------:|:--------:|:------|

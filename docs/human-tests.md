@@ -1,6 +1,10 @@
-# Metropolis Human Testing
+# Metropolis Manual Pre-release Checklist
 
-Use this checklist for behavior that depends on a real Paper world, player interactions, or the installed WorldGuard and WorldEdit plugins. Automated tests cover some isolated logic, but they do not establish that the complete in-game workflows behave correctly.
+This is a manual checklist of expected behavior that needs a real Paper world,
+player interaction, or installed WorldGuard/WorldEdit plugins. Checklist items
+are scenarios to run, not test results; no item is considered passed until a
+person performs it and records the outcome. Automated coverage is summarized
+separately below.
 
 ## Test Environment
 
@@ -10,7 +14,7 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Keep a server console open and check it for errors after startup, commands, joins, and restarts.
 - Record the Metropolis config, world name, test player UUIDs, command output, and any unexpected region bounds or block changes.
 
-## Human Checklist
+## Manual Scenarios
 
 ### Startup and world setup
 
@@ -78,34 +82,20 @@ Use this checklist for behavior that depends on a real Paper world, player inter
 - Test commands as console, permitted player, and player without the relevant permission. Check player-only commands, target-player arguments, unknown names, malformed arguments, and permission denials for useful feedback and no unintended changes.
 - If upgrading an existing server, verify a legacy name-keyed `currentHomes.yml` entry resolves to the right UUID and the player's selected home is retained.
 
-## Existing Automated Coverage
+## Automated Coverage (Separate from This Checklist)
 
-Run `./gradlew test` for the server-free JUnit suite. It has 62 tests covering:
+Run `./gradlew test` for the server-free JUnit suite. It covers isolated plot
+geometry/allocation rules, road and stair layouts/build plans, WorldGuard
+region occupancy and reservation lookup, spawn/city bounds, home identity and
+selection persistence, permission overrides, player lookup, and selected
+command/event behavior. These unit tests do not load a real Paper server.
 
-- `AvenueStairwayLayoutTest`: centered per-segment street and avenue flights, both border directions, independent cadence, top-tread alignment, inverted backing plan, exact-width openings, and invalid-fit rejection.
-- `PlotLevelSupportTest`: rejection of upper plots with missing logical support cells and complete coverage requirements across all lower levels.
-- `CityRegionBoundsTest`: City bounds expand to include elevated plots and Spawn without shrinking existing protection bounds.
-- `PlotGridLayoutTest`: zero-offset compatibility, offsets on X/Y/Z, axis-specific spacing, and negative logical-index recovery.
-- `WorldGuardRegionOccupancyTest`: arbitrary saved-region bounds are excluded while City/global regions are treated as non-occupying envelopes.
-- `PlotWorldBorderBoundsTest`: search bounds follow WorldBorder size/center and require the full candidate footprint inside it.
-- `SpawnLayoutTest`: default one-cell bounds, independent multipliers, and build-height validation.
-- `AvenueStairwayBuilderTest`: configured stair material and facing/half data for avenue and street directions, upside-down backing stairs, exact upper-road AIR placements, and no block writes at lower-road Y.
-- `RoadLayoutTest`: independently sized street/avenue bands, correct road-type tagging, non-overlapping corners, and disabled roads at zero width.
-- `RoadBlockWriterTest`: no-op writes for existing roads, filling missing road blocks, and preserving stair treads.
-- `CuboidTest`: WorldEdit bound conversion, vector ordering/null handling, touching intersections, and point containment.
-- `CurrentHomesStoreTest`: UUID-based persistence and resolving a legacy player-name key.
-- `PlayerJoinListenerTest`: the welcome bounds message when a home is supplied by a mock.
-- `PlayerLookupTest`: case-insensitive full-name matching and rejection of prefix matching.
-- `PlayerHomeTest`: UUID-based region identity and display-name retention.
-- `HomePermissionOverrideTest`: dotted permission-node parsing, priority and tie resolution, invalid entries, and username/permission/default precedence.
-- `HomeNumberAllocatorTest`: choosing the first unused positive home number.
-- `MetropolisHomeMoveCommandTest`: selecting a sender's home, selecting an offline target's home, and rejecting invalid requests.
-- `PlotReservationLookupTest`: owner/member matching, exclusion of homes/City/Spawn, legacy reservation markers, and region-name aliases.
-- `MetropolisPlotGoCommandTest`: self and target teleportation, ambiguous memberships, absent membership, and unsafe-destination feedback.
-- `MetropolisPlotReserveCommandTest`: parsing six coordinates and rejecting malformed coordinates.
-- `MetropolisHomeAcquireTest`: acquisition below the limit and refusal at the limit.
-- `MetropolisDebugGenerateTestHomesCommandTest`: asynchronous tick-queued generation, one home per interval, no overlapping batches, and continuing test-player names across repeated runs.
-
-The two opt-in tests in `src/integrationTest` require a running Paper server and RCON. They check that Metropolis appears in `/plugins` and that a coordinate reservation is persisted by WorldGuard. They do not currently verify restart persistence, join allocation, WorldEdit-selection reservations, permissions, teleports, generated blocks, protection behavior, or the other command workflows above. Run them with the environment variables documented in `README.md`; use a disposable server because the reservation test changes its WorldGuard data.
-
-The integration scope described in `TODO.md` is broader than the tests currently present. Treat the scenarios in this guide as unverified until a human has run them on the target Paper and plugin versions.
+The separate `src/integrationTest` source set currently contains two live
+checks: Metropolis appears in `/plugins`, and a coordinate reservation is
+persisted in WorldGuard's `regions.yml`. It does not verify restart behavior,
+join allocation, WorldEdit-selection reservations, permissions, teleport
+workflows, generated blocks, or protection behavior. See
+[CONTRIBUTING.md](../CONTRIBUTING.md) for prerequisites and safe invocation.
+Those integration checks have not been run as part of this documentation
+update. The manual scenarios above remain unverified until individually run
+and recorded against the target server/plugins.
