@@ -85,3 +85,41 @@ or generated build output.
 - [Modrinth description](docs/modrinth-description.md): hosting copy reference.
 - [Scraper metadata](docs/project-description.md) and
 	[schema](docs/projects.schema.json): consuming-site project entry.
+
+## Versioning, changelog, and releases
+
+**Version strings** come from Git tags named `v<major>.<minor>.<patch>[-suffix]` and
+are computed by [tools/compute-version.sh](tools/compute-version.sh). Gradle (and so
+`plugin.yml`), CI, and the release workflow all call it, so they always agree.
+`tools/compute-version.sh --explain` shows how a version was chosen.
+
+- A tagged commit uses its tag. With several tags the greatest release tag (no
+  suffix) wins; if all have suffixes, the greatest of those wins.
+- An untagged commit looks at every tag reachable from it and takes the greatest.
+  If that tag ends in `-dev` the version is that tag; otherwise it is the tag with
+  the patch number bumped by one and `-dev` added (`v0.2.2` builds as `0.2.3-dev`).
+- With no tags at all the version is `0.0.1-dev`.
+
+**[changelog.md](changelog.md)** holds the release notes for the next release. Its
+first-level header names the version (`# Changelog for v0.2.3`). The tag
+decides the released version (a release build warns if the header names a different
+one), and everything under the header (HTML comments excluded) becomes the GitHub
+and Modrinth release notes; a release with empty notes is refused.
+[tools/changelog.sh](tools/changelog.sh) reads the header and extracts the notes.
+
+**CI** ([gradle.yml](.github/workflows/gradle.yml)) runs the `Build and Test` job
+for pushes and pull requests to `main` and `develop` and for `v*` tags. Make
+`Build and Test` a required status check on `main` and `develop`.
+Pushing a `v*` tag that is not `-dev` also creates or updates a **draft GitHub
+release** with the built jar and the notes from `changelog.md`. Tags ending in `-dev`
+never get a release.
+
+**Releasing** ([release.yml](.github/workflows/release.yml), run manually with the
+tag): it refuses `-dev` tags, tags whose commit would build as a different version,
+and commits without a successful `Build and Test` run, saying why. Otherwise it
+fast-forwards `main`, creates `release/<tag>`, rebuilds, publishes to Modrinth, and
+publishes the GitHub release (promoting the draft). Tags must be on a commit that
+already contains the files above.
+
+**After a release**, commit a reset `changelog.md` with the next expected version
+(release version + 0.0.1) and tag that commit `v<next>-dev`.
