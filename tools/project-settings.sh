@@ -5,4 +5,4 @@
 PROJECT_DISPLAY_NAME="Metropolis"
 
 # Modrinth project ID or slug used when MODRINTH_PROJECT_ID is not set in the environment or .env.
-MODRINTH_DEFAULT_PROJECT_ID="metropolis-builder"
+MODRINTH_DEFAULT_PROJECT_ID="Vdp8OV8o"
