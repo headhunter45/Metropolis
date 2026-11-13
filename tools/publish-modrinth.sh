@@ -4,6 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# shellcheck source=project-settings.sh
+source "$SCRIPT_DIR/project-settings.sh"
+
 load_project_env() {
   local env_line env_key env_value first_char last_char
   while IFS= read -r env_line || [[ -n "$env_line" ]]; do
@@ -41,30 +44,19 @@ elif [[ -z "${MODRINTH_TOKEN:-}" ]]; then
 fi
 
 MODRINTH_TOKEN="${MODRINTH_TOKEN:-}"
-MODRINTH_PROJECT_ID="${MODRINTH_PROJECT_ID:-metropolis-builder}"
+MODRINTH_PROJECT_ID="${MODRINTH_PROJECT_ID:-$MODRINTH_DEFAULT_PROJECT_ID}"
 MODRINTH_VERSION="${MODRINTH_VERSION:-${VERSION:-}}"
 if [[ -z "$MODRINTH_VERSION" ]]; then
-  MODRINTH_VERSION=$(cd "$PROJECT_ROOT" && ./gradlew -q properties --property version | sed -n 's/^version: //p' | head -n1)
+  MODRINTH_VERSION=$(
+    "$PROJECT_ROOT/gradlew" -q -p "$PROJECT_ROOT" properties --property version \
+      | sed -n 's/^version: //p'
+  )
 fi
 
-generate_changelog() {
-  local current_tag previous_tag range commits
-  current_tag="${TAG:-$(git -C "$PROJECT_ROOT" describe --tags --exact-match HEAD 2>/dev/null || true)}"
-  if [[ -n "$current_tag" ]]; then
-    previous_tag=$(git -C "$PROJECT_ROOT" describe --tags --abbrev=0 "${current_tag}^" 2>/dev/null || true)
-    range="${previous_tag:+$previous_tag..}$current_tag"
-  else
-    previous_tag=$(git -C "$PROJECT_ROOT" describe --tags --abbrev=0 2>/dev/null || true)
-    range="${previous_tag:+$previous_tag..}HEAD"
-  fi
-  commits=$(git -C "$PROJECT_ROOT" log --no-merges --format='- %s (%h)' "$range" 2>/dev/null || true)
-  if [[ -z "$commits" ]]; then
-    commits='- No commit messages found for this release.'
-  fi
-  printf '%s\n\n%s\n' "## What's Changed" "$commits"
-}
-
-MODRINTH_CHANGELOG="${MODRINTH_CHANGELOG:-$(generate_changelog)}"
+# Release notes come from changelog.md (see tools/changelog.sh); MODRINTH_CHANGELOG overrides them.
+if [[ -z "${MODRINTH_CHANGELOG:-}" ]]; then
+  MODRINTH_CHANGELOG="$("$PROJECT_ROOT/tools/changelog.sh" notes)" || exit 1
+fi
 MODRINTH_GAME_VERSIONS="${MODRINTH_GAME_VERSIONS:-26.2,26.3}"
 MODRINTH_LOADERS="${MODRINTH_LOADERS:-paper}"
 MODRINTH_VERSION_TYPE="${MODRINTH_VERSION_TYPE:-}"
@@ -91,7 +83,7 @@ case "$MODRINTH_VERSION_TYPE" in
   release|beta|alpha) ;;
   *) echo "Error: MODRINTH_VERSION_TYPE must be release, beta, or alpha." >&2; exit 1 ;;
 esac
-MODRINTH_VERSION_NAME="Metropolis $MODRINTH_VERSION"
+MODRINTH_VERSION_NAME="$PROJECT_DISPLAY_NAME $MODRINTH_VERSION"
 
 if [[ -n "$MODRINTH_FILE" && "$MODRINTH_FILE" != /* ]]; then
   MODRINTH_FILE="$PROJECT_ROOT/$MODRINTH_FILE"
@@ -103,7 +95,7 @@ if [[ -z "$MODRINTH_TOKEN" ]]; then
 fi
 
 if [[ -z "$MODRINTH_FILE" ]]; then
-  MODRINTH_FILE="$PROJECT_ROOT/build/libs/Metropolis-$MODRINTH_VERSION.jar"
+  MODRINTH_FILE=$(ls -t "$PROJECT_ROOT"/build/libs/*.jar 2>/dev/null | grep -v -- '-all\.jar$' | head -n1 || true)
 fi
 if [[ -z "$MODRINTH_FILE" || ! -f "$MODRINTH_FILE" ]]; then
   echo "Error: no jar found for Modrinth upload. Build the project first or set MODRINTH_FILE." >&2
@@ -113,7 +105,7 @@ if ! command -v unzip >/dev/null; then
   echo "Error: 'unzip' is required to verify the plugin version in the jar." >&2
   exit 1
 fi
-JAR_VERSION=$(unzip -p "$MODRINTH_FILE" plugin.yml 2>/dev/null | sed -n 's/^version: //p' | tr -d "'\"" | head -n1 || true)
+JAR_VERSION=$(unzip -p "$MODRINTH_FILE" plugin.yml 2>/dev/null | sed -n 's/^version: //p' | head -n1 || true)
 if [[ -z "$JAR_VERSION" ]]; then
   echo "Error: could not read the plugin version from $MODRINTH_FILE." >&2
   exit 1
@@ -128,7 +120,6 @@ csv_to_json_array() {
 }
 MODRINTH_GAME_VERSIONS_JSON=$(csv_to_json_array "$MODRINTH_GAME_VERSIONS")
 MODRINTH_LOADERS_JSON=$(csv_to_json_array "$MODRINTH_LOADERS")
-
 if [[ -n "$MODRINTH_DEPENDENCIES" ]]; then
   if ! MODRINTH_DEPENDENCIES_JSON=$(jq -ce 'if type == "array" then . else error("dependencies must be a JSON array") end' <<<"$MODRINTH_DEPENDENCIES"); then
     echo "Error: MODRINTH_DEPENDENCIES must be a JSON array." >&2

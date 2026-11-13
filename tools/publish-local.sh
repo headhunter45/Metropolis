@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Use the same local JDK bootstrap pattern as the Gradle projects.
 export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$PROJECT_ROOT/.gradle/user-home}"
 mkdir -p "$GRADLE_USER_HOME/jdks"
 
@@ -42,4 +41,4 @@ ensure_java_25() {
 
 ensure_java_25
 cd "$PROJECT_ROOT"
-exec ./gradlew publishToMavenLocal "$@"
+./gradlew publishToMavenLocal "$@"
